@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Party positions and the vote — nested logit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F6F4; --surface:#FFFFFF; --muted:#ECEFEC; --ink:#15213B; --ink-2:#48536B; --ink-3:#737D90; --line:#D5DAD7;
+  --zinc:#5A6A70; --zinc-ink:#FFFFFF; --accent:#35599E; --accent-soft:#E3EAF6; --warn:#8A5300; --warn-soft:#FBF1DF; --pos:#1F7A4D; --neg:#B3261E;
+  --c-L:#C23B4E; --c-C:#D39A00; --c-R:#2F5DA8; --c-F:#2A2150; --c-O:#B9BFBC;
+  --font:"Archivo","Helvetica Neue",Arial,system-ui,sans-serif; --r-s:3px; --r-m:6px;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0F141D; --surface:#161C27; --muted:#1D2431; --ink:#E6E9EF; --ink-2:#AAB3C4; --ink-3:#7F889B; --line:#2B3443;
+  --zinc:#6F8087; --accent:#8EAEEB; --accent-soft:#1E2A40; --warn:#E9B35C; --warn-soft:#2E2618; --pos:#5CC08D; --neg:#EC6B63;
+  --c-L:#EE6F80; --c-C:#F0C24A; --c-R:#6F9BE8; --c-F:#9A88E0; --c-O:#4A5160; } }
+:root[data-theme="dark"]{
+  --paper:#0F141D; --surface:#161C27; --muted:#1D2431; --ink:#E6E9EF; --ink-2:#AAB3C4; --ink-3:#7F889B; --line:#2B3443;
+  --zinc:#6F8087; --accent:#8EAEEB; --accent-soft:#1E2A40; --warn:#E9B35C; --warn-soft:#2E2618; --pos:#5CC08D; --neg:#EC6B63;
+  --c-L:#EE6F80; --c-C:#F0C24A; --c-R:#6F9BE8; --c-F:#9A88E0; --c-O:#4A5160; }
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 16px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.55;font-variant-numeric:tabular-nums}
+a{color:var(--accent)} :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{display:grid;grid-template-columns:232px minmax(0,1fr);max-width:1360px;margin:0 auto}
+.rail{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;height:100dvh;padding:28px 18px 28px 24px;border-right:1px solid var(--line);overflow-y:auto}
+.rail .brand{font-stretch:112%;font-weight:700;font-size:15px;line-height:1.25;margin:0 0 26px}
+.rail .brand span{display:block;font-weight:400;font-stretch:100%;color:var(--ink-3);font-size:13px;margin-top:4px}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.rail a{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:10px;text-decoration:none;color:var(--ink-2);padding:6px 6px 6px 0;font-size:14px;line-height:1.25}
+.plate{display:inline-grid;place-items:center;width:34px;height:40px;background:var(--muted);color:var(--ink-2);border-radius:2px;font-weight:800;font-stretch:72%;font-size:21px;box-shadow:inset 0 0 0 1px var(--line)}
+.rail a[aria-current="true"]{color:var(--ink)} .rail a[aria-current="true"] .plate{background:var(--zinc);color:var(--zinc-ink);box-shadow:none}
+.rail .foot{margin-top:28px;font-size:12px;color:var(--ink-3)}
+main{padding:0 40px 80px;min-width:0}
+.mast{padding:40px 0 30px;border-bottom:1px solid var(--line)}
+.mast h1{font-stretch:118%;font-weight:750;font-size:clamp(30px,4.2vw,50px);line-height:1.02;letter-spacing:-0.01em;margin:0 0 14px;max-width:18ch}
+.mast p.lede{max-width:68ch;color:var(--ink-2);margin:0;font-size:17px}
+section.step{padding:44px 0 10px;border-bottom:1px solid var(--line)}
+.step-head{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;margin-bottom:18px}
+.step-head .plate{width:48px;height:58px;font-size:32px;background:var(--zinc);color:var(--zinc-ink);box-shadow:none}
+.step-head h2{font-stretch:112%;font-weight:700;font-size:clamp(23px,2.6vw,30px);line-height:1.12;margin:6px 0 6px}
+.step-head p{margin:0;color:var(--ink-2);max-width:72ch}
+h3{font-stretch:106%;font-weight:650;font-size:18px;margin:30px 0 8px} h4{font-weight:650;font-size:15px;margin:18px 0 6px}
+p{max-width:74ch} .note{font-size:13.5px;color:var(--ink-3);max-width:80ch}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;border-radius:2px;padding:0 4px;margin-left:4px;vertical-align:1px;letter-spacing:.02em}
+.b-E{background:var(--accent-soft);color:var(--accent)} .b-C{background:var(--warn-soft);color:var(--warn)} .b-mix{background:var(--muted);color:var(--ink-3)}
+.flag{display:inline-block;font-size:11.5px;font-weight:600;color:var(--warn);background:var(--warn-soft);border-radius:2px;padding:0 5px;margin-left:4px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface);margin:8px 0 6px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th{font-weight:600;color:var(--ink-2);background:var(--muted);font-size:13px;vertical-align:bottom}
+td:first-child,th:first-child{text-align:left} td.l,th.l{text-align:left} tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+td input[type=number]{width:62px;font:inherit;font-size:14px;text-align:right;padding:3px 5px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--paper);color:var(--ink)}
+td input.edited{border-color:var(--warn);background:var(--warn-soft)}
+.pos{color:var(--pos)} .neg{color:var(--neg)}
+.controls{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px 26px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:18px 20px;margin:12px 0}
+.ctl label{display:flex;justify-content:space-between;gap:10px;font-size:14px;font-weight:600}
+.ctl label output{font-weight:700;font-stretch:90%}
+.ctl .hint{font-size:12.5px;color:var(--ink-3);margin-top:2px;line-height:1.4}
+.ctl input[type=range]{width:100%;accent-color:var(--accent);margin:6px 0 0}
+.ctl select,select.big{width:100%;font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--paper);color:var(--ink);margin-top:4px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px} .chk input{margin-top:4px;accent-color:var(--accent)}
+.chks{display:flex;flex-wrap:wrap;gap:6px 18px}
+button{font:inherit;font-size:14px;font-weight:600;padding:7px 13px;border-radius:var(--r-s);border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--ink-3)} button.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)} button:disabled{opacity:.5;cursor:default}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+.eq{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--zinc);border-radius:var(--r-s);padding:12px 16px;margin:10px 0;overflow-x:auto;font-size:15.5px;line-height:1.9;white-space:nowrap}
+.eq sub,.eq sup{font-size:.72em}
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:10px 12px;margin:8px 0}
+.chart svg{display:block;width:100%;height:auto} .chart .cap{font-size:13px;color:var(--ink-3);margin:4px 2px 0}
+svg text{fill:var(--ink-2);font-family:var(--font);font-size:11px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2);margin:6px 2px}
+.sim{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:16px 18px;position:sticky;top:16px}
+.panel h3{margin-top:0}
+.slider{margin:12px 0}
+.slider label{display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.slider .scale{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-3)}
+.slider input{width:100%;accent-color:var(--accent)}
+.slider .base{font-size:12px;color:var(--ink-3)}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface);overflow:hidden;margin-bottom:12px}
+.kpis div{padding:12px 16px;border-right:1px solid var(--line)} .kpis div:last-child{border-right:none}
+.kpis b{display:block;font-stretch:80%;font-weight:760;font-size:22px;line-height:1.15;white-space:nowrap} .kpis span{font-size:12.5px;color:var(--ink-3)}
+.changed{font-size:13px;color:var(--ink-2);margin:6px 0}
+@media (max-width:1060px){ .sim{grid-template-columns:1fr} .panel{position:static} }
+@media (max-width:980px){
+  .shell{grid-template-columns:1fr}
+  .rail{position:sticky;top:0;z-index:5;height:auto;padding:10px 14px;border-right:none;border-bottom:1px solid var(--line);background:var(--paper);padding-top:calc(env(safe-area-inset-top,0px) + 10px)}
+  .rail .brand,.rail .foot{display:none} .rail ol{flex-direction:row;overflow-x:auto;gap:4px} .rail a{grid-template-columns:auto;padding:0} .rail a .t{display:none}
+  .plate{width:30px;height:36px;font-size:19px} main{padding:0 16px 60px} .grid2{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:no-preference){ html{scroll-behavior:smooth} }
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="rail" aria-label="Steps">
+  <p class="brand">Party positions and the vote<span>Nested logit on French national elections</span></p>
+  <ol>
+    <li><a href="#s1"><span class="plate">1</span><span class="t">What worries voters</span></a></li>
+    <li><a href="#s2"><span class="plate">2</span><span class="t">Party characteristics</span></a></li>
+    <li><a href="#s3"><span class="plate">3</span><span class="t">Votes, 2017–2024</span></a></li>
+    <li><a href="#s3b"><span class="plate">4</span><span class="t">Income groups</span></a></li>
+    <li><a href="#s4"><span class="plate">5</span><span class="t">Estimation</span></a></li>
+    <li><a href="#s5"><span class="plate">6</span><span class="t">Reposition a party</span></a></li>
+  </ol>
+  <div class="foot">Data as of 30 September 2026. Estimation and simulation run in your browser.<div style="margin-top:10px"><button id="themeBtn" type="button">Switch theme</button></div></div>
+</nav>
+<main>
+<header class="mast">
+  <h1>What happens to the vote if a party changes its line?</h1>
+  <p class="lede">Party positions on the issues French voters worry about, scored from the Chapel Hill Expert Survey where it covers them and coded by hand where it doesn't. A nested logit is estimated on 60 party results in seven national elections. Then you move a party's positions and watch votes shift between parties and abstention.</p>
+</header>
+
+<section class="step" id="s1">
+  <div class="step-head"><span class="plate">1</span><div><h2>What worries voters</h2>
+  <p>The characteristics in the model follow the issues voters rank highest, plus the ones you asked for. Cost of living leads every recent survey; crime and immigration come next.</p></div></div>
+  <div class="grid2">
+    <div><h4>Ranked concerns</h4><div class="tw"><table id="tConc"></table></div>
+      <p class="note">Fractures françaises 2025 (Ipsos–CEVIPOF–Le Monde–Fondation Jean-Jaurès–Institut Montaigne, Oct 2025, two answers); Ipsos "Comprendre le vote" European 2024 and legislative 2024 (Ipsos-Talan, top three). Environment fell 5 points between 2024 and 2025.</p></div>
+    <div><h4>Salience differs by electorate (legislative 2024, top-3 vote criterion)</h4><div class="tw"><table id="tSal"></table></div>
+      <p class="note">Ipsos-Talan, 30 June 2024. Immigration matters to 77% of RN voters and 4% of NFP voters, which is why a single average weight on immigration is a strong simplification (see the caveats in step 4).</p>
+      <h4>Mapping to model characteristics</h4><div class="tw"><table id="tMap"></table></div></div>
+  </div>
+</section>
+
+<section class="step" id="s2">
+  <div class="step-head"><span class="plate">2</span><div><h2>Party characteristics</h2>
+  <p>Every score runs from 0 to 10 in the direction you specified. Cells marked <span class="badge b-E">E19</span> or <span class="badge b-E">E24</span> are Chapel Hill Expert Survey means (2019 or 2024 wave, rescaled where needed); <span class="badge b-C">C</span> cells are constructed codings. Edit any cell: coalitions recompute and the model re-estimates at once.</p></div></div>
+  <div class="controls" style="grid-template-columns:minmax(240px,420px) 1fr">
+    <div class="ctl"><label for="perSel">Positions for</label><select id="perSel"><option value="2024">2022–2024 elections (CHES 2024)</option><option value="2019">2017–2019 elections (CHES 2019)</option></select></div>
+    <div class="btns"><button type="button" id="resetChar">Restore original scores</button><span class="note" id="editNote"></span></div>
+  </div>
+  <div class="tw"><table id="tChar"></table></div>
+  <div class="tw"><table id="tScale"></table></div>
+  <h3>Promised fiscal gain by income group</h3>
+  <p>For the income-group model each party gets three scores: how much its tax and transfer promises would raise (10) or cut (0) the disposable income of poor, middle and rich households, 5 being neutral. Manifestos are precise about who pays and who gains (brackets, wealth taxes, VAT, minimum wage), so the direction is reliable; they are not costed by income decile, so the magnitudes are judgement. The last published distributional evaluation (IPP) covers the 2017–2022 term, not the 2022 or 2024 programmes. Edit any score.</p>
+  <div class="btns"><button type="button" id="resetFisc">Restore coded fiscal scores</button></div>
+  <div class="tw"><table id="tFisc"></table></div>
+  <p class="note">CHES variables used: spendvtax (tax cuts vs public services), immigrate_policy, eu_position (1–7, rescaled to 0–10), redistribution (reversed), civlib_laworder, eu_russia (reversed: 10 = invest in defence against Russia). <b>Environment vs climate:</b> the CHES "environment" item is broader than global warming (environmental sustainability versus growth). The 2024 wave adds a separate climate-change-policy item, now its own column; it isn't in the 2019 wave, so 2024 climate scores are carried back to the 2017–2019 elections. Among French parties the two items correlate at 0.95, so national results can't separate their effects: include one or the other in the model. Spending control is anchored on Institut Montaigne's costings of the 2024 legislative programmes (added deficit per year: NFP €179bn → 1, RN €71bn → 3.5, Ensemble €21bn → 6). Support for Israel has no expert-survey measure: it is coded from party statements and votes since October 2023 (e.g. LFI's refusal to call Hamas terrorist; RN and Reconquête opposing recognition of Palestine; Macron's recognition in September 2025) and is the least reliable column. Parties outside CHES (LO/NPA, UDR, UPR/Patriotes, and DLF in 2024) are coded by hand. Ensemble is a weighted mix of Renaissance, MoDem and Horizons; NUPES and NFP mix their parties by number of candidacies.</p>
+</section>
+
+<section class="step" id="s3">
+  <div class="step-head"><span class="plate">3</span><div><h2>Votes, 2017–2024</h2>
+  <p>Each national direct election is a market. Shares are of registered voters; abstention, blank and null ballots form the outside option. The Senate is left out because it is elected by local councillors, so it has no voter-level shares.</p></div></div>
+  <div class="tw" style="max-height:520px;overflow-y:auto"><table id="tData"></table></div>
+  <p class="note">Official Interior Ministry and Conseil constitutionnel results, first rounds. Candidates or lists without a scored party (Lassalle, Génération.s, UDI in 2019, the Animalist party, regionalists, miscellaneous) are left out of the choice set but kept in the valid-vote denominator. Rows marked <span class="flag">check</span> use figures not re-verified against the ministry files.</p>
+</section>
+
+<section class="step" id="s3b">
+  <div class="step-head"><span class="plate">4</span><div><h2>Income groups</h2>
+  <p>Post-election surveys report the vote by household income for three elections. Each election × income group becomes a market, which is what lets coefficients differ between poor, middle and rich voters.</p></div></div>
+  <p>Groups follow Ipsos's brackets of household net monthly income: poor below €1,250, middle €1,250–3,000 (two Ipsos brackets merged), rich above €3,000. "Rich" is therefore roughly the upper 40% of households, not the top few percent: the surveys don't go finer. Parties below 4% nationally are left out of the income markets because the survey's rounded percentages are too coarse for them.</p>
+  <div class="controls" id="wInputs"></div>
+  <p class="note">Population weights of the three groups among registered voters (defaults are the Ipsos-implied shares, rounded). They weight group results into national totals and centre the income-specific coefficients.</p>
+  <div class="tw"><table id="tInc"></table></div>
+  <p class="note">Shares of valid votes (%) in each group: Ipsos–Sopra Steria (presidential 2022, 6–9 April, n=4,000), Ipsos (European 2024, 6–7 June, n=8,923), Ipsos-Talan (legislative 2024, 27–28 June, n=10,286). Legislative 2024 abstention by income wasn't published in the sources found; it is imputed from the European 2024 pattern, scaled to the official 33.3%.</p>
+</section>
+
+<section class="step" id="s4">
+  <div class="step-head"><span class="plate">5</span><div><h2>Estimation</h2>
+  <p>Berry's (1994) inversion turns the nested logit into a linear equation. The within-nest share is endogenous, so it is instrumented with the number of rivals in the nest and the sum of their characteristics.</p></div></div>
+  <div class="eq">ln <i>s</i><sub>jt</sub> − ln <i>s</i><sub>0t</sub> = Σ<sub>k</sub> β<sub>k</sub> <i>x</i><sub>jkt</sub> + σ ln <i>s</i><sub>j|g,t</sub> + λ<sub>t</sub> + ξ<sub>jt</sub>, &nbsp;&nbsp; ξ<sub>jt</sub> = <i>X</i><sub>j</sub> + ε<sub>jt</sub></div>
+  <p><i>x</i> are the characteristics from step 2 (centred at 5), λ<sub>t</sub> an election fixed effect that absorbs turnout, σ ∈ [0,1) the within-nest correlation, and ξ the unobserved characteristic. Because positions barely move over time, party fixed effects would absorb the β's; instead the party-specific factor <i>X</i><sub>j</sub> is recovered as the party's average ξ, and ε<sub>jt</sub> is what remains in each election (candidate effects, alliances, campaign).</p>
+  <div class="controls">
+    <div class="ctl"><label>Characteristics in the model</label><div class="chks" id="dimChks"></div></div>
+    <div class="ctl"><label>Ideal-point terms (quadratic)</label><div class="chks" id="quadChks"></div><div class="hint">Adds (x−5)² so that support can peak at an interior position rather than rise without limit.</div></div>
+    <div class="ctl"><label for="nestSel">Nests</label><select id="nestSel"><option value="3">Left / Centre / Right</option><option value="4">Left / Centre / Right / Far right</option></select><div class="hint">Far right: RN, Reconquête, UDR, DLF, UPR/Patriotes.</div></div>
+    <div class="ctl"><label for="estSel">Estimator</label><select id="estSel"><option value="iv">2SLS (instrumented within-nest share)</option><option value="ols">OLS</option></select></div>
+  </div>
+  <div class="grid2">
+    <div><h3>Coefficients</h3><div class="tw"><table id="tCoef"></table></div><p class="note" id="coefNote"></p></div>
+    <div><h3>Fit</h3><div class="chart"><svg id="chFit" viewBox="0 0 440 360" role="img" aria-label="Observed against fitted log share ratios"></svg><p class="cap">Observed against fitted ln(s<sub>j</sub>/s<sub>0</sub>), leaving out ξ. The gap for each point is that party's unobserved characteristic in that election.</p></div></div>
+  </div>
+  <h3>Party-specific factor X<sub>j</sub> (average unobserved characteristic)</h3>
+  <div class="tw"><table id="tXi"></table></div>
+  <p class="note">Positive X<sub>j</sub>: the party wins more votes than its positions predict (brand, leader, organisation). Negative: fewer. Per-election residuals ε<sub>jt</sub> show, for example, how a presidential candidate over- or under-performs the party's usual level.</p>
+  <h3>Income-group coefficients</h3>
+  <p>Estimated on the income markets from step 4 with a fixed effect for every party × election: anything a party does that affects all groups alike is absorbed, so only how groups differ is identified. That includes the effect of the fiscal promise made to the voter's own group, because the same party promises different things to different groups.</p>
+  <div class="eq">ln <i>s</i><sub>jtg</sub> − ln <i>s</i><sub>0tg</sub> − σ̂ ln <i>s</i><sub>j|n,tg</sub> = φ<sub>jt</sub> + λ<sub>tg</sub> + Σ<sub>k</sub> Δ<sub>kg</sub> <i>x</i><sub>jk</sub> + γ · fiscal<sub>jg</sub> + <i>e</i><sub>jtg</sub></div>
+  <div class="controls">
+    <div class="ctl"><label>Let these coefficients differ by income</label><div class="chks" id="incChks"></div></div>
+    <div class="ctl"><label>Fiscal promises</label><label class="chk"><input type="checkbox" id="gamChk" checked> Include the promised fiscal gain for the voter's own income group (γ)</label></div>
+  </div>
+  <div class="tw"><table id="tIncEst"></table></div>
+  <p class="note" id="incNote"></p>
+  <h3>Caveats</h3>
+  <p class="note">Sixty observations across seven elections is thin: standard errors are wide and several positions are coded by hand. Linear characteristics with a common β mean every voter values, say, tighter immigration control in the same direction; nesting captures the fact that close parties compete harder, but not opposing tastes across electorates. The natural next step is a BLP random-coefficients model on department-level results with demographic interactions (foreign-born share, income, age), which the salience gaps in step 1 call for. First-round presidential votes are partly strategic, which a sincere-choice model ignores. The income model rests on 51 survey cells with rounded percentages; its deviations are imprecise and the fiscal scores are coded judgements.</p>
+</section>
+
+<section class="step" id="s5">
+  <div class="step-head"><span class="plate">6</span><div><h2>Reposition a party</h2>
+  <p>Pick an election as the baseline: with the estimated ξ held fixed, the model reproduces it exactly. Move a party's characteristics, including its fiscal promises to each income group, and see where votes go, including to and from abstention.</p></div></div>
+  <div class="sim">
+    <div class="panel">
+      <div class="ctl"><label for="baseSel">Baseline election</label><select id="baseSel"></select></div>
+      <label class="chk" style="margin-top:10px"><input type="checkbox" id="useInc" checked> <span>Use the income-group model when the baseline has income data</span></label>
+      <div class="ctl" style="margin-top:12px"><label for="partySel">Party to reposition</label><select id="partySel"></select></div>
+      <div id="sliders"></div>
+      <div class="btns"><button type="button" id="resetParty">Reset this party</button><button type="button" id="resetAll">Reset all</button></div>
+      <div class="ctl" style="margin-top:14px"><label for="sigRng">Within-nest correlation σ <output id="sigOut"></output></label><input type="range" id="sigRng" min="0" max="0.95" step="0.01"><div class="hint" id="sigHint"></div></div>
+      <h4>Scenarios</h4><div class="btns" id="presets"></div>
+    </div>
+    <div>
+      <div class="kpis" id="kpis"></div>
+      <p class="changed" id="changed"></p>
+      <div class="chart"><svg id="chSim" viewBox="0 0 760 360" role="img" aria-label="Baseline and counterfactual vote shares"></svg><div class="legend"><span><span class="dot" style="background:var(--ink-3)"></span>Baseline (actual)</span><span><span class="dot" style="background:var(--accent)"></span>With your changes</span></div></div>
+      <div class="tw"><table id="tSim"></table></div>
+      <h3>By income group</h3>
+      <div id="grpBox"></div>
+      <h3>Where the change comes from</h3>
+      <p>Votes won or lost by each party and by abstention as a result of all your changes, in votes (registered voters in the baseline election).</p>
+      <div class="chart"><svg id="chDiv" viewBox="0 0 760 300" role="img" aria-label="Vote changes by party and abstention"></svg></div>
+      <h3>Sensitivity: one point on each characteristic</h3>
+      <p class="note">Change in the selected party's share of valid votes (points) if it moved one point up the scale on each characteristic, everything else at its current value.</p>
+      <div class="tw"><table id="tSens"></table></div>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+<script>
+const PC = {"base": {"2019": {"LONPA": {"v": {"tax": 0.0, "immig": 0.0, "eu": 2.0, "redis": 10.0, "order": 0.5, "env": 6.0, "spend": 0.0, "israel": 0.5, "ukr": 3.0, "climate": 6}, "s": {"tax": "C", "immig": "C", "eu": "C", "redis": "C", "order": "C", "env": "C", "spend": "C", "israel": "C", "ukr": "C", "climate": "C"}}, "LFI": {"v": {"tax": 0.62, "immig": 4.0, "eu": 3.12, "redis": 9.38, "order": 1.88, "env": 6.12, "spend": 1.0, "israel": 1.0, "ukr": 5.0, "climate": 7.75}, "s": {"tax": "E19", "immig": "E19", "eu": "E19", "redis": "E19", "order": "E19", "env": "E19", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "PCF": {"v": {"tax": 0.38, "immig": 3.25, "eu": 3.33, "redis": 9.5, "order": 2.5, "env": 6.14, "spend": 1.0, "israel": 1.5, "ukr": 4.5, "climate": 6.0}, "s": {"tax": "E19", "immig": "E19", "eu": "E19", "redis": "E19", "order": "E19", "env": "E19", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "EELV": {"v": {"tax": 1.75, "immig": 1.62, "eu": 8.96, "redis": 7.62, "order": 1.25, "env": 8.38, "spend": 1.5, "israel": 2.0, "ukr": 7.0, "climate": 9.25}, "s": {"tax": "E19", "immig": "E19", "eu": "E19", "redis": "E19", "order": "E19", "env": "E19", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "PS": {"v": {"tax": 2.12, "immig": 2.75, "eu": 8.54, "redis": 7.75, "order": 2.0, "env": 6.0, "spend": 2.0, "israel": 3.0, "ukr": 7.67, "climate": 6.75}, "s": {"tax": "E19", "immig": "E19", "eu": "E19", "redis": "E19", "order": "E19", "env": "E19", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "RE": {"v": {"tax": 5.5, "immig": 5.67, "eu": 9.72, "redis": 4.17, "order": 6.0, "env": 4.83, "spend": 6.0, "israel": 5.0, "ukr": 8.67, "climate": 5.5}, "s": {"tax": "E19", "immig": "E19", "eu": "E19", "redis": "E19", "order": "E19", "env": "E19", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "MoDem": {"v": {"tax": 6.29, "immig": 5.38, "eu": 9.52, "redis": 4.14, "order": 4.57, "env": 3.86, "spend": 6.0, "israel": 4.5, "ukr": 6.67, "climate": 5.5}, "s": {"tax": "E19", "immig": "E19", "eu": "E19", "redis": "E19", "order": "E19", "env": "E19", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "HOR": {"v": {"tax": 7.0, "immig": 6.0, "eu": 9.07, "redis": 3.6, "order": 5.5, "env": 3.67, "spend": 7.0, "israel": 5.5, "ukr": 7.33, "climate": 5.5}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "LR": {"v": {"tax": 8.5, "immig": 7.88, "eu": 7.5, "redis": 2.62, "order": 7.62, "env": 2.75, "spend": 7.5, "israel": 7.0, "ukr": 7.0, "climate": 4.0}, "s": {"tax": "E19", "immig": "E19", "eu": "E19", "redis": "E19", "order": "E19", "env": "E19", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "UDR": {"v": {"tax": 8.0, "immig": 9.0, "eu": 3.0, "redis": 3.0, "order": 9.0, "env": 2.5, "spend": 5.5, "israel": 8.0, "ukr": 5.0, "climate": 2.5}, "s": {"tax": "C", "immig": "C", "eu": "C", "redis": "C", "order": "C", "env": "C", "spend": "C", "israel": "C", "ukr": "C", "climate": "C"}}, "DLF": {"v": {"tax": 6.5, "immig": 9.33, "eu": 0.71, "redis": 3.6, "order": 9.0, "env": 3.5, "spend": 5.0, "israel": 6.5, "ukr": 5.0, "climate": 3}, "s": {"tax": "E19", "immig": "E19", "eu": "E19", "redis": "E19", "order": "E19", "env": "E19", "spend": "C", "israel": "C", "ukr": "C", "climate": "C"}}, "RN": {"v": {"tax": 5.43, "immig": 9.88, "eu": 0.62, "redis": 6.0, "order": 9.25, "env": 2.75, "spend": 3.5, "israel": 7.5, "ukr": 2.33, "climate": 2.5}, "s": {"tax": "E19", "immig": "E19", "eu": "E19", "redis": "E19", "order": "E19", "env": "E19", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "REC": {"v": {"tax": 8.5, "immig": 9.67, "eu": 1.06, "redis": 2.11, "order": 9.5, "env": 2.17, "spend": 6.0, "israel": 9.0, "ukr": 5.0, "climate": 1.67}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "UPR": {"v": {"tax": 5.0, "immig": 7.0, "eu": 0.0, "redis": 5.0, "order": 7.0, "env": 3.0, "spend": 5.0, "israel": 3.0, "ukr": 2.0, "climate": 3}, "s": {"tax": "C", "immig": "C", "eu": "C", "redis": "C", "order": "C", "env": "C", "spend": "C", "israel": "C", "ukr": "C", "climate": "C"}}}, "2024": {"LONPA": {"v": {"tax": 0.0, "immig": 0.0, "eu": 2.0, "redis": 10.0, "order": 0.5, "env": 6.0, "spend": 0.0, "israel": 0.5, "ukr": 3.0, "climate": 6}, "s": {"tax": "C", "immig": "C", "eu": "C", "redis": "C", "order": "C", "env": "C", "spend": "C", "israel": "C", "ukr": "C", "climate": "C"}}, "LFI": {"v": {"tax": 1.0, "immig": 1.55, "eu": 3.33, "redis": 9.0, "order": 2.0, "env": 6.67, "spend": 1.0, "israel": 1.0, "ukr": 5.0, "climate": 7.75}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "PCF": {"v": {"tax": 1.0, "immig": 3.09, "eu": 3.52, "redis": 9.0, "order": 2.83, "env": 5.67, "spend": 1.0, "israel": 1.5, "ukr": 4.5, "climate": 6.0}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "EELV": {"v": {"tax": 1.33, "immig": 1.6, "eu": 8.67, "redis": 8.6, "order": 2.17, "env": 8.0, "spend": 1.5, "israel": 2.0, "ukr": 7.0, "climate": 9.25}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "PS": {"v": {"tax": 1.67, "immig": 3.18, "eu": 8.79, "redis": 7.8, "order": 2.83, "env": 6.67, "spend": 2.0, "israel": 3.0, "ukr": 7.67, "climate": 6.75}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "RE": {"v": {"tax": 6.5, "immig": 5.73, "eu": 8.79, "redis": 3.8, "order": 5.8, "env": 4.33, "spend": 6.0, "israel": 5.0, "ukr": 8.67, "climate": 5.5}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "MoDem": {"v": {"tax": 5.33, "immig": 4.67, "eu": 9.7, "redis": 4.5, "order": 3.83, "env": 4.33, "spend": 6.0, "israel": 4.5, "ukr": 6.67, "climate": 5.5}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "HOR": {"v": {"tax": 7.0, "immig": 6.0, "eu": 9.07, "redis": 3.6, "order": 5.5, "env": 3.67, "spend": 7.0, "israel": 5.5, "ukr": 7.33, "climate": 5.5}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "LR": {"v": {"tax": 7.33, "immig": 8.36, "eu": 7.12, "redis": 2.6, "order": 7.83, "env": 2.67, "spend": 7.5, "israel": 7.0, "ukr": 7.0, "climate": 4.0}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "UDR": {"v": {"tax": 8.0, "immig": 9.0, "eu": 3.0, "redis": 3.0, "order": 9.0, "env": 2.5, "spend": 5.5, "israel": 8.0, "ukr": 5.0, "climate": 2.5}, "s": {"tax": "C", "immig": "C", "eu": "C", "redis": "C", "order": "C", "env": "C", "spend": "C", "israel": "C", "ukr": "C", "climate": "C"}}, "DLF": {"v": {"tax": 6.5, "immig": 9.33, "eu": 0.71, "redis": 3.6, "order": 9.0, "env": 3.5, "spend": 5.0, "israel": 6.5, "ukr": 5.0, "climate": 3}, "s": {"tax": "E19", "immig": "E19", "eu": "E19", "redis": "E19", "order": "E19", "env": "E19", "spend": "C", "israel": "C", "ukr": "C", "climate": "C"}}, "RN": {"v": {"tax": 4.33, "immig": 9.55, "eu": 1.97, "redis": 5.3, "order": 8.83, "env": 2.0, "spend": 3.5, "israel": 7.5, "ukr": 2.33, "climate": 2.5}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "REC": {"v": {"tax": 8.5, "immig": 9.67, "eu": 1.06, "redis": 2.11, "order": 9.5, "env": 2.17, "spend": 6.0, "israel": 9.0, "ukr": 5.0, "climate": 1.67}, "s": {"tax": "E24", "immig": "E24", "eu": "E24", "redis": "E24", "order": "E24", "env": "E24", "spend": "C", "israel": "C", "ukr": "E24", "climate": "E24"}}, "UPR": {"v": {"tax": 5.0, "immig": 7.0, "eu": 0.0, "redis": 5.0, "order": 7.0, "env": 3.0, "spend": 5.0, "israel": 3.0, "ukr": 2.0, "climate": 3}, "s": {"tax": "C", "immig": "C", "eu": "C", "redis": "C", "order": "C", "env": "C", "spend": "C", "israel": "C", "ukr": "C", "climate": "C"}}}}, "elec": [{"id": "P2017", "label": "Presidential 2017, round 1", "type": "P", "period": "2019", "ins": 47582183, "expr": 36054394, "v": {"ENS": 8656346, "RN": 7678491, "LR": 7212995, "LFI": 7059951, "PS": 2291288, "DLF": 1695000, "LONPA": 626889, "UPR": 332547}, "others": 500887, "flag": {}}, {"id": "L2017", "label": "Legislative 2017, round 1", "type": "L", "period": "2019", "ins": 47570988, "expr": 22654164, "v": {"ENS": 7323496, "LR": 4260652, "RN": 2990454, "LFI": 2497622, "PS": 1685677, "EELV": 973527, "PCF": 615487, "DLF": 265420, "LONPA": 175214}, "others": null, "flag": {"ENS": "REM 6,391,269 + MoDem 932,227 (MoDem: check)", "LR": "LR 3,573,427 + UDI 687,225 (UDI: check)", "PS": "check", "EELV": "check", "PCF": "check", "DLF": "check", "LONPA": "EXG, check"}}, {"id": "E2019", "label": "European 2019", "type": "E", "period": "2019", "ins": 47345328, "expr": 22655174, "v": {"RN": 5286939, "ENS": 5079015, "EELV": 3055023, "LR": 1920407, "LFI": 1428548, "PS": 1403170, "DLF": 795508, "PCF": 564949, "UPR": 412609, "LONPA": 176339}, "others": null, "flag": {"UPR": "UPR 265,469 + Patriotes 147,140", "PS": "PS–Place publique list", "exprimes": "check"}}, {"id": "P2022", "label": "Presidential 2022, round 1", "type": "P", "period": "2024", "ins": 48747876, "expr": 35132947, "v": {"ENS": 9783058, "RN": 8133828, "LFI": 7712520, "REC": 2485226, "LR": 1679001, "EELV": 1627853, "PCF": 802422, "DLF": 725176, "PS": 616478, "LONPA": 465998}, "others": 1101387, "flag": {}}, {"id": "L2022", "label": "Legislative 2022, round 1", "type": "L", "period": "2024", "ins": 48953748, "expr": 22744708, "v": {"ENS": 5857364, "NUPES": 5836079, "RN": 4248537, "LR": 2568502, "REC": 964775, "LONPA": 266412}, "others": null, "flag": {"LR": "LR 2,370,440 + UDI 198,062", "LONPA": "DXG"}}, {"id": "E2024", "label": "European 2024", "type": "E", "period": "2024", "ins": 49462981, "expr": 24753773, "v": {"RN": 7765936, "ENS": 3614646, "PS": 3424216, "LFI": 2448703, "LR": 1794171, "EELV": 1361883, "REC": 1353127, "PCF": 584067, "UPR": 482226, "LONPA": 158715}, "others": null, "flag": {"UPR": "UPR-Frexit 253,036 + Patriotes 229,190", "LONPA": "LO 121,281 + NPA-R 37,434", "PS": "PS–Place publique list"}}, {"id": "L2024", "label": "Legislative 2024, round 1", "type": "L", "period": "2024", "ins": 49332709, "expr": 32057946, "v": {"RN": 9379092, "NFP": 8995226, "ENS": 6657374, "LR": 2106166, "UDR": 1268822, "REC": 238934, "LONPA": 366594}, "others": null, "flag": {"ENS": "ENS 6,425,707 + HOR 231,667", "UDR": "UXD nuance", "LONPA": "EXG"}}]};
+const INC = {"groups": ["Poor (< €1,250/month)", "Middle (€1,250–3,000)", "Rich (> €3,000)"], "w": [0.12, 0.47, 0.41], "elec": {"P2022": {"cols": ["LONPA", "LFI", "PCF", "EELV", "PS", "ENS", "LR", "LAS", "DLF", "RN", "REC"], "rows": [[1.0, 30.0, 1.0, 5.0, 1.0, 13.0, 2.0, 2.0, 4.0, 31.0, 10.0], [0.91, 23.18, 3.0, 5.0, 1.0, 24.64, 4.09, 3.0, 2.09, 26.09, 7.0], [1.0, 19.0, 2.0, 4.0, 2.0, 34.0, 6.0, 4.0, 2.0, 19.0, 7.0]], "abst": [34.0, 26.9, 23.0], "bn": 0.022012204920834035, "src": "Ipsos–Sopra Steria, 6–9 April 2022, n=4,000", "imputed": false, "rows4": [[1, 30, 1, 5, 1, 13, 2, 2, 4, 31, 10], [2, 27, 3, 5, 1, 23, 3, 3, 1, 25, 7], [0, 20, 3, 5, 1, 26, 5, 3, 3, 27, 7], [1, 19, 2, 4, 2, 34, 6, 4, 2, 19, 7]], "abst4": [34, 29, 25, 23]}, "E2024": {"cols": ["LFI", "PCF", "EELV", "PS", "ENS", "LR", "RN", "REC", "OTH"], "rows": [[19.0, 2.0, 5.0, 12.0, 7.0, 4.0, 32.0, 4.0, 15.0], [10.89, 2.56, 5.0, 13.44, 13.78, 6.11, 32.78, 5.11, 10.33], [8.0, 2.0, 6.0, 16.0, 16.0, 8.0, 30.0, 6.0, 8.0]], "abst": [57.0, 48.3, 46.0], "bn": 0.028138426331479057, "src": "Ipsos, 6–7 June 2024, n=8,923", "imputed": false, "rows4": [[19, 2, 5, 12, 7, 4, 32, 4, 15], [12, 2, 5, 14, 11, 5, 35, 4, 12], [10, 3, 5, 13, 16, 7, 31, 6, 9], [8, 2, 6, 16, 16, 8, 30, 6, 8]], "abst4": [57, 51, 46, 46]}, "L2024": {"cols": ["NFP", "ENS", "LR", "RNA", "OTH"], "rows": [[35.0, 12.0, 8.0, 38.0, 7.0], [29.16, 18.84, 8.1, 35.45, 8.45], [26.0, 23.0, 12.0, 32.0, 7.0]], "abst": [41.3, 33.2, 31.1], "bn": 0.025850675097437128, "src": "Ipsos-Talan, 27–28 June 2024, n=10,286", "imputed": true, "rows4": [[35, 12, 8, 38, 7], [33, 15, 7, 36, 9], [26, 22, 9, 35, 8], [26, 23, 12, 32, 7]], "abst4": [41.3, 35.5, 31.1, 31.1]}}, "w4": [0.12, 0.22, 0.25, 0.41]};
+</script>
+<script>
+// ======================= constants =======================
+const DIMS=[
+ {k:'tax',name:'Tax cuts',lo:'Tax increases',hi:'Strong tax cuts',src:'CHES spendvtax'},
+ {k:'immig',name:'Immigration control',lo:'More immigration',hi:'Remigration',src:'CHES immigrate_policy'},
+ {k:'spend',name:'Spending control',lo:'Large spending rise',hi:'Strong control',src:'Constructed from Institut Montaigne costings'},
+ {k:'eu',name:'European integration',lo:'Frexit',hi:'Federal union',src:'CHES eu_position, (x−1)/6×10'},
+ {k:'israel',name:'Support for Israel',lo:'Strongly critical',hi:'Strong support',src:'Constructed from statements and votes'},
+ {k:'redis',name:'Redistribution',lo:'Against',hi:'Strongly for',src:'10 − CHES redistribution'},
+ {k:'order',name:'Law and order',lo:'Civil liberties',hi:'Tough on crime',src:'CHES civlib_laworder'},
+ {k:'climate',name:'Climate action',lo:'Growth over climate policy',hi:'Climate policy first',src:'10 − CHES climate_change (2024 wave; carried back to 2017–2019)'},
+ {k:'env',name:'Other environment',lo:'Growth first',hi:'Environmental protection first',src:'10 − CHES environment (environmental sustainability)'},
+ {k:'ukr',name:'Defence vs Russia',lo:'Trade with Russia',hi:'Invest in defence',src:'10 − CHES eu_russia (2024 wave)'}];
+const RAW=['LONPA','LFI','PCF','EELV','PS','RE','MoDem','HOR','LR','UDR','DLF','RN','REC','UPR'];
+const PNAME={LONPA:'LO / NPA',LFI:'La France insoumise',PCF:'PCF',EELV:'Les Écologistes',PS:'PS / Place publique',RE:'Renaissance',MoDem:'MoDem',HOR:'Horizons',LR:'LR',UDR:'UDR (Ciotti)',DLF:'Debout la France',RN:'RN',REC:'Reconquête',UPR:'UPR / Patriotes',
+  ENS:'Ensemble',NUPES:'NUPES (2022)',NFP:'Nouveau Front populaire'};
+const COMPOSITE={ENS:{'2019':{RE:0.8,MoDem:0.2},'2024':{RE:0.7,MoDem:0.2,HOR:0.1}}, NUPES:{'2019':{LFI:326,EELV:100,PS:70,PCF:50},'2024':{LFI:326,EELV:100,PS:70,PCF:50}}, NFP:{'2019':{LFI:229,PS:175,EELV:92,PCF:50},'2024':{LFI:229,PS:175,EELV:92,PCF:50}}};
+const NEST3={LONPA:'L',LFI:'L',PCF:'L',EELV:'L',PS:'L',NUPES:'L',NFP:'L',ENS:'C',LR:'R',UDR:'R',DLF:'R',RN:'R',REC:'R',UPR:'R'};
+const NEST4=Object.assign({},NEST3,{UDR:'F',DLF:'F',RN:'F',REC:'F',UPR:'F'});
+const NESTNAME={L:'Left',C:'Centre',R:'Right',F:'Far right'};
+const PRODUCT_ORDER=['LONPA','LFI','PCF','EELV','PS','NUPES','NFP','ENS','LR','UDR','DLF','RN','REC','UPR'];
+const $=s=>document.querySelector(s);
+const fmt=(x,d=1)=>(x==null||!isFinite(x))?'—':x.toFixed(d);
+const sgn=(x,d=1)=>(x>0?'+':'')+fmt(x,d);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+const S={ fisc:null, w:INC.w.slice(), incDims:['immig','eu'], incGamma:true, incEst:null, base:JSON.parse(JSON.stringify(PC.base)), per:'2024', dims:['tax','immig','spend','eu','israel'], quad:[], nest:'3', estimator:'iv',
+  est:null, useIncome:true, baseEl:'E2024', party:'RN', over:{}, sigma:null, sigmaManual:false };
+const ORIG=JSON.parse(JSON.stringify(PC.base));
+// Promised net fiscal gain (taxes and transfers) by income group, 0 = large loss, 5 = neutral, 10 = large gain. Coded from manifestos.
+const FISC0={LONPA:[9.5,6,0.5],LFI:[9,6.5,1],PCF:[9,6,1.5],EELV:[8,5.5,2],PS:[7.5,5.5,2.5],RE:[5.5,6.5,6.5],MoDem:[5.5,6,5.5],HOR:[5,6.5,7],LR:[4.5,7,7.5],UDR:[5,7,7.5],DLF:[6,6.5,5],RN:[7,6.5,4.5],REC:[5.5,7,8],UPR:[6,6,4]};
+const FISC_NOTE={LONPA:'Heavy taxation of capital and high incomes; large minimum-wage and benefit rises',LFI:'14-bracket income tax, cuts below ~€4,000 net/month, ISF restored, flat tax abolished; minimum wage €1,600 net',PCF:'Similar to LFI; higher minimum wage and pensions',EELV:'Climate ISF, higher inheritance tax on large estates; targeted transfers',PS:'ISF restored, more progressive CSG; moderate transfers',RE:'Middle-class income tax cut (~€2bn), no ISF, flat tax kept',MoDem:'Close to Renaissance, more redistributive rhetoric',HOR:'Lower taxes on work and capital, spending cuts',LR:'Payroll and middle-class tax cuts, lower inheritance tax',UDR:'Tax cuts close to LR/RN',DLF:'Mixed: VAT and energy cuts, some wealth taxation',RN:'VAT on energy 20%→5.5%, full family share from 2nd child, youth exemption; IFI replaced by a tax on financial wealth',REC:'Broad tax cuts incl. inheritance; spending cuts on benefits for foreigners',UPR:'Sovereigntist; mixed fiscal promises'};
+const INCOME_PRODUCTS={P2022:{LFI:{LFI:1},EELV:{EELV:1},ENS:{ENS:1},LR:{LR:1},RN:{RN:1},REC:{REC:1}}, E2024:{LFI:{LFI:1},EELV:{EELV:1},PS:{PS:1},ENS:{ENS:1},LR:{LR:1},RN:{RN:1},REC:{REC:1}}, L2024:{NFP:{NFP:1},ENS:{ENS:1},LR:{LR:1},RNA:{RN:9379092,UDR:1268822}}};
+const GNAME=['Poor','Middle','Rich'];
+S.fisc=JSON.parse(JSON.stringify(FISC0));
+function nestMap(){ return S.nest==='4'?NEST4:NEST3; }
+function colOf(p){ return `var(--c-${nestMap()[p]||'O'})`; }
+// ======================= characteristics =======================
+function productVec(p,per){
+  if(COMPOSITE[p]){ const w=COMPOSITE[p][per], tot=Object.values(w).reduce((a,b)=>a+b,0), v={};
+    DIMS.forEach(d=>{ v[d.k]=0; for(const q in w) v[d.k]+=S.base[per][q].v[d.k]*w[q]/tot; }); return v; }
+  return Object.assign({},S.base[per][p].v);
+}
+function fiscVec(p){ if(COMPOSITE[p]){ const w=COMPOSITE[p]['2024'], tot=Object.values(w).reduce((a,b)=>a+b,0); return [0,1,2].map(g=>Object.keys(w).reduce((s,q)=>s+S.fisc[q][g]*w[q]/tot,0)); } return S.fisc[p].slice(); }
+function buildRows(){
+  const rows=[];
+  PC.elec.forEach(e=>{ const s0=1-e.expr/e.ins; let inside=0;
+    for(const p in e.v){ rows.push({e:e.id,p,votes:e.v[p],s:e.v[p]/e.ins,s0,x:productVec(p,e.period),per:e.period}); inside+=e.v[p]/e.ins; }
+    e.sOthers=Math.max(0,1-s0-inside); });
+  const g=nestMap(), tot={}; rows.forEach(r=>{ r.g=g[r.p]; const k=r.e+'|'+r.g; tot[k]=(tot[k]||0)+r.s; });
+  rows.forEach(r=>{ r.y=Math.log(r.s)-Math.log(r.s0); r.lsg=Math.log(r.s/tot[r.e+'|'+r.g]); });
+  return rows;
+}
+// ======================= linear algebra =======================
+const T=A=>A[0].map((_,j)=>A.map(r=>r[j]));
+const mm=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((s,v,k)=>s+v*B[k][j],0)));
+function inv(M){ const n=M.length; const A=M.map((r,i)=>r.map(v=>v).concat(Array.from({length:n},(_,j)=>i===j?1:0)));
+  const tr=M.reduce((s,r,i)=>s+Math.abs(r[i]),0)/n||1; for(let i=0;i<n;i++) A[i][i]+=1e-10*tr;
+  for(let c=0;c<n;c++){ let p=c; for(let r=c+1;r<n;r++) if(Math.abs(A[r][c])>Math.abs(A[p][c])) p=r; if(Math.abs(A[p][c])<1e-14) return null;
+    [A[c],A[p]]=[A[p],A[c]]; const d=A[c][c]; for(let j=0;j<2*n;j++) A[c][j]/=d;
+    for(let r=0;r<n;r++) if(r!==c){ const f=A[r][c]; if(f) for(let j=0;j<2*n;j++) A[r][j]-=f*A[c][j]; } }
+  return A.map(r=>r.slice(n)); }
+function pinvSym(M){ // eigen-free pseudo inverse via ridge when singular
+  let I=inv(M); if(I) return I; const n=M.length, tr=M.reduce((s,r,i)=>s+Math.abs(r[i]),0)/n||1;
+  return inv(M.map((r,i)=>r.map((v,j)=>v+(i===j?1e-6*tr:0)))); }
+// ======================= estimation =======================
+function features(x){ const f=S.dims.map(k=>x[k]-5); S.quad.filter(k=>S.dims.includes(k)).forEach(k=>f.push((x[k]-5)*(x[k]-5))); return f; }
+function featNames(){ return S.dims.map(k=>DIMS.find(d=>d.k===k).name).concat(S.quad.filter(k=>S.dims.includes(k)).map(k=>DIMS.find(d=>d.k===k).name+' (squared)')); }
+function estimate(){
+  const rows=buildRows(), E=PC.elec.map(e=>e.id), n=rows.length;
+  const X=rows.map(r=>features(r.x)), kx=X[0].length;
+  const FE=rows.map(r=>E.map(id=>r.e===id?1:0));
+  const W=rows.map((r,i)=>X[i].concat([r.lsg],FE[i]));
+  const nin=rows.map(r=>rows.filter(q=>q.e===r.e&&q.g===r.g).length-1);
+  const riv=rows.map(r=>S.dims.map(k=>rows.filter(q=>q.e===r.e&&q.g===r.g&&q!==r).reduce((s,q)=>s+q.x[k],0)));
+  const Zx=rows.map((r,i)=>X[i].concat(FE[i])), Zexc=rows.map((r,i)=>[nin[i]].concat(riv[i]));
+  const Z=rows.map((r,i)=>Zx[i].concat(Zexc[i]));
+  const y=rows.map(r=>[r.y]);
+  let Wh=W;
+  if(S.estimator==='iv'){ const ZtZi=pinvSym(mm(T(Z),Z)); const P=mm(mm(Z,ZtZi),T(Z)); Wh=mm(P,W); }
+  const A=pinvSym(mm(T(Wh),W)); const b=mm(A,mm(T(Wh),y)).map(r=>r[0]);
+  const fit=W.map(w=>w.reduce((s,v,j)=>s+v*b[j],0)); const res=rows.map((r,i)=>r.y-fit[i]);
+  const k=b.length; // HC1 robust covariance
+  const Bread=pinvSym(mm(T(Wh),Wh)); const meat=Wh[0].map(()=>new Array(k).fill(0));
+  Wh.forEach((w,i)=>{ const e2=res[i]*res[i]; for(let a=0;a<k;a++) for(let c=0;c<k;c++) meat[a][c]+=w[a]*w[c]*e2; });
+  const V=mm(mm(Bread,meat),Bread).map(r=>r.map(v=>v*n/Math.max(1,n-k)));
+  const se=b.map((_,j)=>Math.sqrt(Math.max(0,V[j][j])));
+  // first-stage F for excluded instruments
+  const lsg=rows.map(r=>[r.lsg]); const rss=(M)=>{ const Bm=mm(pinvSym(mm(T(M),M)),mm(T(M),lsg)); return rows.reduce((s,_,i)=>{ const f=M[i].reduce((a,v,j)=>a+v*Bm[j][0],0); return s+(lsg[i][0]-f)**2; },0); };
+  const rssR=rss(Zx), rssU=rss(Z), q=Zexc[0].length, F=((rssR-rssU)/q)/(rssU/Math.max(1,n-Z[0].length));
+  const ybar=rows.reduce((s,r)=>s+r.y,0)/n, sst=rows.reduce((s,r)=>s+(r.y-ybar)**2,0), sse=res.reduce((s,v)=>s+v*v,0);
+  const sigma=b[kx]; const fe={}; E.forEach((id,i)=>fe[id]=b[kx+1+i]);
+  // xi decomposition: party-specific factor = mean residual by product
+  const mu={}, cnt={}; rows.forEach((r,i)=>{ mu[r.p]=(mu[r.p]||0)+res[i]; cnt[r.p]=(cnt[r.p]||0)+1; }); for(const p in mu) mu[p]/=cnt[p];
+  rows.forEach((r,i)=>{ r.xi=res[i]; r.eps=res[i]-mu[r.p]; r.fitNoXi=fit[i]; r.fitted=fit[i]; });
+  return {rows,b,se,kx,sigma,sigmaSE:se[kx],fe,mu,cnt,F,r2:1-sse/sst,n,k,rmse:Math.sqrt(sse/n),names:featNames()};
+}
+// ======================= simulation =======================
+function simShares(el, sigma, deltaShift){ // returns shares of registered for products + outside, using Berry-consistent baseline
+  const rows=S.est.rows.filter(r=>r.e===el.id), g=nestMap();
+  const d=rows.map((r,i)=>(r.y - sigma*r.lsg) + (deltaShift?deltaShift[i]:0));
+  const D={}; rows.forEach((r,i)=>{ const k=g[r.p]; D[k]=(D[k]||0)+Math.exp(d[i]/(1-sigma)); });
+  const den=1+Object.values(D).reduce((s,v)=>s+Math.pow(v,1-sigma),0);
+  const scale=1-el.sOthers;
+  const sh=rows.map((r,i)=>scale*Math.exp(d[i]/(1-sigma))*Math.pow(D[g[r.p]],-sigma)/den);
+  return {rows, sh, s0:scale/den, others:el.sOthers};
+}
+function curSigma(){ const s=S.sigmaManual? S.sigma : S.est.sigma; return Math.max(0,Math.min(0.95,s)); }
+function betaFor(){ return S.est.b.slice(0,S.est.kx); }
+function currentX(el,p){ const r=S.est.rows.find(q=>q.e===el.id&&q.p===p); const o=(S.over[el.id]||{})[p]||{}; const x=Object.assign({},r.x); for(const k in o) if(k!=='mu') x[k]=o[k]; return x; }
+function shiftsFor(el){ const beta=betaFor(); return S.est.rows.filter(r=>r.e===el.id).map(r=>{ const o=(S.over[el.id]||{})[r.p]||{}; const f0=features(r.x), f1=features(currentX(el,r.p));
+  return f1.reduce((s,v,j)=>s+beta[j]*(v-f0[j]),0)+(o.mu||0); }); }
+function validShare(res,i){ const valid=res.sh.reduce((a,b)=>a+b,0)+res.others; return 100*res.sh[i]/valid; }
+
+// ======================= income-group model =======================
+// Markets = election x income group (Ipsos post-election surveys). Party x election fixed effects absorb everything common across groups,
+// so only income-specific deviations of the coefficients (and the effect of the group's own promised fiscal gain) are estimated.
+function groupX(e,gp,xFn,fFn){ const comp=INCOME_PRODUCTS[e][gp], tot=Object.values(comp).reduce((a,b)=>a+b,0), x={}, f=[0,0,0];
+  DIMS.forEach(d=>{ x[d.k]=0; for(const q in comp) x[d.k]+=xFn(q)[d.k]*comp[q]/tot; });
+  for(const q in comp){ const fq=fFn(q); for(let g=0;g<3;g++) f[g]+=fq[g]*comp[q]/tot; } return {x,f}; }
+function nestOfGroupProduct(gp){ return gp==='RNA'? nestMap()['RN'] : nestMap()[gp]; }
+function buildIncomeRows(){
+  const rows=[];
+  for(const e in INCOME_PRODUCTS){ const d=INC.elec[e], per='2024';
+    for(let g=0;g<3;g++){ const vote=(1-d.abst[g]/100)*(1-d.bn), s0=1-vote, nt={}, sh={};
+      for(const gp in INCOME_PRODUCTS[e]){ sh[gp]=vote*d.rows[g][d.cols.indexOf(gp)]/100; const n=nestOfGroupProduct(gp); nt[n]=(nt[n]||0)+sh[gp]; }
+      const inside=Object.values(sh).reduce((a,b)=>a+b,0);
+      for(const gp in sh){ const gx=groupX(e,gp,q=>productVec(q,per),q=>fiscVec(q));
+        rows.push({e,g,p:gp,s:sh[gp],s0,others:Math.max(0,1-s0-inside),y:Math.log(sh[gp])-Math.log(s0),lsg:Math.log(sh[gp]/nt[nestOfGroupProduct(gp)]),x:gx.x,fisc:gx.f[g],fiscAll:gx.f}); } } }
+  return rows;
+}
+function estimateIncome(){
+  const rows=buildIncomeRows(), sig=Math.max(0,Math.min(0.95,S.est.sigma));
+  const pe=[...new Set(rows.map(r=>r.e+'|'+r.p))], tg=[]; for(const e in INCOME_PRODUCTS){ tg.push(e+'|0',e+'|2'); }
+  const dims=S.incDims.slice();
+  const X=rows.map(r=>{ const v=pe.map(k=>k===r.e+'|'+r.p?1:0).concat(tg.map(k=>k===r.e+'|'+r.g?1:0));
+    dims.forEach(k=>{ v.push((r.x[k]-5)*(r.g===0?1:0), (r.x[k]-5)*(r.g===2?1:0)); }); if(S.incGamma) v.push(r.fisc-5); return v; });
+  const y=rows.map(r=>[r.y-sig*r.lsg]); const n=rows.length, k=X[0].length;
+  const XtXi=pinvSym(mm(T(X),X)); const b=mm(XtXi,mm(T(X),y)).map(r=>r[0]);
+  const res=rows.map((r,i)=>y[i][0]-X[i].reduce((s,v,j)=>s+v*b[j],0));
+  const meat=X[0].map(()=>new Array(k).fill(0)); X.forEach((x,i)=>{ const e2=res[i]*res[i]; for(let a=0;a<k;a++) for(let c=0;c<k;c++) meat[a][c]+=x[a]*x[c]*e2; });
+  const V=mm(mm(XtXi,meat),XtXi).map(r=>r.map(v=>v*n/Math.max(1,n-k))); const se=b.map((_,j)=>Math.sqrt(Math.max(0,V[j][j])));
+  const off=pe.length+tg.length, delta={}, dse={};
+  dims.forEach((kk,i)=>{ delta[kk]=[b[off+2*i],0,b[off+2*i+1]]; dse[kk]=[se[off+2*i],0,se[off+2*i+1]]; });
+  const gamma=S.incGamma? b[k-1] : 0, gse=S.incGamma? se[k-1] : null;
+  // group-specific betas: national beta + income deviation, centred so the population-weighted mean equals the national beta
+  const w=normW(); const bNat={}; S.dims.forEach((kk,j)=>bNat[kk]=S.est.b[j]);
+  const beta=[0,1,2].map(g=>{ const o={}; S.dims.forEach(kk=>{ let v=bNat[kk]; if(delta[kk]){ const m=delta[kk].reduce((s,dv,h)=>s+w[h]*dv,0); v+=delta[kk][g]-m; } o[kk]=v; });
+    dims.filter(kk=>!S.dims.includes(kk)).forEach(kk=>{ const m=delta[kk].reduce((s,dv,h)=>s+w[h]*dv,0); o[kk]=delta[kk][g]-m; }); return o; });
+  rows.forEach((r,i)=>r.res=res[i]);
+  return {rows,delta,dse,gamma,gse,beta,n,k,rmse:Math.sqrt(res.reduce((s,v)=>s+v*v,0)/n),dims};
+}
+function normW(){ const s=S.w.reduce((a,b)=>a+b,0); return S.w.map(v=>v/s); }
+function fiscOf(el,p){ const o=(S.over[el.id]||{})[p]||{}; return o.fisc? o.fisc.slice() : fiscVec(p); }
+function simIncome(el,sigma){ // returns per-group baseline/counterfactual shares and national deltas for national products
+  const I=S.incEst, w=normW(), g2n=INCOME_PRODUCTS[el.id], out={groups:[],dNat:{},dOut:0};
+  for(let g=0;g<3;g++){ const rows=I.rows.filter(r=>r.e===el.id&&r.g===g); const gm=nestMap();
+    const d0=rows.map(r=>r.y-sigma*r.lsg), d1=rows.map((r,i)=>{ const comp=g2n[r.p], tot=Object.values(comp).reduce((a,b)=>a+b,0); let dd=0;
+      for(const q in comp){ const wq=comp[q]/tot, xb=S.est.rows.find(z=>z.e===el.id&&z.p===q); if(!xb) continue; const xn=currentX(el,q), o=(S.over[el.id]||{})[q]||{};
+        for(const kk in I.beta[g]){ if(xb.x[kk]==null) continue; dd+=wq*I.beta[g][kk]*(xn[kk]-xb.x[kk]); }
+        dd+=wq*I.gamma*(fiscOf(el,q)[g]-fiscVec(q)[g]); dd+=wq*(o.mu||0); }
+      return d0[i]+dd; });
+    const shares=(dv)=>{ const D={}; rows.forEach((r,i)=>{ const k=nestOfGroupProduct(r.p); D[k]=(D[k]||0)+Math.exp(dv[i]/(1-sigma)); }); const den=1+Object.values(D).reduce((s,v)=>s+Math.pow(v,1-sigma),0), sc=1-rows[0].others;
+      return {sh:rows.map((r,i)=>sc*Math.exp(dv[i]/(1-sigma))*Math.pow(D[nestOfGroupProduct(r.p)],-sigma)/den), s0:sc/den}; };
+    const b=shares(d0), c=shares(d1); out.groups.push({rows,b,c,others:rows[0].others});
+    rows.forEach((r,i)=>{ const comp=g2n[r.p], tot=Object.values(comp).reduce((a,x)=>a+x,0);
+      // split a group product's change across its national components in proportion to their official votes
+      for(const q in comp){ out.dNat[q]=(out.dNat[q]||0)+w[g]*(c.sh[i]-b.sh[i])*comp[q]/tot; } });
+    out.dOut+=w[g]*(c.s0-b.s0); }
+  return out;
+}
+// ======================= step 1 =======================
+const CONCERNS=[['Purchasing power',36,45,59],['Crime / insecurity',22,null,'≈30'],['Immigration',22,43,38],['Health system',18,26,'≈30'],['Environment',18,27,'≈25'],['Public debt / deficits','28–31 (Jan 2025)',null,'<20'],['Pensions',null,null,'<20'],['War in Ukraine',null,19,null],['Gaza',null,'6 (22 among 18–24)',null]];
+const SALIENCE=[['Purchasing power',57,46,47,69],['Immigration',4,19,37,77]];
+const MAP=[['Purchasing power','Tax cuts; redistribution; fiscal gain by income group'],['Immigration','Immigration control'],['Crime','Law and order'],['Public debt','Spending control'],['Environment','Climate action; other environment'],['Europe','European integration'],['Israel–Gaza','Support for Israel'],['Ukraine / defence','Defence vs Russia']];
+function renderStep1(){
+  const c=v=>v==null?'—':v;
+  $('#tConc').innerHTML='<thead><tr><th>Issue</th><th>Fractures françaises 2025</th><th>European 2024 vote</th><th>Legislative 2024 vote</th></tr></thead><tbody>'+CONCERNS.map(r=>`<tr><td>${r[0]}</td><td>${c(r[1])}</td><td>${c(r[2])}</td><td>${c(r[3])}</td></tr>`).join('')+'</tbody>';
+  $('#tSal').innerHTML='<thead><tr><th>Issue</th><th>NFP</th><th>Ensemble</th><th>LR/DVD</th><th>RN</th></tr></thead><tbody>'+SALIENCE.map(r=>`<tr><td>${r[0]}</td>${r.slice(1).map(v=>`<td>${v}%</td>`).join('')}</tr>`).join('')+'</tbody>';
+  $('#tMap').innerHTML='<thead><tr><th>Concern</th><th class="l">Characteristic in the model</th></tr></thead><tbody>'+MAP.map(r=>`<tr><td>${r[0]}</td><td class="l">${r[1]}</td></tr>`).join('')+'</tbody>';
+}
+// ======================= step 2 =======================
+function badge(s){ if(!s) return ''; if(s==='edited') return '<span class="badge b-C">edited</span>'; if(s==='mix') return '<span class="badge b-mix">mix</span>'; return `<span class="badge ${s.startsWith('E')?'b-E':'b-C'}">${s}</span>`; }
+function renderChar(){
+  const per=S.per, mu=S.est?S.est.mu:{};
+  let h='<thead><tr><th>Party</th><th class="l">Nest</th>'+DIMS.map(d=>`<th title="${esc(d.src)}">${d.name}</th>`).join('')+'<th>X<sub>j</sub> party factor</th></tr></thead><tbody>';
+  RAW.forEach(p=>{ const b=S.base[per][p]; const inE=['RE','MoDem','HOR'].includes(p);
+    h+=`<tr><td><span class="dot" style="background:${colOf(inE?'ENS':p)}"></span>${PNAME[p]}</td><td class="l">${inE?'(in Ensemble)':NESTNAME[nestMap()[p]]}</td>`+
+      DIMS.map(d=>{ const ed=b.v[d.k]!==ORIG[per][p].v[d.k]; return `<td><input type="number" min="0" max="10" step="0.1" value="${b.v[d.k]}" data-p="${p}" data-k="${d.k}" class="${ed?'edited':''}" aria-label="${PNAME[p]} ${d.name}">${badge(ed?'edited':b.s[d.k])}</td>`; }).join('')+
+      `<td>${inE?'—':fmt(mu[p],2)}</td></tr>`; });
+  ['ENS','NUPES','NFP'].forEach(p=>{ const v=productVec(p,per);
+    h+=`<tr><td><span class="dot" style="background:${colOf(p)}"></span>${PNAME[p]}</td><td class="l">${NESTNAME[nestMap()[p]]}</td>`+DIMS.map(d=>`<td>${fmt(v[d.k],2)}${badge('mix')}</td>`).join('')+`<td>${fmt(mu[p],2)}</td></tr>`; });
+  $('#tChar').innerHTML=h+'</tbody>';
+  $('#tChar').querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{ const v=parseFloat(inp.value); if(!isFinite(v)) return;
+    S.base[S.per][inp.dataset.p].v[inp.dataset.k]=Math.max(0,Math.min(10,v)); refreshAll(); }));
+  const nEd=RAW.reduce((s,p)=>s+DIMS.filter(d=>S.base[per][p].v[d.k]!==ORIG[per][p].v[d.k]).length,0);
+  $('#editNote').textContent=nEd?`${nEd} cell${nEd>1?'s':''} edited in this period; the estimates below use your values.`:'';
+  $('#tScale').innerHTML='<thead><tr><th>Characteristic</th><th class="l">0 means</th><th class="l">10 means</th><th class="l">Source</th></tr></thead><tbody>'+DIMS.map(d=>`<tr><td>${d.name}</td><td class="l">${d.lo}</td><td class="l">${d.hi}</td><td class="l">${d.src}</td></tr>`).join('')+'</tbody>';
+}
+
+function renderFisc(){
+  let h='<thead><tr><th>Party</th><th>Poor</th><th>Middle</th><th>Rich</th><th class="l">Main measures behind the coding</th></tr></thead><tbody>';
+  RAW.forEach(p=>{ h+=`<tr><td><span class="dot" style="background:${colOf(['RE','MoDem','HOR'].includes(p)?'ENS':p)}"></span>${PNAME[p]}</td>`+[0,1,2].map(g=>{ const ed=S.fisc[p][g]!==FISC0[p][g]; return `<td><input type="number" min="0" max="10" step="0.5" value="${S.fisc[p][g]}" data-p="${p}" data-g="${g}" class="${ed?'edited':''}" aria-label="${PNAME[p]} fiscal gain ${GNAME[g]}">${badge(ed?'edited':'C')}</td>`; }).join('')+`<td class="l note" style="white-space:normal;min-width:320px">${FISC_NOTE[p]}</td></tr>`; });
+  ['ENS','NUPES','NFP'].forEach(p=>{ const f=fiscVec(p); h+=`<tr><td><span class="dot" style="background:${colOf(p)}"></span>${PNAME[p]}</td>${f.map(v=>`<td>${fmt(v,2)}${badge('mix')}</td>`).join('')}<td class="l note">weighted mix of members</td></tr>`; });
+  $('#tFisc').innerHTML=h+'</tbody>';
+  $('#tFisc').querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{ const v=parseFloat(inp.value); if(!isFinite(v)) return; S.fisc[inp.dataset.p][+inp.dataset.g]=Math.max(0,Math.min(10,v)); refreshAll(); }));
+}
+const INCNAME={LFI:'La France insoumise',EELV:'Les Écologistes',PS:'PS / Place publique',ENS:'Ensemble',LR:'LR',RN:'RN',REC:'Reconquête',NFP:'Nouveau Front populaire',RNA:'RN and allies (incl. UDR)'};
+function renderIncomeData(){
+  const w=normW(); $('#wInputs').innerHTML=[0,1,2].map(g=>`<div class="ctl"><label for="w${g}">${INC.groups[g]} <output>${fmt(100*w[g],0)}%</output></label><input type="range" id="w${g}" min="2" max="80" step="1" value="${Math.round(100*S.w[g])}"></div>`).join('');
+  [0,1,2].forEach(g=>$('#w'+g).addEventListener('change',()=>{ S.w[g]=parseFloat($('#w'+g).value)/100; refreshAll(); }));
+  let h='<thead><tr><th>Election</th><th class="l">Party</th>'+INC.groups.map(g=>`<th>${g.split(' (')[0]}</th>`).join('')+'</tr></thead><tbody>';
+  for(const e in INCOME_PRODUCTS){ const d=INC.elec[e], lab=PC.elec.find(z=>z.id===e).label;
+    for(const gp in INCOME_PRODUCTS[e]){ const j=d.cols.indexOf(gp); h+=`<tr><td>${lab}</td><td class="l"><span class="dot" style="background:${colOf(gp==='RNA'?'RN':gp)}"></span>${gp==='LR'&&e==='L2024'?'LR and miscellaneous right':INCNAME[gp]}</td>${[0,1,2].map(g=>`<td>${fmt(d.rows[g][j],1)}</td>`).join('')}</tr>`; }
+    h+=`<tr><td>${lab}</td><td class="l note">Abstention${d.imputed?' <span class="flag">imputed</span>':''}</td>${[0,1,2].map(g=>`<td class="note">${fmt(d.abst[g],1)}</td>`).join('')}</tr>`; }
+  $('#tInc').innerHTML=h+'</tbody>';
+}
+function renderIncomeEst(){
+  const I=S.incEst; if(!I) return;
+  let h='<thead><tr><th>Characteristic</th><th>Poor</th><th>Middle</th><th>Rich</th><th>Poor − middle (s.e.)</th><th>Rich − middle (s.e.)</th></tr></thead><tbody>';
+  const keys=[...new Set(S.dims.concat(I.dims))];
+  keys.forEach(kk=>{ const d=DIMS.find(z=>z.k===kk), het=!!I.delta[kk];
+    h+=`<tr><td>${d.name}${het?'':' <span class="note">(common)</span>'}</td>${[0,1,2].map(g=>`<td>${fmt(I.beta[g][kk],3)}</td>`).join('')}<td>${het?`${sgn(I.delta[kk][0],3)} (${fmt(I.dse[kk][0],3)})`:'—'}</td><td>${het?`${sgn(I.delta[kk][2],3)} (${fmt(I.dse[kk][2],3)})`:'—'}</td></tr>`; });
+  if(S.incGamma) h+=`<tr><td><b>Own promised fiscal gain γ</b></td><td colspan="3"><b>${fmt(I.gamma,3)}</b> for every group</td><td colspan="2">s.e. ${fmt(I.gse,3)}, t = ${fmt(I.gamma/I.gse,2)}</td></tr>`;
+  h+=`<tr><td>Observations / parameters</td><td>${I.n}</td><td>${I.k}</td><td colspan="3" class="l note">RMSE ${fmt(I.rmse,3)}; σ fixed at the national estimate</td></tr>`;
+  $('#tIncEst').innerHTML=h+'</tbody>';
+  $('#incNote').textContent=`Coefficients per point (characteristics centred at 5). Group coefficients = national estimate + income deviation, centred so that their population-weighted average equals the national coefficient. ${S.incGamma?`γ = ${fmt(I.gamma,3)}: one extra point of promised gain for a voter's own income group raises that party's utility for the group by ${fmt(I.gamma,3)}, identified from the fact that the same party promises different things to different groups.`:''}`;
+}
+
+// ======================= step 3 =======================
+function renderData(){
+  let h='<thead><tr><th>Election</th><th class="l">Party / list</th><th>Votes</th><th>% registered</th><th>% valid</th><th>Outside %</th><th>ln(s/s₀)</th><th>ln s<sub>j|g</sub></th><th class="l">Nest</th><th class="l">Note</th></tr></thead><tbody>';
+  PC.elec.forEach(e=>{ S.est.rows.filter(r=>r.e===e.id).forEach(r=>{ const fl=(e.flag||{})[r.p];
+    h+=`<tr><td>${e.label}</td><td class="l"><span class="dot" style="background:${colOf(r.p)}"></span>${PNAME[r.p]}</td><td>${r.votes.toLocaleString('en')}</td><td>${fmt(100*r.s,2)}</td><td>${fmt(100*r.votes/e.expr,2)}</td><td>${fmt(100*r.s0,1)}</td><td>${fmt(r.y,3)}</td><td>${fmt(r.lsg,3)}</td><td class="l">${NESTNAME[r.g]}</td><td class="l">${fl?(/check/.test(fl)?`<span class="flag">check</span> `:'')+esc(fl.replace(/\(?[^()]*check[^()]*\)?/,'').trim()):''}</td></tr>`; }); });
+  $('#tData').innerHTML=h+'</tbody>';
+}
+// ======================= step 4 =======================
+function renderEst(){
+  const E=S.est; const sig=E.sigma, onems=1-Math.max(0.01,Math.min(0.99,sig));
+  let h='<thead><tr><th>Term</th><th>Estimate</th><th>Robust s.e.</th><th>t</th><th>Per point, within nest β/(1−σ)</th></tr></thead><tbody>';
+  E.names.forEach((nm,j)=>{ const t=E.b[j]/E.se[j]; h+=`<tr><td>${nm}</td><td>${fmt(E.b[j],3)}</td><td>${fmt(E.se[j],3)}</td><td class="${Math.abs(t)>1.96?'':'note'}">${fmt(t,2)}</td><td>${fmt(E.b[j]/onems,3)}</td></tr>`; });
+  h+=`<tr><td><b>σ (within-nest correlation)</b></td><td><b>${fmt(sig,3)}</b></td><td>${fmt(E.sigmaSE,3)}</td><td>${fmt(sig/E.sigmaSE,2)}</td><td></td></tr>`;
+  h+=`<tr><td>Election fixed effects λ<sub>t</sub></td><td colspan="4" class="l note">${PC.elec.map(e=>`${e.id} ${fmt(E.fe[e.id],2)}`).join(' · ')}</td></tr>`;
+  h+=`<tr><td>Observations / parameters</td><td>${E.n}</td><td>${E.k}</td><td></td><td></td></tr><tr><td>R² (with fixed effects)</td><td>${fmt(E.r2,3)}</td><td></td><td></td><td></td></tr>`;
+  if(S.estimator==='iv') h+=`<tr><td>First-stage F, excluded instruments</td><td>${fmt(E.F,1)}</td><td></td><td></td><td></td></tr>`;
+  $('#tCoef').innerHTML=h+'</tbody>';
+  const warn = (sig<0||sig>=1)? ' σ is outside [0,1), so the simulator caps it; treat the nesting as rejected or unstable in this specification.' : '';
+  $('#coefNote').textContent=`Characteristics are centred at 5. A positive β means that moving up the scale raises the party's vote among all voters, holding the other positions fixed. With σ = ${fmt(sig,2)}, the effect on a party's share within its nest is β/(1−σ) per point.${warn}${S.estimator==='iv'&&E.F<10?' The first-stage F is below 10: the instruments are weak with national data, so read σ with caution.':''}`;
+  // fit chart
+  const W=440,H=360,L=46,R=12,Tp=12,B=36; const xs=E.rows.map(r=>r.y), fs=E.rows.map(r=>r.fitNoXi);
+  const lo=Math.floor(Math.min(...xs,...fs)), hi=Math.ceil(Math.max(...xs,...fs));
+  const sx=v=>L+(v-lo)/(hi-lo)*(W-L-R), sy=v=>H-B-(v-lo)/(hi-lo)*(H-B-Tp); let s='';
+  for(let v=lo; v<=hi; v++){ s+=`<line x1="${sx(v)}" x2="${sx(v)}" y1="${Tp}" y2="${H-B}" stroke="var(--line)"/><line x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)"/><text x="${sx(v)}" y="${H-B+14}" text-anchor="middle">${v}</text><text x="${L-6}" y="${sy(v)+4}" text-anchor="end">${v}</text>`; }
+  s+=`<line x1="${sx(lo)}" y1="${sy(lo)}" x2="${sx(hi)}" y2="${sy(hi)}" stroke="var(--ink-3)"/><text x="${W-R}" y="${H-4}" text-anchor="end">observed ln(s/s₀)</text><text x="${L+4}" y="${Tp+10}">fitted, without ξ</text>`;
+  E.rows.forEach(r=>{ s+=`<circle cx="${sx(r.y)}" cy="${sy(r.fitNoXi)}" r="5" style="fill:${colOf(r.p)};fill-opacity:.85" stroke="var(--surface)"><title>${r.e} ${PNAME[r.p]}: observed ${fmt(r.y,2)}, fitted ${fmt(r.fitNoXi,2)}, ξ ${fmt(r.xi,2)}</title></circle>`; });
+  $('#chFit').innerHTML=s;
+  // xi table
+  const prods=PRODUCT_ORDER.filter(p=>E.mu[p]!=null);
+  let t='<thead><tr><th>Party</th><th>X<sub>j</sub></th>'+PC.elec.map(e=>`<th>${e.id}<br><span class="note">ε</span></th>`).join('')+'</tr></thead><tbody>';
+  prods.forEach(p=>{ t+=`<tr><td><span class="dot" style="background:${colOf(p)}"></span>${PNAME[p]}</td><td class="${E.mu[p]>0?'pos':'neg'}"><b>${sgn(E.mu[p],2)}</b></td>`+PC.elec.map(e=>{ const r=E.rows.find(q=>q.e===e.id&&q.p===p); return `<td>${r?sgn(r.eps,2):''}</td>`; }).join('')+'</tr>'; });
+  $('#tXi').innerHTML=t+'</tbody>';
+}
+// ======================= step 5 =======================
+function baseEl(){ return PC.elec.find(e=>e.id===S.baseEl); }
+function productsIn(el){ return PRODUCT_ORDER.filter(p=>el.v[p]!=null); }
+function renderSliders(){
+  const el=baseEl(); if(!(S.party in el.v)) S.party=productsIn(el).find(p=>p==='RN')||productsIn(el)[0];
+  $('#partySel').innerHTML=productsIn(el).map(p=>`<option value="${p}" ${p===S.party?'selected':''}>${PNAME[p]}</option>`).join('');
+  const r0=S.est.rows.find(q=>q.e===el.id&&q.p===S.party), x=currentX(el,S.party), o=(S.over[el.id]||{})[S.party]||{};
+  let h='';
+  DIMS.forEach(d=>{ const inModel=S.dims.includes(d.k); const v=x[d.k], b=r0.x[d.k];
+    h+=`<div class="slider"><label for="sl_${d.k}"><span>${d.name}${inModel?'':' <span class="note">(not in model)</span>'}</span><output>${fmt(v,1)}</output></label>
+      <input type="range" id="sl_${d.k}" min="0" max="10" step="0.1" value="${v}" data-k="${d.k}" ${inModel?'':'disabled'}>
+      <div class="scale"><span>${d.lo}</span><span>${d.hi}</span></div><div class="base">Actual: ${fmt(b,1)}${Math.abs(v-b)>1e-9?` · change ${sgn(v-b,1)}`:''}</div></div>`; });
+  if(incomeMode()){ const f=fiscOf(el,S.party), f0=fiscVec(S.party);
+    h+='<h4>Promised fiscal gain by income group</h4>'+[0,1,2].map(g=>`<div class="slider"><label for="slf_${g}"><span>${INC.groups[g]}</span><output>${fmt(f[g],1)}</output></label><input type="range" id="slf_${g}" min="0" max="10" step="0.1" value="${f[g]}" data-f="${g}"><div class="scale"><span>Large loss</span><span>Large gain</span></div><div class="base">Coded: ${fmt(f0[g],1)}</div></div>`).join(''); }
+  else if(S.incEst) h+='<p class="note">Fiscal promises by income group act only in the income-group model (presidential 2022, European 2024 and legislative 2024 baselines).</p>';
+  const mu0=S.est.mu[S.party]||0, dm=o.mu||0;
+  h+=`<div class="slider"><label for="sl_mu"><span>Party-specific factor X<sub>j</sub> (leader, brand)</span><output>${sgn(mu0+dm,2)}</output></label>
+    <input type="range" id="sl_mu" min="-1.5" max="1.5" step="0.05" value="${dm}" data-k="mu"><div class="scale"><span>−1.5</span><span>shift</span><span>+1.5</span></div><div class="base">Estimated: ${sgn(mu0,2)} (utility units; shift ${sgn(dm,2)})</div></div>`;
+  $('#sliders').innerHTML=h;
+  $('#sliders').querySelectorAll('input[data-f]').forEach(inp=>inp.addEventListener('input',()=>{ const el=baseEl(); S.over[el.id]=S.over[el.id]||{}; const o=S.over[el.id][S.party]=S.over[el.id][S.party]||{};
+    o.fisc=o.fisc||fiscVec(S.party); o.fisc[+inp.dataset.f]=parseFloat(inp.value); inp.parentElement.querySelector('output').textContent=fmt(o.fisc[+inp.dataset.f],1); renderSim(); }));
+  $('#sliders').querySelectorAll('input[data-k]').forEach(inp=>inp.addEventListener('input',()=>{ const el=baseEl(); S.over[el.id]=S.over[el.id]||{}; const o=S.over[el.id][S.party]=S.over[el.id][S.party]||{};
+    o[inp.dataset.k]=parseFloat(inp.value); renderSim(); const lab=inp.parentElement.querySelector('output'); if(inp.dataset.k==='mu') lab.textContent=sgn((S.est.mu[S.party]||0)+o.mu,2); else lab.textContent=fmt(o[inp.dataset.k],1);
+    const b=inp.parentElement.querySelector('.base'); if(inp.dataset.k!=='mu'){ const r0=S.est.rows.find(q=>q.e===el.id&&q.p===S.party); const dv=o[inp.dataset.k]-r0.x[inp.dataset.k]; b.textContent=`Actual: ${fmt(r0.x[inp.dataset.k],1)}${Math.abs(dv)>1e-9?' · change '+sgn(dv,1):''}`; } else b.textContent=`Estimated: ${sgn(S.est.mu[S.party]||0,2)} (utility units; shift ${sgn(o.mu,2)})`; }));
+}
+function incomeMode(){ return S.useIncome && !!S.incEst && !!INCOME_PRODUCTS[S.baseEl]; }
+function cfFor(el,sig){ const base=simShares(el,sig,null);
+  if(!incomeMode()) return {base, cf:simShares(el,sig,shiftsFor(el)), inc:null};
+  const inc=simIncome(el,sig); const cf={rows:base.rows, sh:base.rows.map((r,i)=>base.sh[i]+(inc.dNat[r.p]||0)), s0:base.s0+inc.dOut, others:base.others}; return {base,cf,inc}; }
+function renderGroupSim(el,inc){
+  const box=$('#grpBox'); if(!inc){ box.innerHTML=INCOME_PRODUCTS[el.id]?'<p class="note">Income-group model switched off: results use the national model.</p>':'<p class="note">No income breakdown for this election: results use the national model. Income-group results are available for presidential 2022, European 2024 and legislative 2024.</p>'; return; }
+  let h='<div class="tw"><table><thead><tr><th>Party (survey grouping)</th>'+GNAME.map(g=>`<th>${g}: actual</th><th>${g}: new</th>`).join('')+'</tr></thead><tbody>';
+  const rows=inc.groups[0].rows;
+  rows.forEach((r,i)=>{ h+=`<tr><td><span class="dot" style="background:${colOf(r.p==='RNA'?'RN':r.p)}"></span>${INCNAME[r.p]}</td>`+inc.groups.map(G=>{ const vb=G.b.sh.reduce((a,b)=>a+b,0)+G.others, vc=G.c.sh.reduce((a,b)=>a+b,0)+G.others; const a=100*G.b.sh[i]/vb, c=100*G.c.sh[i]/vc; return `<td>${fmt(a)}</td><td class="${c-a>0.05?'pos':c-a<-0.05?'neg':''}">${fmt(c)}</td>`; }).join('')+'</tr>'; });
+  h+='<tr><td>Turnout (valid votes / registered)</td>'+inc.groups.map(G=>`<td class="note">${fmt(100*(1-G.b.s0),1)}</td><td class="note">${fmt(100*(1-G.c.s0),1)}</td>`).join('')+'</tr></tbody></table></div>';
+  box.innerHTML=h+'<p class="note">Shares of valid votes within each income group, from the Ipsos survey baseline. National changes above are the population-weighted sum of these group changes, added to the official result.</p>';
+}
+function renderSim(){
+  const el=baseEl(), sig=curSigma();
+  const {base,cf,inc}=cfFor(el,sig);
+  const rows=base.rows; const ord=rows.map((r,i)=>i).sort((a,b)=>base.sh[b]-base.sh[a]);
+  const iP=rows.findIndex(r=>r.p===S.party);
+  const vb=validShare(base,iP), vc=validShare(cf,iP);
+  const turnB=100*(1-base.s0), turnC=100*(1-cf.s0);
+  const dv=rows.map((r,i)=>(cf.sh[i]-base.sh[i])*el.ins); const dO=(cf.s0-base.s0)*el.ins;
+  $('#kpis').innerHTML=`<div><b>${fmt(vb)}% → ${fmt(vc)}%</b><span>${PNAME[S.party]}, share of valid votes</span></div><div><b>${sgn(dv[iP]/1e6,2)}m</b><span>${PNAME[S.party]}, change in votes</span></div><div><b>${fmt(turnB,1)}% → ${fmt(turnC,1)}%</b><span>valid votes / registered voters</span></div>`;
+  const ch=[]; for(const p in (S.over[el.id]||{})){ const o=S.over[el.id][p], r0=S.est.rows.find(q=>q.e===el.id&&q.p===p); const parts=[];
+    DIMS.forEach(d=>{ if(o[d.k]!=null&&Math.abs(o[d.k]-r0.x[d.k])>1e-9) parts.push(`${d.name} ${fmt(r0.x[d.k],1)}→${fmt(o[d.k],1)}`); }); if(o.mu) parts.push(`party factor ${sgn(o.mu,2)}`);
+    if(parts.length) ch.push(`<b>${PNAME[p]}</b>: ${parts.join(', ')}`); }
+  $('#changed').innerHTML=ch.length?'Your changes: '+ch.join('; '):'No changes yet: move a slider on the left.';
+  // bar chart
+  const W=760,H=360,L=40,R=10,Tp=12,B=64, n=ord.length, gw=(W-L-R)/n, mx=Math.max(...ord.map(i=>Math.max(validShare(base,i),validShare(cf,i))))*1.12;
+  const sy=v=>H-B-v/mx*(H-B-Tp); let s='';
+  for(let v=0; v<=mx; v+= (mx>30?10:5)){ s+=`<line x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)"/><text x="${L-6}" y="${sy(v)+4}" text-anchor="end">${v}%</text>`; }
+  ord.forEach((i,k)=>{ const x0=L+k*gw+gw*0.12, bw=gw*0.36, a=validShare(base,i), c=validShare(cf,i), r=rows[i];
+    s+=`<rect x="${x0}" y="${sy(a)}" width="${bw}" height="${H-B-sy(a)}" style="fill:var(--ink-3)"><title>${PNAME[r.p]} actual ${fmt(a)}%</title></rect><rect x="${x0+bw+2}" y="${sy(c)}" width="${bw}" height="${H-B-sy(c)}" style="fill:${r.p===S.party?'var(--accent)':colOf(r.p)}"><title>${PNAME[r.p]} simulated ${fmt(c)}%</title></rect>`;
+    s+=`<text x="${x0+bw}" y="${sy(Math.max(a,c))-5}" text-anchor="middle" style="font-weight:700;fill:var(--ink)">${fmt(c)}</text>`;
+    s+=`<text transform="translate(${x0+bw},${H-B+12}) rotate(30)" style="fill:var(--ink)">${PNAME[r.p].replace(' (Renaissance, MoDem, Horizons)','')}</text>`; });
+  $('#chSim').innerHTML=s;
+  let t=`<thead><tr><th>Party</th><th>Actual % valid</th><th>Simulated % valid</th><th>Change (pts)</th><th>Change in votes</th></tr></thead><tbody>`;
+  ord.forEach(i=>{ const a=validShare(base,i), c=validShare(cf,i); t+=`<tr${rows[i].p===S.party?' style="font-weight:650"':''}><td><span class="dot" style="background:${colOf(rows[i].p)}"></span>${PNAME[rows[i].p]}</td><td>${fmt(a)}</td><td>${fmt(c)}</td><td class="${c-a>0.05?'pos':c-a<-0.05?'neg':''}">${sgn(c-a,2)}</td><td>${sgn(dv[i]/1e3,0)}k</td></tr>`; });
+  t+=`<tr><td>Abstention, blank, null</td><td colspan="2" class="note">${fmt(100*base.s0,1)}% → ${fmt(100*cf.s0,1)}% of registered</td><td></td><td>${sgn(dO/1e3,0)}k</td></tr>`;
+  $('#tSim').innerHTML=t+'</tbody>';
+  // diversion chart
+  const items=ord.map(i=>({lab:PNAME[rows[i].p].replace(' (Renaissance, MoDem, Horizons)',''),v:dv[i],p:rows[i].p})).concat([{lab:'Abstention / blank / null',v:dO,p:null}]);
+  const mxv=Math.max(1,...items.map(x=>Math.abs(x.v))); const H2=Math.max(160,items.length*24+30), L2=190, mid=L2+(W-L2-20)/2, half=(W-L2-20)/2; let s2='';
+  s2+=`<line x1="${mid}" x2="${mid}" y1="6" y2="${H2-14}" stroke="var(--ink-3)"/>`;
+  items.forEach((it,k)=>{ const yy=10+k*24, w=Math.abs(it.v)/mxv*half*0.92; const x=it.v>=0?mid:mid-w;
+    s2+=`<text x="${L2-8}" y="${yy+14}" text-anchor="end" style="fill:var(--ink);font-size:13px">${it.lab}</text><rect x="${x}" y="${yy+3}" width="${w}" height="15" style="fill:${it.p?(it.p===S.party?'var(--accent)':colOf(it.p)):'var(--c-O)'}"/>`;
+    if(Math.abs(it.v)>=500) s2+=`<text x="${it.v>=0?x+w+5:x-5}" y="${yy+14}" text-anchor="${it.v>=0?'start':'end'}">${sgn(it.v/1e3,0)}k</text>`; });
+  if(items.every(it=>Math.abs(it.v)<1)) s2+=`<text x="${mid+8}" y="${H2/2}" style="fill:var(--ink-3);font-size:13px">No change yet</text>`;
+  const svg=$('#chDiv'); svg.setAttribute('viewBox',`0 0 ${W} ${H2}`); svg.innerHTML=s2;
+  // sensitivity
+  const beta=betaFor(); let st='<thead><tr><th>Characteristic</th><th>Current</th><th>+1 point: Δ share of valid votes</th><th class="l">Biggest counterpart</th></tr></thead><tbody>';
+  S.dims.forEach(k=>{ const d=DIMS.find(z=>z.k===k); const el2=el; const saved=JSON.parse(JSON.stringify(S.over));
+    S.over[el2.id]=S.over[el2.id]||{}; const o=S.over[el2.id][S.party]=Object.assign({},S.over[el2.id][S.party]||{}); o[k]=currentX(el2,S.party)[k]+1;
+    const r2=cfFor(el2,sig).cf; S.over=saved; const dvs=rows.map((r,i)=>validShare(r2,i)-validShare(cf,i));
+    let lo=-1, lv=0; const dir=Math.sign(dvs[iP]); rows.forEach((r,i)=>{ if(i!==iP&&dvs[i]*dir<lv*dir-1e-12){ lv=dvs[i]; lo=i; } });
+    if(dir===0) lo=-1; const oc=100*(r2.s0-cf.s0)/(1-cf.s0||1);
+    st+=`<tr><td>${d.name}</td><td>${fmt(currentX(el,S.party)[k],1)}</td><td class="${dvs[iP]>0?'pos':'neg'}">${sgn(dvs[iP],2)}</td><td class="l">${lo>=0?PNAME[rows[lo].p]+' ('+sgn(lv,2)+')':'—'}</td></tr>`; });
+  st+=`<tr><td colspan="4" class="l note">Moves beyond 10 extrapolate outside the scale. The counterpart is the party whose share moves most in the opposite direction.</td></tr>`;
+  $('#tSens').innerHTML=st+'</tbody>';
+  renderGroupSim(el,inc);
+  $('#sigOut').textContent=fmt(sig,2); $('#sigRng').value=sig;
+  $('#sigHint').textContent=`Estimated ${fmt(S.est.sigma,2)}${S.sigmaManual?' (you have overridden it; the baseline still reproduces the actual result)':''}. Higher σ: votes move mostly between parties of the same nest.`;
+}
+const PRESETS=[
+  ['LR takes RN\u2019s immigration line', el=>({LR:{immig:currentX(el,'RN').immig}}), ['LR','RN']],
+  ['RN turns pro-European (+4)', el=>({RN:{eu:Math.min(10,currentX(el,'RN').eu+4)}}), ['RN']],
+  ['Ensemble promises strong tax cuts (+3)', el=>({ENS:{tax:Math.min(10,currentX(el,'ENS').tax+3)}}), ['ENS']],
+  ['LFI moderates on Israel (+3)', el=>({LFI:{israel:Math.min(10,currentX(el,'LFI').israel+3)}}), ['LFI']],
+  ['RN adds a wealth-tax promise (rich −3, poor +1)', el=>({RN:{fisc:(f=>[Math.min(10,f[0]+1),f[1],Math.max(0,f[2]-3)])(fiscVec('RN'))}}), ['RN']]];
+function renderPresets(){ $('#presets').innerHTML=PRESETS.map((p,i)=>`<button type="button" data-i="${i}">${p[0]}</button>`).join('');
+  $('#presets').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ const pr=PRESETS[+b.dataset.i], el=baseEl();
+    if(!pr[2].every(p=>p in el.v)){ $('#changed').textContent=`That scenario needs ${pr[2].map(p=>PNAME[p]).join(' and ')} in the baseline election. Pick another election.`; return; }
+    S.over[el.id]={}; const ch=pr[1](el); for(const p in ch) S.over[el.id][p]=Object.assign({},ch[p]); S.party=Object.keys(ch)[0]; renderSliders(); renderSim(); })); }
+// ======================= wiring =======================
+function refreshAll(){ S.est=estimate(); S.incEst=estimateIncome(); renderChar(); renderFisc(); renderData(); renderIncomeData(); renderEst(); renderIncomeEst(); renderSliders(); renderSim(); }
+function init(){
+  try{ const t=localStorage.getItem('theme'); if(t) document.documentElement.dataset.theme=t; }catch(e){}
+  renderStep1();
+  $('#dimChks').innerHTML=DIMS.map(d=>`<label class="chk"><input type="checkbox" data-k="${d.k}" ${S.dims.includes(d.k)?'checked':''}> ${d.name}</label>`).join('');
+  $('#quadChks').innerHTML=DIMS.map(d=>`<label class="chk"><input type="checkbox" data-k="${d.k}" ${S.quad.includes(d.k)?'checked':''}> ${d.name}</label>`).join('');
+  $('#dimChks').querySelectorAll('input').forEach(c=>c.addEventListener('change',()=>{ S.dims=DIMS.map(d=>d.k).filter(k=>$('#dimChks input[data-k="'+k+'"]').checked); if(!S.dims.length){ c.checked=true; S.dims=[c.dataset.k]; } refreshAll(); }));
+  $('#quadChks').querySelectorAll('input').forEach(c=>c.addEventListener('change',()=>{ S.quad=DIMS.map(d=>d.k).filter(k=>$('#quadChks input[data-k="'+k+'"]').checked); refreshAll(); }));
+  $('#incChks').innerHTML=DIMS.map(d=>`<label class="chk"><input type="checkbox" data-k="${d.k}" ${S.incDims.includes(d.k)?'checked':''}> ${d.name}</label>`).join('');
+  $('#incChks').querySelectorAll('input').forEach(c=>c.addEventListener('change',()=>{ S.incDims=DIMS.map(d=>d.k).filter(k=>$('#incChks input[data-k="'+k+'"]').checked); refreshAll(); }));
+  $('#gamChk').addEventListener('change',()=>{ S.incGamma=$('#gamChk').checked; refreshAll(); });
+  $('#useInc').addEventListener('change',()=>{ S.useIncome=$('#useInc').checked; renderSliders(); renderSim(); });
+  $('#resetFisc').addEventListener('click',()=>{ S.fisc=JSON.parse(JSON.stringify(FISC0)); refreshAll(); });
+  $('#nestSel').addEventListener('change',()=>{ S.nest=$('#nestSel').value; refreshAll(); });
+  $('#estSel').addEventListener('change',()=>{ S.estimator=$('#estSel').value; refreshAll(); });
+  $('#perSel').addEventListener('change',()=>{ S.per=$('#perSel').value; renderChar(); });
+  $('#resetChar').addEventListener('click',()=>{ S.base=JSON.parse(JSON.stringify(ORIG)); refreshAll(); });
+  $('#baseSel').innerHTML=PC.elec.map(e=>`<option value="${e.id}" ${e.id===S.baseEl?'selected':''}>${e.label}</option>`).join('');
+  $('#baseSel').addEventListener('change',()=>{ S.baseEl=$('#baseSel').value; renderSliders(); renderSim(); });
+  $('#partySel').addEventListener('change',()=>{ S.party=$('#partySel').value; renderSliders(); renderSim(); });
+  $('#resetParty').addEventListener('click',()=>{ const el=baseEl(); if(S.over[el.id]) delete S.over[el.id][S.party]; renderSliders(); renderSim(); });
+  $('#resetAll').addEventListener('click',()=>{ S.over={}; S.sigmaManual=false; renderSliders(); renderSim(); });
+  $('#sigRng').addEventListener('input',()=>{ S.sigmaManual=true; S.sigma=parseFloat($('#sigRng').value); renderSim(); });
+  $('#themeBtn').addEventListener('click',()=>{ const r=document.documentElement; const dark=r.dataset.theme? r.dataset.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.dataset.theme=dark?'light':'dark'; try{localStorage.setItem('theme',r.dataset.theme);}catch(e){} });
+  const links=[...document.querySelectorAll('.rail a')]; const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) links.forEach(l=>l.setAttribute('aria-current',l.getAttribute('href')==='#'+e.target.id?'true':'false')); }),{rootMargin:'-40% 0px -55% 0px'});
+  links.forEach(a=>io.observe(document.querySelector(a.getAttribute('href'))));
+  renderPresets(); refreshAll();
+}
+document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
+
+</script>
+</body>
+</html>
