@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PS1 Car or Bus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+/* Layout: sticky question rail on the left, one reading column per question (prompt → theory → figure → code → key). */
+:root{
+  --paper:#F3F6F7; --surface:#FFFFFF; --muted:#E9EEF1; --ink:#17212A; --ink-2:#47545F; --ink-3:#77838E; --line:#D5DDE2;
+  --accent:#2B4E80; --accent-soft:#E2EAF5;
+  --car:#B4432F; --car-soft:#F6E3DE; --bus:#1F6F8B; --bus-soft:#DDEEF3;
+  --key:#FBF5E6; --key-line:#E7D9B2; --ok:#2E7D4F; --err:#B3261E; --err-soft:#FBE5E3;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:6px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0F151A; --surface:#161E25; --muted:#1D2730; --ink:#E3E9ED; --ink-2:#A8B3BD; --ink-3:#7C8893; --line:#2A353F;
+  --accent:#8FB2E6; --accent-soft:#1D2A3D;
+  --car:#E57C64; --car-soft:#3A2420; --bus:#5DB4D0; --bus-soft:#16303A;
+  --key:#221F17; --key-line:#4A4128; --ok:#6CC495; --err:#F07B72; --err-soft:#3A1E1C;
+  color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --paper:#0F151A; --surface:#161E25; --muted:#1D2730; --ink:#E3E9ED; --ink-2:#A8B3BD; --ink-3:#7C8893; --line:#2A353F;
+  --accent:#8FB2E6; --accent-soft:#1D2A3D;
+  --car:#E57C64; --car-soft:#3A2420; --bus:#5DB4D0; --bus-soft:#16303A;
+  --key:#221F17; --key-line:#4A4128; --ok:#6CC495; --err:#F07B72; --err-soft:#3A1E1C;
+  color-scheme:dark; }
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:20px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+a{color:var(--accent);text-underline-offset:2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;max-width:1180px;margin:0 auto;padding-inline:24px}
+
+/* Rail */
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;max-height:100vh;overflow-y:auto;padding-block:32px;font-family:var(--display)}
+.rail .course{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px}
+.rail .ps{font-size:22px;font-weight:750;line-height:1.1;margin:0 0 22px}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.rail a{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:baseline;padding:6px 8px;border-radius:var(--r);text-decoration:none;color:var(--ink-2);font-size:14px;line-height:1.3}
+.rail a:hover{background:var(--muted);color:var(--ink)}
+.rail a b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.rail .group{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:14px 8px 4px}
+.py-status{margin-top:24px;display:flex;flex-direction:column;gap:10px;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:var(--muted);color:var(--ink-2);width:max-content;max-width:100%}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex:none}
+.pill[data-state="loading"] i{background:var(--accent);animation:pulse 1s ease-in-out infinite}
+.pill[data-state="ready"] i{background:var(--ok)}
+.pill[data-state="error"] i{background:var(--err)}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion: reduce){.pill i{animation:none!important}}
+
+/* Main */
+main{min-width:0;padding-block:40px 120px}
+.hero{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:8px}
+.hero .eyebrow{font-family:var(--display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,5vw,54px);line-height:1.02;letter-spacing:-.02em;margin:10px 0 14px;text-wrap:balance}
+.hero h1 .car{color:var(--car)} .hero h1 .bus{color:var(--bus)}
+.hero p{max-width:66ch;margin:0 0 12px;color:var(--ink-2)}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px;font-family:var(--display);font-size:14px;line-height:1.4}
+.how div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;color:var(--ink-2)}
+.how b{display:block;color:var(--ink);margin-bottom:2px}
+
+section.q{overflow-wrap:break-word;padding-top:44px;border-top:1px solid var(--line);margin-top:44px}
+section.q:first-of-type{border-top:0;margin-top:0}
+.q-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.q-tag{font-family:var(--display);font-weight:800;font-size:15px;color:var(--surface);background:var(--ink);border-radius:4px;padding:2px 9px;font-variant-numeric:tabular-nums}
+.q h2{font-family:var(--display);font-weight:750;font-size:30px;line-height:1.15;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.q h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:30px 0 8px}
+.q p,.q li{max-width:68ch}
+.q ul,.q ol{padding-left:22px}
+.prompt{margin:18px 0 0;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);font-size:16px;color:var(--ink-2);max-width:72ch}
+.prompt b{color:var(--ink)}
+code{font-family:var(--mono);font-size:.84em;background:var(--muted);padding:1px 5px;border-radius:3px}
+.car-t{color:var(--car);font-weight:600} .bus-t{color:var(--bus);font-weight:600}
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 var(--r) var(--r) 0;max-width:68ch;margin:16px 0}
+.callout p{margin:6px 0}
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:4px 0}
+
+/* Figures */
+figure.fig{margin:20px 0;padding:14px 14px 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);max-width:720px}
+figure.fig svg{display:block;width:100%;height:auto}
+figure.fig figcaption{font-family:var(--display);font-size:13.5px;line-height:1.45;color:var(--ink-2);margin-top:8px}
+.fig-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;max-width:720px}
+.fig-row figure.fig{margin:0}
+svg text{font-family:var(--display);fill:var(--ink-2);font-size:12px}
+svg .t-strong{fill:var(--ink);font-weight:700}
+svg .t-car{fill:var(--car);font-weight:700} svg .t-bus{fill:var(--bus);font-weight:700} svg .t-err{fill:var(--err);font-weight:600}
+svg .axis{stroke:var(--ink-3);stroke-width:1;fill:none}
+svg .grid{stroke:var(--line);stroke-width:1;fill:none}
+svg .curve{stroke:var(--ink);stroke-width:2;fill:none}
+svg .area{fill:var(--muted);stroke:none}
+svg .l-car{stroke:var(--car);stroke-width:2.5;fill:none}
+svg .l-bus{stroke:var(--bus);stroke-width:2.5;fill:none}
+svg .l-acc{stroke:var(--accent);stroke-width:2.5;fill:none}
+svg .band{fill:var(--err-soft);stroke:none}
+svg .rej{fill:var(--car-soft);stroke:none}
+svg .node{fill:var(--surface);stroke:var(--ink-3);stroke-width:1.2}
+svg .node-key{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .edge{stroke:var(--ink-3);stroke-width:1.4;fill:none}
+svg .arrowhead{fill:var(--ink-3)}
+.key-swatch{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+
+.see{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 4px;font-family:var(--display);font-size:13.5px}
+.see span{color:var(--ink-3);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+.see a{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);text-decoration:none;color:var(--ink)}
+.see a:hover{border-color:var(--accent);color:var(--accent)}
+.see a::after{content:"↗";color:var(--ink-3);font-size:11px}
+
+/* Code cells */
+.cell{margin:16px 0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;max-width:860px}
+.cell-bar{display:flex;align-items:center;gap:10px;padding:7px 8px 7px 12px;border-bottom:1px solid var(--line);background:var(--muted);font-family:var(--display);font-size:13.5px;flex-wrap:wrap}
+.cell-n{font-family:var(--mono);font-size:12px;color:var(--ink-3);min-width:34px}
+.cell-title{flex:1;min-width:0;color:var(--ink);font-weight:600}
+.cell-bar button{font-family:var(--display);font-size:13px;font-weight:650;border-radius:5px;padding:5px 12px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+.cell-bar button.run{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.cell-bar button:hover{filter:brightness(1.08)}
+.cell-bar button:disabled{opacity:.55;cursor:progress}
+.cell textarea{display:block;width:100%;border:0;resize:vertical;padding:12px 14px;margin:0;background:var(--surface);color:var(--ink);font-family:var(--mono);font-size:13.5px;line-height:1.55;tab-size:4;white-space:pre;overflow-x:auto;min-height:60px}
+.cell textarea:focus{outline:none;background:var(--paper)}
+.cell[data-state="running"] .cell-n{color:var(--accent)}
+.cell[data-state="done"] .cell-n{color:var(--ok)}
+.cell[data-state="error"] .cell-n{color:var(--err)}
+.out{border-top:1px dashed var(--line);padding:10px 14px;font-size:13.5px;overflow-x:auto}
+.out:empty{display:none}
+.out pre{margin:0;font-family:var(--mono);font-size:12.8px;line-height:1.5;white-space:pre;color:var(--ink)}
+.out pre.err{color:var(--err);background:var(--err-soft);padding:8px 10px;border-radius:4px;white-space:pre-wrap}
+.out .note{font-family:var(--display);color:var(--ink-3);font-size:13px}
+.out img{display:block;max-width:100%;height:auto;background:#FFFFFF;border-radius:4px;padding:6px;margin:8px 0}
+.out table{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;margin:4px 0}
+.out table{border:0}
+.out th,.out td{padding:4px 10px;border:0;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.out thead th{color:var(--ink-2);font-weight:600}
+.out tbody th{text-align:left;color:var(--ink)}
+.try{font-family:var(--display);font-size:13.5px;color:var(--ink-2);margin:-6px 0 16px;max-width:860px}
+.try b{color:var(--ink)}
+
+/* Solution key */
+details.key{margin:20px 0;border:1px solid var(--key-line);background:var(--key);border-radius:var(--r);max-width:860px}
+details.key summary{cursor:pointer;padding:10px 14px;font-family:var(--display);font-weight:650;font-size:14px;color:var(--ink)}
+details.key summary span{font-weight:400;color:var(--ink-3)}
+details.key .body{padding:0 16px 14px}
+details.key pre{font-family:var(--mono);font-size:12.5px;line-height:1.5;background:var(--surface);border:1px solid var(--key-line);border-radius:4px;padding:10px 12px;overflow-x:auto;margin:8px 0}
+.discuss{max-width:68ch;margin-top:18px;font-size:16px}
+.discuss h3{margin-top:22px}
+.discuss ol{margin:0}
+
+.upload{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-family:var(--display);font-size:14px;margin:12px 0;padding:12px 14px;border:1px dashed var(--line);border-radius:var(--r);max-width:860px;background:var(--surface)}
+.upload label{font-weight:650}
+.upload input{font-family:var(--display);font-size:13px;max-width:100%}
+.upload output{color:var(--ink-3)}
+.btn-all{font-family:var(--display);font-size:13px;font-weight:650;border-radius:5px;padding:7px 12px;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:var(--surface);width:max-content}
+footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--display);font-size:13px;color:var(--ink-3);max-width:72ch}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:0;padding-inline:16px}
+  .rail{position:static;max-height:none;padding-block:20px 0;border-bottom:1px solid var(--line)}
+  .rail ol{flex-direction:row;flex-wrap:wrap}
+  .rail a{grid-template-columns:auto;padding:4px 8px;border:1px solid var(--line)}
+  .rail a span{display:none}
+  .rail .group{display:none}
+  .py-status{flex-direction:row;flex-wrap:wrap;align-items:center;margin:14px 0 16px}
+  .how{grid-template-columns:minmax(0,1fr)}
+  .fig-row{grid-template-columns:minmax(0,1fr)}
+  .q h2{font-size:25px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav class="rail" aria-label="Questions">
+  <p class="course">ResEcon 703 · UMass Amherst</p>
+  <p class="ps">Problem Set 1</p>
+  <ol>
+    <li><a href="#setup"><b>0</b><span>Data &amp; setup</span></a></li>
+    <li class="group">Summary statistics</li>
+    <li><a href="#p1a"><b>1a</b><span>Means and medians</span></a></li>
+    <li><a href="#p1b"><b>1b</b><span>Drivers vs. bus riders</span></a></li>
+    <li class="group">Linear probability model</li>
+    <li><a href="#p2a1"><b>2a.i</b><span>Coefficients &amp; robust SEs</span></a></li>
+    <li><a href="#p2a2"><b>2a.ii</b><span>Probabilities outside [0, 1]</span></a></li>
+    <li><a href="#p2a3"><b>2a.iii</b><span>Wald test on time</span></a></li>
+  </ol>
+  <div class="py-status">
+    <span class="pill" id="py-pill" data-state="idle"><i></i><span id="py-msg">Python not started</span></span>
+    <button class="btn-all" id="run-all" type="button">Run all cells</button>
+  </div>
+</nav>
+
+<main>
+<header class="hero">
+  <p class="eyebrow">Topics in Advanced Econometrics · Class notebook</p>
+  <h1>Winter commute: <span class="car">car</span> or <span class="bus">bus</span>?</h1>
+  <p>1,000 UMass graduate students who live more than a mile from campus choose how to get there in winter. Only two options exist: drive, or take the (free) bus. We describe the data, then model the choice with a linear probability model, and ask what the estimates say about how students trade off time and money.</p>
+  <p>The original problem set was solved in R. Every cell below is Python and runs in your browser, so you can change a line and re-run it during class.</p>
+  <div class="how">
+    <div><b>Run a cell</b>Press <em>Run</em> or Shift + Enter inside the code. Earlier cells run first if they haven't yet.</div>
+    <div><b>Edit freely</b>Change the code and re-run. <em>Reset</em> restores the original version.</div>
+    <div><b>Check the key</b>Each question ends with the official R output and answer, collapsed.</div>
+  </div>
+</header>
+
+<!-- ============================ SETUP ============================ -->
+<section class="q" id="setup">
+  <div class="q-head"><span class="q-tag">0</span><h2>Data and setup</h2></div>
+  <p>The course file <code>commute_binary.csv</code> holds one row per student: the chosen <code>mode</code> (<span class="car-t">car</span> or <span class="bus-t">bus</span>), the time of each alternative in minutes (<code>time.car</code>, <code>time.bus</code>), and the cost of each in dollars (<code>cost.car</code>; <code>cost.bus</code> is zero because the bus is free).</p>
+  <p>If you have the course file, load it below and every result will match the solution key. Without it, the setup cell builds a <b>simulated stand-in</b> with the same columns and similar summary statistics. The simulated choices come from a binary logit with known coefficients, which we will exploit in later problem sets to check whether our estimators recover the truth.</p>
+
+  <div class="upload">
+    <label for="csv-upload">Use the real data</label>
+    <input type="file" id="csv-upload" accept=".csv,text/csv">
+    <output id="csv-msg">No file loaded: cells use the simulated stand-in.</output>
+  </div>
+
+  <div class="cell" data-title="Load libraries and data">
+<textarea spellcheck="false" aria-label="Python code: load libraries and data"># Libraries used throughout the problem set
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.formula.api as smf
+from scipy import stats
+from pathlib import Path
+
+CAR, BUS, GREY = "#B4432F", "#1F6F8B", "#9AA5B1"   # same colors as the page
+
+def simulate_commute_binary(n=1000, seed=703):
+    """Stand-in for commute_binary.csv. Choices come from a binary logit
+    with known coefficients, so we know the 'truth' behind the data."""
+    rng = np.random.default_rng(seed)
+    miles = 1 + rng.lognormal(np.log(3.2), 0.55, n)              # everyone lives > 1 mile away
+    time_car = np.maximum(3, np.round(2.5 + 1.75 * miles + rng.normal(0, 1.5, n)))
+    time_bus = np.maximum(4, np.round(5 + 1.85 * miles + rng.normal(0, 3, n)))
+    price_gas = np.round(rng.normal(3.2, 0.25, n), 2)             # $ per gallon
+    mpg = rng.uniform(25, 45, n)
+    cost_car = np.round(miles * price_gas / mpg, 2)               # $ per trip
+    v = 1.9 - 2.0 * cost_car - 0.30 * time_car + 0.13 * time_bus  # utility(car) - utility(bus)
+    drives = v + rng.logistic(size=n) > 0
+    return pd.DataFrame({"id": np.arange(1, n + 1),
+                         "mode": np.where(drives, "car", "bus"),
+                         "time.car": time_car, "cost.car": cost_car,
+                         "time.bus": time_bus, "cost.bus": 0.0,
+                         "price_gas": price_gas})
+
+if Path("commute_binary.csv").exists():
+    data_binary = pd.read_csv("commute_binary.csv")
+    source = "course file commute_binary.csv"
+else:
+    data_binary = simulate_commute_binary()
+    source = "simulated stand-in"
+
+print(f"Rows: {len(data_binary)}   Columns: {data_binary.shape[1]}   Source: {source}")
+data_binary.head()</textarea>
+  </div>
+  <p class="try"><b>Try:</b> change <code>seed=703</code> to another number. Which conclusions below survive a new sample, and which were luck?</p>
+</section>
+
+<!-- ============================ 1a ============================ -->
+<section class="q" id="p1a">
+  <div class="q-head"><span class="q-tag">1a</span><h2>Means and medians of cost and time</h2></div>
+  <div class="prompt">The three factors most likely to drive the choice are the <b>cost of driving</b> (<code>cost.car</code>), the <b>time to drive</b> (<code>time.car</code>) and the <b>time by bus</b> (<code>time.bus</code>); the bus is free. (i) Report the mean and median of each for the full sample. (ii) Do you see patterns worth keeping in mind for the analysis?</div>
+
+  <h3>Theory</h3>
+  <p>The <b>mean</b> \(\bar x = \frac1N\sum_n x_n\) uses every observation, so a few extreme values pull it around. The <b>median</b> is the value with half the sample on each side; it ignores how far the extremes are. Comparing the two is a quick test of shape:</p>
+  <ul>
+    <li>mean \(\approx\) median: roughly symmetric distribution;</li>
+    <li>mean \(&gt;\) median: <b>right skew</b>, a long tail of large values;</li>
+    <li>mean \(&lt;\) median: left skew.</li>
+  </ul>
+  <p>Commute variables are almost always right-skewed. Distance from campus cannot fall below one mile here, but a few students live very far away, and time and fuel cost scale with distance. The skew matters for modelling: a linear model fitted on such data is driven partly by the tail, and a log transform or robust check may be worth considering.</p>
+  <p>The comparison of <em>levels</em> also matters. A choice model is about trade-offs. If driving is faster but costs money, the choice reveals how much students value their time. That idea, the <b>value of travel time</b>, returns in Problem 2.</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 580 228" role="img" aria-label="A right-skewed density of driving cost with the median at 0.35 dollars to the left of the mean at 0.411 dollars">
+      <path class="area" d="M50.4,180.0 L58.6,180.0 L66.8,178.0 L75.0,167.6 L83.3,146.5 L91.5,119.1 L99.7,91.1 L108.0,67.0 L116.2,48.8 L124.4,37.0 L132.6,31.1 L140.9,30.0 L149.1,32.6 L157.3,38.0 L165.6,45.2 L173.8,53.5 L182.0,62.4 L190.2,71.5 L198.5,80.4 L206.7,89.1 L214.9,97.3 L223.2,104.9 L231.4,112.1 L239.6,118.6 L247.9,124.6 L256.1,130.1 L264.3,135.1 L272.5,139.6 L280.8,143.6 L289.0,147.3 L297.2,150.6 L305.5,153.5 L313.7,156.2 L321.9,158.6 L330.2,160.7 L338.4,162.6 L346.6,164.4 L354.8,165.9 L363.1,167.3 L371.3,168.5 L379.5,169.6 L387.8,170.6 L396.0,171.5 L404.2,172.4 L412.4,173.1 L420.7,173.7 L428.9,174.3 L437.1,174.8 L445.4,175.3 L453.6,175.8 L461.8,176.1 L470.0,176.5 L478.3,176.8 L486.5,177.1 L494.7,177.4 L503.0,177.6 L511.2,177.8 L519.4,178.0 L527.7,178.2 L535.9,178.3 L540.0,178.4 L540.0,180 L50.4,180 Z"/>
+      <path class="curve" d="M50.4,180.0 L58.6,180.0 L66.8,178.0 L75.0,167.6 L83.3,146.5 L91.5,119.1 L99.7,91.1 L108.0,67.0 L116.2,48.8 L124.4,37.0 L132.6,31.1 L140.9,30.0 L149.1,32.6 L157.3,38.0 L165.6,45.2 L173.8,53.5 L182.0,62.4 L190.2,71.5 L198.5,80.4 L206.7,89.1 L214.9,97.3 L223.2,104.9 L231.4,112.1 L239.6,118.6 L247.9,124.6 L256.1,130.1 L264.3,135.1 L272.5,139.6 L280.8,143.6 L289.0,147.3 L297.2,150.6 L305.5,153.5 L313.7,156.2 L321.9,158.6 L330.2,160.7 L338.4,162.6 L346.6,164.4 L354.8,165.9 L363.1,167.3 L371.3,168.5 L379.5,169.6 L387.8,170.6 L396.0,171.5 L404.2,172.4 L412.4,173.1 L420.7,173.7 L428.9,174.3 L437.1,174.8 L445.4,175.3 L453.6,175.8 L461.8,176.1 L470.0,176.5 L478.3,176.8 L486.5,177.1 L494.7,177.4 L503.0,177.6 L511.2,177.8 L519.4,178.0 L527.7,178.2 L535.9,178.3 L540.0,178.4"/>
+      <line class="l-bus" x1="172.5" y1="24" x2="172.5" y2="180"/>
+      <line class="l-car" x1="193.9" y1="24" x2="193.9" y2="180" stroke-dasharray="6 4"/>
+      <text class="t-bus" x="166" y="18" text-anchor="end">median $0.35</text>
+      <text class="t-car" x="200" y="18">mean $0.411</text>
+      <text x="350" y="128">long right tail:</text>
+      <text x="350" y="143">students who live far away</text>
+      <line class="axis" x1="50" y1="180" x2="540" y2="180"/>
+      <g text-anchor="middle">
+        <line class="axis" x1="50" y1="180" x2="50" y2="185"/><text x="50" y="199">0</text>
+        <line class="axis" x1="137.5" y1="180" x2="137.5" y2="185"/><text x="137.5" y="199">0.25</text>
+        <line class="axis" x1="225" y1="180" x2="225" y2="185"/><text x="225" y="199">0.50</text>
+        <line class="axis" x1="312.5" y1="180" x2="312.5" y2="185"/><text x="312.5" y="199">0.75</text>
+        <line class="axis" x1="400" y1="180" x2="400" y2="185"/><text x="400" y="199">1.00</text>
+        <line class="axis" x1="487.5" y1="180" x2="487.5" y2="185"/><text x="487.5" y="199">1.25</text>
+        <text x="295" y="222">cost of driving one trip ($)</text>
+      </g>
+    </svg>
+    <figcaption>A log-normal curve with the median and mean from the solution key. In a right-skewed distribution the tail drags the mean above the median. The same pattern appears for both time variables.</figcaption>
+  </figure>
+
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Skewness" target="_blank" rel="noopener">Skewness: mean vs. median diagram</a>
+    <a href="https://seeing-theory.brown.edu/basic-probability/index.html" target="_blank" rel="noopener">Seeing Theory: expectation</a>
+    <a href="https://en.wikipedia.org/wiki/Log-normal_distribution" target="_blank" rel="noopener">Log-normal distribution</a>
+    <a href="https://en.wikipedia.org/wiki/Value_of_time" target="_blank" rel="noopener">Value of travel time</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p><code>DataFrame.agg</code> plays the role of R's <code>summarize()</code>.</p>
+  <div class="cell" data-title="1a.i Means and medians, full sample">
+<textarea spellcheck="false" aria-label="Python code: means and medians"># Means and medians of the three key variables, full sample
+summ_stats_1a = data_binary[["cost.car", "time.car", "time.bus"]].agg(["mean", "median"])
+summ_stats_1a.round(3)</textarea>
+  </div>
+
+  <div class="cell" data-title="1a.ii See the skew">
+<textarea spellcheck="false" aria-label="Python code: histograms with mean and median"># Histograms with the median (solid) and the mean (dashed)
+fig, axes = plt.subplots(1, 3, figsize=(11, 3.2))
+for ax, col, unit in zip(axes, ["cost.car", "time.car", "time.bus"], ["$", "minutes", "minutes"]):
+    x = data_binary[col]
+    ax.hist(x, bins=30, color=GREY, edgecolor="white")
+    ax.axvline(x.median(), color=BUS, lw=2, label=f"median {x.median():.2f}")
+    ax.axvline(x.mean(), color=CAR, lw=2, ls="--", label=f"mean {x.mean():.2f}")
+    ax.set_title(f"{col} ({unit})")
+    ax.legend(frameon=False, fontsize=8)
+fig.tight_layout()
+
+# Skewness > 0 means a long right tail
+print("Skewness:")
+print(data_binary[["cost.car", "time.car", "time.bus"]].skew().round(2).to_string())</textarea>
+  </div>
+  <p class="try"><b>Try:</b> add <code>np.log(x)</code> before plotting. Does the log make the distributions symmetric?</p>
+
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## # A tibble: 1 x 6
+##   mn_cost_c md_cost_c mn_time_c md_time_c mn_time_b md_time_b
+## 1     0.411      0.35      10.9        10      14.2        13</pre>
+      <p><b>(ii)</b> For the average student, driving is faster than the bus. If students value their time, the shorter drive pushes them toward the car. Driving also has a monetary cost that the bus does not, so students trade the shorter commute off against that cost. For all three variables the mean exceeds the median, which points to a long right tail of students who commute from far away and face especially long and costly commutes.</p>
+    </div>
+  </details>
+
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>The average student saves about 3.3 minutes by driving and pays about $0.41. What is the implied break-even value of time, in dollars per hour? (Answer: \(0.41/3.3 \times 60 \approx \$7.5\).)</li>
+      <li>Why might the <em>median</em> student be a better guide than the mean for a parking plan?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ 1b ============================ -->
+<section class="q" id="p1b">
+  <div class="q-head"><span class="q-tag">1b</span><h2>Do drivers and bus riders face different choices?</h2></div>
+  <div class="prompt">Students who drive and students who take the bus may face different times and costs. (i) Compute the same statistics separately for each group. (ii) Do you see patterns that begin to explain why some students drive and others take the bus?</div>
+
+  <h3>Theory</h3>
+  <p>Grouping by the outcome compares <b>conditional distributions</b>: the distribution of \(x\) given that the student drove, \(F(x\mid Y=1)\), against the distribution given that they took the bus, \(F(x\mid Y=0)\). If driving cost matters, drivers should on average face lower driving costs. This is the logic of <a href="https://en.wikipedia.org/wiki/Bayes%27_theorem" target="_blank" rel="noopener">Bayes' rule</a> run backwards: a higher \(\Pr(Y=1\mid x)\) at low \(x\) shows up as more drivers with low \(x\).</p>
+  <p>These comparisons are <b>one variable at a time</b>, which is their weakness. The three variables are correlated because all of them grow with distance from campus. A student far from campus has a long drive <em>and</em> a long bus ride. So when we compare bus times across groups, we also compare driving times, and the two effects mix.</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 580 200" role="img" aria-label="Diagram: distance from campus raises driving time, driving cost and bus time; each of these affects whether the student drives">
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrowhead" d="M0,0 L10,5 L0,10 Z"/></marker></defs>
+      <rect class="node-key" x="12" y="78" width="150" height="44" rx="6"/>
+      <text class="t-strong" x="87" y="97" text-anchor="middle">Distance from</text>
+      <text class="t-strong" x="87" y="112" text-anchor="middle">campus (unobserved)</text>
+      <rect class="node" x="232" y="18" width="116" height="34" rx="5"/><text x="290" y="40" text-anchor="middle">time.car</text>
+      <rect class="node" x="232" y="83" width="116" height="34" rx="5"/><text x="290" y="105" text-anchor="middle">cost.car</text>
+      <rect class="node" x="232" y="148" width="116" height="34" rx="5"/><text x="290" y="170" text-anchor="middle">time.bus</text>
+      <rect class="node" x="438" y="78" width="126" height="44" rx="6"/><text class="t-car" x="501" y="105" text-anchor="middle">Drives?</text>
+      <path class="edge" marker-end="url(#arr)" d="M162,92 L230,38"/>
+      <path class="edge" marker-end="url(#arr)" d="M162,100 L230,100"/>
+      <path class="edge" marker-end="url(#arr)" d="M162,108 L230,162"/>
+      <path class="edge" marker-end="url(#arr)" d="M348,38 L436,90"/>
+      <path class="edge" marker-end="url(#arr)" d="M348,100 L436,100"/>
+      <path class="edge" marker-end="url(#arr)" d="M348,162 L436,110"/>
+      <text class="t-car" x="395" y="56" text-anchor="middle">−</text>
+      <text class="t-car" x="392" y="94" text-anchor="middle">−</text>
+      <text class="t-bus" x="395" y="152" text-anchor="middle">+</text>
+    </svg>
+    <figcaption>Distance moves all three regressors together. A longer bus ride makes driving <em>more</em> attractive (+), but students with long bus rides also have long drives (−). A raw group comparison mixes these effects. Regression in Problem 2 holds the other variables fixed.</figcaption>
+  </figure>
+
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Simpson%27s_paradox" target="_blank" rel="noopener">Simpson's paradox</a>
+    <a href="https://en.wikipedia.org/wiki/Confounding" target="_blank" rel="noopener">Confounding</a>
+    <a href="https://en.wikipedia.org/wiki/Box_plot" target="_blank" rel="noopener">Reading a box plot</a>
+    <a href="https://pandas.pydata.org/docs/user_guide/groupby.html" target="_blank" rel="noopener">pandas: split-apply-combine</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p><code>groupby("mode")</code> is the equivalent of R's <code>group_by(mode)</code>.</p>
+  <div class="cell" data-title="1b.i Means and medians by mode">
+<textarea spellcheck="false" aria-label="Python code: statistics by mode"># Same statistics, separately for drivers and bus riders
+summ_stats_1b = (data_binary
+                 .groupby("mode")[["cost.car", "time.car", "time.bus"]]
+                 .agg(["mean", "median"]))
+print(data_binary["mode"].value_counts(normalize=True).round(3).to_string(), "\n")
+summ_stats_1b.round(3)</textarea>
+  </div>
+
+  <div class="cell" data-title="1b.ii Compare the distributions">
+<textarea spellcheck="false" aria-label="Python code: box plots by mode"># Box plots: whole distributions, not just two numbers
+fig, axes = plt.subplots(1, 3, figsize=(11, 3.4))
+for ax, col in zip(axes, ["cost.car", "time.car", "time.bus"]):
+    groups = [data_binary.loc[data_binary["mode"] == m, col] for m in ["car", "bus"]]
+    bp = ax.boxplot(groups, patch_artist=True, widths=0.55, showfliers=False)
+    ax.set_xticks([1, 2], ["drove", "took bus"])
+    for patch, c in zip(bp["boxes"], [CAR, BUS]):
+        patch.set_facecolor(c); patch.set_alpha(0.35); patch.set_edgecolor(c)
+    for med in bp["medians"]:
+        med.set_color("black")
+    ax.set_title(col)
+fig.tight_layout()</textarea>
+  </div>
+
+  <p>The key reports that bus riders have <em>longer</em> bus times than drivers, which looks backwards. The next cell tests the distance story: compare bus times <b>within</b> groups of students who have similar driving times.</p>
+  <div class="cell" data-title="1b.iii Untangle the bus-time puzzle">
+<textarea spellcheck="false" aria-label="Python code: compare bus times within driving-time quartiles">cols = ["cost.car", "time.car", "time.bus"]
+print("Correlations (all three move with distance):")
+print(data_binary[cols].corr().round(2).to_string(), "\n")
+
+# Hold driving time roughly fixed: split students into quartiles of time.car
+quartile = pd.qcut(data_binary["time.car"], 4)
+(data_binary
+ .groupby([quartile, "mode"], observed=True)["time.bus"]
+ .mean()
+ .unstack()
+ .round(2))</textarea>
+  </div>
+  <p class="try"><b>Read it:</b> within a quartile of driving time, do drivers have <em>longer</em> bus rides than bus riders? If so, the bus-time effect has the expected sign once distance is held roughly fixed.</p>
+
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## # A tibble: 2 x 7
+##   mode  mn_cost_c md_cost_c mn_time_c md_time_c mn_time_b md_time_b
+## 1 bus       0.449      0.38     11.9         11      14.7        13
+## 2 car       0.361      0.32      9.70         9      13.5        13</pre>
+      <p><b>(ii)</b> Drivers, on average, have lower costs to drive and shorter driving times than bus riders. This is intuitive: <em>ceteris paribus</em>, a cheaper and shorter drive makes a student more likely to drive. The median bus time is identical in both groups, and the mean bus time is <em>greater</em> for the group that takes the bus. That result is less intuitive, and a more rigorous analysis might explain it.</p>
+    </div>
+  </details>
+
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>Which assumption behind "<em>ceteris paribus</em>" fails when we compare raw group means?</li>
+      <li>Name an unobserved variable other than distance that could move both bus time and the choice. (Living on a bus line? Owning a car at all?)</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ 2a.i ============================ -->
+<section class="q" id="p2a1">
+  <div class="q-head"><span class="q-tag">2a.i</span><h2>The linear probability model</h2></div>
+  <div class="prompt">Model the choice to drive as a linear probability model,
+  \[Y_n=\beta_0+\beta_1C_{nc}+\beta_2T_{nc}+\beta_3T_{nb}+\varepsilon_n,\]
+  where \(Y_n=1\) if student \(n\) drives, \(C_{nc}\) is the cost of driving, \(T_{nc}\) the driving time and \(T_{nb}\) the bus time. Report the coefficients with <b>heteroskedasticity-robust</b> standard errors and interpret them.</div>
+
+  <h3>Theory</h3>
+  <p><b>Why a regression on a 0/1 outcome is a probability model.</b> Because \(Y_n\) only takes the values 0 and 1,</p>
+  \[\mathbb E[Y_n\mid X_n] = 1\cdot\Pr(Y_n=1\mid X_n)+0\cdot\Pr(Y_n=0\mid X_n)=\Pr(Y_n=1\mid X_n).\]
+  <p>OLS estimates a conditional mean, so here it estimates the <b>probability of driving</b> as a linear function \(X_n'\beta\). Each coefficient is a <b>marginal effect</b> in probability units: \(\partial\Pr(Y=1\mid X)/\partial x_k=\beta_k\), the same for every student.</p>
+  <p><b>Link to random utility.</b> In the discrete-choice view, student \(n\) drives when \(U_{nc}&gt;U_{nb}\). With utility linear in cost and time, the probability of driving is some increasing function of the utility gap \(V_n = \alpha + \gamma_1C_{nc}+\gamma_2T_{nc}+\gamma_3T_{nb}\). The LPM approximates that function with a straight line. Logit and probit (next problem sets) use an S-shaped curve instead. For students in the middle of the distribution the approximation is usually good; at the extremes it breaks (Question 2a.ii).</p>
+  <p><b>Why robust standard errors.</b> The error \(\varepsilon_n=Y_n-p_n\) can take only two values, \(1-p_n\) or \(-p_n\), so</p>
+  \[\operatorname{Var}(\varepsilon_n\mid X_n)=p_n(1-p_n),\qquad p_n = X_n'\beta.\]
+  <p>The variance changes with \(X_n\): the LPM is <b>heteroskedastic by construction</b>. OLS is still unbiased, but the textbook formula \(\hat\sigma^2(X'X)^{-1}\) is wrong. The White (sandwich) estimator fixes it:</p>
+  \[\widehat{\operatorname{Var}}(\hat\beta)=(X'X)^{-1}\Big(\sum_n \omega_n\,\hat\varepsilon_n^2\,x_nx_n'\Big)(X'X)^{-1}.\]
+  <p>HC0 uses \(\omega_n=1\). R's <code>vcovHC()</code> defaults to <b>HC3</b>, \(\omega_n=1/(1-h_{nn})^2\), where \(h_{nn}\) is the leverage of observation \(n\). HC3 inflates the weight of high-leverage points and behaves better in small samples. We use HC3 in Python to match the key.</p>
+
+  <div class="fig-row">
+    <figure class="fig">
+      <svg viewBox="0 0 580 230" role="img" aria-label="An S-shaped logit curve stays between 0 and 1, while the straight LPM line crosses below 0 on the left and above 1 on the right">
+        <rect class="band" x="50" y="20" width="490" height="30"/>
+        <rect class="band" x="50" y="170" width="490" height="30"/>
+        <line class="grid" x1="50" y1="110" x2="540" y2="110"/>
+        <line class="axis" x1="50" y1="50" x2="540" y2="50"/>
+        <line class="axis" x1="50" y1="170" x2="540" y2="170"/>
+        <line class="axis" x1="50" y1="20" x2="50" y2="200"/>
+        <text class="t-err" x="60" y="40">p &gt; 1: impossible</text>
+        <text class="t-err" x="530" y="192" text-anchor="end">p &lt; 0: impossible</text>
+        <path class="l-bus" d="M50.0,169.7 L64.8,169.6 L79.7,169.4 L94.5,169.1 L109.4,168.7 L124.2,168.2 L139.1,167.4 L153.9,166.3 L168.8,164.8 L183.6,162.6 L198.5,159.7 L213.3,155.7 L228.2,150.4 L243.0,143.7 L257.9,135.5 L272.7,126.0 L287.6,115.4 L302.4,104.6 L317.3,94.0 L332.1,84.5 L347.0,76.3 L361.8,69.6 L376.7,64.3 L391.5,60.3 L406.4,57.4 L421.2,55.2 L436.1,53.7 L450.9,52.6 L465.8,51.8 L480.6,51.3 L495.5,50.9 L510.3,50.6 L525.2,50.4 L540.0,50.3"/>
+        <path class="l-car" d="M50.0,196.4 L540.0,23.6"/>
+        <g text-anchor="end">
+          <text x="44" y="54">1</text><text x="44" y="114">0.5</text><text x="44" y="174">0</text>
+        </g>
+        <text x="295" y="222" text-anchor="middle">utility gap V (car minus bus)</text>
+      </svg>
+      <figcaption><span class="key-swatch" style="background:var(--car)"></span>LPM: a straight line in \(V\). <span class="key-swatch" style="background:var(--bus)"></span>Logit: an S-curve that stays in [0, 1]. The two agree near \(p=0.5\).</figcaption>
+    </figure>
+    <figure class="fig">
+      <svg viewBox="0 0 280 180" role="img" aria-label="The error variance p times one minus p is a parabola that is zero at p equals 0 and 1 and peaks at 0.25 at p equals one half">
+        <line class="axis" x1="40" y1="140" x2="260" y2="140"/>
+        <line class="axis" x1="40" y1="20" x2="40" y2="140"/>
+        <line class="grid" x1="40" y1="30" x2="260" y2="30"/>
+        <path class="l-acc" d="M40,140 Q150,-80 260,140"/>
+        <g text-anchor="end"><text x="34" y="34">0.25</text><text x="34" y="144">0</text></g>
+        <g text-anchor="middle"><text x="40" y="158">0</text><text x="150" y="158">0.5</text><text x="260" y="158">1</text>
+        <text x="150" y="176">p = Pr(drive | X)</text></g>
+        <text class="t-strong" x="150" y="80" text-anchor="middle">Var(ε | X) = p(1 − p)</text>
+      </svg>
+      <figcaption>The error variance depends on \(X\) through \(p\). Constant-variance standard errors are wrong; use the sandwich.</figcaption>
+    </figure>
+  </div>
+
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Linear_probability_model" target="_blank" rel="noopener">Linear probability model</a>
+    <a href="https://en.wikipedia.org/wiki/Heteroskedasticity-consistent_standard_errors" target="_blank" rel="noopener">Heteroskedasticity-consistent SEs</a>
+    <a href="https://en.wikipedia.org/wiki/Heteroscedasticity" target="_blank" rel="noopener">Heteroskedasticity, pictured</a>
+    <a href="https://seeing-theory.brown.edu/regression-analysis/index.html" target="_blank" rel="noopener">Seeing Theory: least squares</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train, Discrete Choice Methods (ch. 2–3)</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p><code>smf.ols</code> is R's <code>lm()</code>. Passing <code>cov_type="HC3"</code> to <code>fit()</code> plays the role of <code>coeftest(reg, vcov = vcovHC(reg))</code>. Formulas do not accept dots in names, so we rename <code>time.car</code> to <code>time_car</code> first.</p>
+  <div class="cell" data-title="2a.i Estimate the LPM with HC3 standard errors">
+<textarea spellcheck="false" aria-label="Python code: estimate linear probability model"># Formulas dislike dots in names: time.car -> time_car
+df = data_binary.rename(columns=lambda c: c.replace(".", "_"))
+df["car"] = (df["mode"] == "car").astype(int)          # Y_n = 1 if student drives
+
+reg_2a = smf.ols("car ~ cost_car + time_car + time_bus", data=df).fit(cov_type="HC3", use_t=True)
+
+# Same layout as R's coeftest() output
+pd.DataFrame({"Estimate": reg_2a.params,
+              "Std. Error": reg_2a.bse,
+              "t value": reg_2a.tvalues,
+              "Pr(>|t|)": reg_2a.pvalues}).round(5)</textarea>
+  </div>
+
+  <div class="cell" data-title="Under the hood: the sandwich by hand">
+<textarea spellcheck="false" aria-label="Python code: compute robust standard errors by hand"># OLS and the HC3 sandwich with plain numpy
+X = np.column_stack([np.ones(len(df)), df[["cost_car", "time_car", "time_bus"]]])
+y = df["car"].to_numpy()
+N, K = X.shape
+
+XtX_inv = np.linalg.inv(X.T @ X)
+beta = XtX_inv @ X.T @ y
+e = y - X @ beta                                  # residuals
+h = np.einsum("ij,jk,ik->i", X, XtX_inv, X)       # leverage h_nn
+
+V_classic = XtX_inv * (e @ e) / (N - K)           # assumes constant variance
+meat = (X * (e**2 / (1 - h)**2)[:, None]).T @ X   # HC3 weights
+V_hc3 = XtX_inv @ meat @ XtX_inv
+meat0 = (X * (e**2)[:, None]).T @ X               # HC0 weights
+V_hc0 = XtX_inv @ meat0 @ XtX_inv
+
+pd.DataFrame({"beta": beta,
+              "SE classical": np.sqrt(np.diag(V_classic)),
+              "SE HC0": np.sqrt(np.diag(V_hc0)),
+              "SE HC3": np.sqrt(np.diag(V_hc3))},
+             index=["Intercept", "cost_car", "time_car", "time_bus"]).round(5)</textarea>
+  </div>
+
+  <div class="cell" data-title="Interpret: marginal effects and the value of time">
+<textarea spellcheck="false" aria-label="Python code: interpret coefficients"># Each LPM coefficient is a change in Pr(drive), in probability units
+b = reg_2a.params
+print(f"+10 cents of driving cost  -> {100 * 0.10 * b['cost_car']:+.1f} percentage points")
+print(f"+1 minute of driving       -> {100 * b['time_car']:+.1f} percentage points")
+print(f"+1 minute on the bus       -> {100 * b['time_bus']:+.1f} percentage points")
+
+# Value of driving time: dollars that offset one minute of driving
+vot = b["time_car"] / b["cost_car"]
+print(f"\nImplied value of driving time: ${vot:.3f} per minute = ${60 * vot:.2f} per hour")
+if source == "simulated stand-in":
+    print("Truth in the simulation: 0.30 / 2.0 = $0.150 per minute = $9.00 per hour")</textarea>
+  </div>
+  <p class="try"><b>Try:</b> refit with <code>cov_type="nonrobust"</code> and with <code>"HC0"</code>. Which standard errors move most, and why the cost coefficient?</p>
+
+  <div class="callout">
+    <p><b>Percent vs. percentage points.</b> The key says an extra 10 cents "reduces the probability of driving by 4.4%". Strictly, that is 4.4 <em>percentage points</em> (for example, from 43% to 38.6%). A 4.4 <em>percent</em> fall would be from 43% to 41.1%.</p>
+    <p><b>Value of time.</b> The ratio \(\beta_2/\beta_1\) has units of dollars per minute. In the key, \(0.0653/0.4376\approx\$0.149\) per minute, about $9 per hour. Ratios of coefficients like this survive the move to logit, where individual coefficients no longer are marginal effects.</p>
+  </div>
+
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>coeftest(reg_2a, vcov = vcovHC(reg_2a))
+
+##               Estimate Std. Error  t value  Pr(>|t|)
+## (Intercept)  0.9205109  0.0737943  12.4740 &lt; 2.2e-16 ***
+## cost.car    -0.4375642  0.1392888  -3.1414  0.001731 **
+## time.car    -0.0652505  0.0058747 -11.1070 &lt; 2.2e-16 ***
+## time.bus     0.0283670  0.0065722   4.3162 1.746e-05 ***</pre>
+      <p>All three variables have statistically significant and economically meaningful effects on the choice. An additional 10 cents of driving cost reduces the probability of driving by 4.4%, an additional minute of driving reduces it by 6.5%, and an additional minute on the bus increases it by 2.8%. With only two alternatives, the marginal effects on taking the bus are the negatives of these.</p>
+    </div>
+  </details>
+
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>Why is a constant marginal effect implausible for a student who already drives with probability 0.98?</li>
+      <li>Is $9 per hour a plausible value of time for a graduate student? How does it compare with a typical stipend per hour?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ 2a.ii ============================ -->
+<section class="q" id="p2a2">
+  <div class="q-head"><span class="q-tag">2a.ii</span><h2>Fitted probabilities outside [0, 1]</h2></div>
+  <div class="prompt">One problem with a linear probability model is that predicted probabilities can fall outside the [0, 1] range. How many students have infeasible choice probabilities? Given these results, are you worried about using an LPM here?</div>
+
+  <h3>Theory</h3>
+  <p>Nothing in OLS forces \(\hat p_n = X_n'\hat\beta\) to lie in [0, 1]. A straight line with a non-zero slope must leave the unit interval somewhere; the question is whether many students sit out there.</p>
+  <p>Why it matters:</p>
+  <ul>
+    <li><b>Interpretation.</b> A fitted probability of 1.08 or −0.05 is meaningless, and predictions for policy scenarios (a bigger parking fee, say) can go out of range quickly.</li>
+    <li><b>Consistency.</b> The LPM is consistent for the true marginal effects only if the true probability really is linear in \(X\). Many fitted values outside [0, 1] are evidence that the true curve bends, so the linear fit is misspecified and the slope is an average of a curve's slopes. <a href="https://doi.org/10.1016/j.econlet.2005.08.004" target="_blank" rel="noopener">Horrace and Oaxaca (2006)</a> show the bias grows with the share of out-of-range predictions.</li>
+    <li><b>Variance.</b> \(\hat p_n(1-\hat p_n)\) is negative out of range, so feasible GLS weights break down there.</li>
+  </ul>
+  <p>A small share of out-of-range fits, as here, suggests that the linear approximation holds over most of the data. A <b>calibration plot</b> is a second check: group students by fitted probability and compare with the share who actually drive. If the LPM were right, the points would lie on the 45° line.</p>
+
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Linear_probability_model#Drawbacks" target="_blank" rel="noopener">LPM drawbacks</a>
+    <a href="https://en.wikipedia.org/wiki/Logistic_function" target="_blank" rel="noopener">The logistic S-curve</a>
+    <a href="https://scikit-learn.org/stable/modules/calibration.html" target="_blank" rel="noopener">Calibration curves, explained</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p><code>reg_2a.fittedvalues</code> is R's <code>predict(reg_2a)</code>.</p>
+  <div class="cell" data-title="2a.ii Count infeasible probabilities">
+<textarea spellcheck="false" aria-label="Python code: count fitted probabilities outside zero to one"># Fitted probability of driving for every student
+df["prob_car_2a"] = reg_2a.fittedvalues
+
+outside = (df["prob_car_2a"] &lt; 0) | (df["prob_car_2a"] &gt; 1)
+print(f"{outside.sum()} students ({outside.mean():.1%}) have fitted probabilities outside [0, 1]")
+print(f"Range of fitted values: {df['prob_car_2a'].min():.3f} to {df['prob_car_2a'].max():.3f}")
+
+fig, ax = plt.subplots(figsize=(8.5, 3.2))
+ax.hist(df["prob_car_2a"], bins=40, color=GREY, edgecolor="white")
+ax.axvspan(min(df["prob_car_2a"].min(), 0) - 0.05, 0, color=CAR, alpha=0.15, label="infeasible")
+ax.axvspan(1, max(df["prob_car_2a"].max(), 1) + 0.05, color=CAR, alpha=0.15)
+ax.set_xlabel("fitted Pr(drive)"); ax.set_ylabel("students"); ax.legend(frameon=False)
+fig.tight_layout()</textarea>
+  </div>
+
+  <div class="cell" data-title="Calibration: is the probability really linear?">
+<textarea spellcheck="false" aria-label="Python code: calibration plot"># Group students into 10 bins of fitted probability; compare with the share who drive
+bins = pd.qcut(df["prob_car_2a"], 10)
+calib = df.groupby(bins, observed=True).agg(fitted=("prob_car_2a", "mean"), actual=("car", "mean"))
+
+fig, ax = plt.subplots(figsize=(4.8, 4.2))
+ax.plot([-0.1, 1.1], [-0.1, 1.1], color=GREY, ls="--", label="45° line")
+ax.plot(calib["fitted"], calib["actual"], "o-", color=CAR, label="LPM deciles")
+ax.set_xlabel("mean fitted Pr(drive)"); ax.set_ylabel("share who actually drive")
+ax.legend(frameon=False); fig.tight_layout()
+calib.round(3)</textarea>
+  </div>
+  <p class="try"><b>Read it:</b> an S-shaped pattern around the 45° line (actual share flatter than fitted at the ends) is the signature of a true logit or probit curve.</p>
+
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>data_binary %&gt;%
+  filter(prob_car_2a &lt; 0 | prob_car_2a &gt; 1) %&gt;%
+  nrow()
+## [1] 22</pre>
+      <p>Only 22 students, or 2.2% of the sample, have estimated probabilities outside the [0, 1] range. This suggests that the estimated marginal effects are not likely to be inconsistent and that the interpretation of the results is sound.</p>
+    </div>
+  </details>
+
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>Suppose the university doubles the cost of driving. Use <code>reg_2a</code> to predict the new share of drivers. How many students now fall outside [0, 1]?</li>
+      <li>Is 2.2% "small"? What share would make you switch to logit?</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================ 2a.iii ============================ -->
+<section class="q" id="p2a3">
+  <div class="q-head"><span class="q-tag">2a.iii</span><h2>Are the two time coefficients equal in size?</h2></div>
+  <div class="prompt">Test whether the two time coefficients are equal in absolute value. Interpret the result and explain why it could make intuitive sense. If a delay raised the driving time and the bus time by the same amount, would the share of drivers rise, fall, or stay the same?</div>
+
+  <h3>Theory</h3>
+  <p>"Equal in absolute value" with opposite signs means \(\beta_2=-\beta_3\), a single <b>linear restriction</b>:</p>
+  \[H_0:\ \beta_2+\beta_3=0 \quad\Longleftrightarrow\quad R\beta=r,\qquad R=\begin{pmatrix}0&amp;0&amp;1&amp;1\end{pmatrix},\ r=0.\]
+  <p>The <b>Wald test</b> asks whether the estimated \(R\hat\beta-r\) is far from zero relative to its sampling noise:</p>
+  \[W=(R\hat\beta-r)'\big[R\,\widehat V\,R'\big]^{-1}(R\hat\beta-r)\ \xrightarrow{d}\ \chi^2_q,\qquad F=W/q .\]
+  <p>Here \(q=1\) restriction, so \(W\) is the square of a t-statistic: \(W=\big((\hat\beta_2+\hat\beta_3)/\operatorname{se}(\hat\beta_2+\hat\beta_3)\big)^2\), with \(\operatorname{se}^2=\widehat V_{22}+\widehat V_{33}+2\widehat V_{23}\). The covariance term matters: the two coefficients are estimated from correlated regressors. Using the robust \(\widehat V\) keeps the test valid under the LPM's heteroskedasticity. R's <code>linearHypothesis()</code> reports \(F=W/q\) compared with an \(F(q,\,N-K)\) distribution; for \(N=1000\) this is almost identical to \(\chi^2_1\), whose 5% critical value is 3.84.</p>
+  <p><b>Economics.</b> If \(\beta_2+\beta_3=0\), only the <em>difference</em> in travel times matters: a minute is a minute in either mode. Rejecting it says a minute behind the wheel and a minute on the bus feel different. On the bus you can read or answer email; while driving in snow you cannot. An equal delay \(\Delta\) on both modes changes the probability of driving by \((\beta_2+\beta_3)\Delta\).</p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 580 228" role="img" aria-label="Chi-square with one degree of freedom density; the 5 percent rejection region starts at 3.85 and the key's F statistic of 17.2 lies far inside it">
+      <path class="rej" d="M144.3,168.9 L158.0,172.1 L171.6,174.4 L185.3,176.0 L198.9,177.1 L212.5,177.9 L226.2,178.5 L239.8,178.9 L253.5,179.2 L267.1,179.4 L280.8,179.6 L294.4,179.7 L308.1,179.8 L321.7,179.8 L335.3,179.9 L349.0,179.9 L362.6,179.9 L376.3,179.9 L389.9,180.0 L540.0,180.0 L540.0,180 L144.3,180 Z"/>
+      <rect class="rej" x="144.3" y="170" width="395.7" height="10" opacity=".55"/>
+      <path class="curve" d="M51.2,30.0 L63.6,30.0 L66.1,47.2 L68.6,62.5 L71.1,75.1 L73.6,85.7 L76.0,94.7 L78.5,102.5 L81.0,109.4 L83.5,115.4 L86.0,120.7 L88.4,125.5 L90.9,129.8 L93.4,133.7 L95.9,137.2 L98.4,140.3 L100.9,143.2 L103.3,145.9 L105.8,148.3 L108.3,150.5 L110.8,152.5 L113.3,154.4 L115.7,156.1 L118.2,157.7 L120.7,159.2 L123.2,160.6 L125.7,161.8 L128.1,163.0 L130.6,164.1 L133.1,165.1 L135.6,166.0 L138.1,166.9 L140.6,167.7 L143.0,168.5 L145.5,169.2 L148.0,169.9 L152.9,171.1 L166.2,173.6 L179.6,175.4 L192.9,176.7 L206.3,177.6 L219.6,178.2 L233.0,178.7 L246.3,179.0 L259.7,179.3 L273.0,179.5 L286.4,179.6 L299.7,179.7 L313.1,179.8 L326.4,179.8 L339.8,179.9 L353.1,179.9 L366.5,179.9 L379.8,180.0 L540.0,180.0"/>
+      <line class="l-acc" x1="144.3" y1="70" x2="144.3" y2="180" stroke-dasharray="5 4"/>
+      <text x="150" y="80">5% critical value 3.85</text>
+      <text x="150" y="95">reject H₀ to the right</text>
+      <line class="l-car" x1="471.4" y1="60" x2="471.4" y2="180"/>
+      <text class="t-car" x="465" y="54" text-anchor="end">F = 17.2 in the key</text>
+      <text class="t-car" x="465" y="69" text-anchor="end">p = 0.00004</text>
+      <line class="axis" x1="50" y1="180" x2="540" y2="180"/>
+      <g text-anchor="middle">
+        <line class="axis" x1="50" y1="180" x2="50" y2="185"/><text x="50" y="199">0</text>
+        <line class="axis" x1="172.5" y1="180" x2="172.5" y2="185"/><text x="172.5" y="199">5</text>
+        <line class="axis" x1="295" y1="180" x2="295" y2="185"/><text x="295" y="199">10</text>
+        <line class="axis" x1="417.5" y1="180" x2="417.5" y2="185"/><text x="417.5" y="199">15</text>
+        <line class="axis" x1="540" y1="180" x2="540" y2="185"/><text x="540" y="199">20</text>
+        <text x="295" y="222">Wald statistic under H₀: χ²(1) ≈ F(1, 996); density cut off near 0</text>
+      </g>
+    </svg>
+    <figcaption>Under \(H_0\) the statistic rarely exceeds 3.85. The key's value of 17.2 lies far out in the tail, so equality of the time coefficients is rejected.</figcaption>
+  </figure>
+
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Wald_test" target="_blank" rel="noopener">Wald test</a>
+    <a href="https://en.wikipedia.org/wiki/Chi-squared_distribution" target="_blank" rel="noopener">χ² density plots</a>
+    <a href="https://en.wikipedia.org/wiki/F-test" target="_blank" rel="noopener">F-test</a>
+    <a href="https://www.statsmodels.org/stable/generated/statsmodels.regression.linear_model.RegressionResults.wald_test.html" target="_blank" rel="noopener">statsmodels wald_test</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p><code>wald_test</code> with a string restriction is the counterpart of <code>linearHypothesis(reg_2a, "time.car = -time.bus", vcov = vcovHC(reg_2a))</code>. Because <code>reg_2a</code> was fitted with HC3, the test uses the robust covariance.</p>
+  <div class="cell" data-title="2a.iii Wald test with statsmodels">
+<textarea spellcheck="false" aria-label="Python code: Wald test"># H0: beta_time_car + beta_time_bus = 0, using the HC3 covariance
+wald = reg_2a.wald_test("time_car + time_bus = 0", use_f=True, scalar=True)
+print(f"F = {wald.statistic:.3f},  df = ({int(wald.df_num)}, {int(wald.df_denom)}),  p = {wald.pvalue:.3g}")</textarea>
+  </div>
+
+  <div class="cell" data-title="Under the hood: the Wald statistic by hand">
+<textarea spellcheck="false" aria-label="Python code: Wald statistic by hand">R = np.array([0, 0, 1, 1])              # picks beta_time_car + beta_time_bus
+V = reg_2a.cov_params().to_numpy()       # robust (HC3) covariance matrix
+diff = R @ reg_2a.params.to_numpy()
+se = np.sqrt(R @ V @ R)
+W = (diff / se) ** 2                      # one restriction: W = t^2
+
+print(f"beta_time_car + beta_time_bus = {diff:.4f}   (robust SE {se:.4f})")
+print(f"Wald W = {W:.3f}   chi2(1) p-value = {stats.chi2.sf(W, 1):.3g}")
+print(f"5% critical values: chi2(1) = {stats.chi2.ppf(0.95, 1):.3f},  "
+      f"F(1, {int(reg_2a.df_resid)}) = {stats.f.ppf(0.95, 1, reg_2a.df_resid):.3f}")</textarea>
+  </div>
+
+  <div class="cell" data-title="What does an equal delay do?">
+<textarea spellcheck="false" aria-label="Python code: effect of an equal delay on both modes">delay = 5    # minutes added to BOTH the drive and the bus ride
+
+effect = delay * diff
+lo, hi = delay * (diff - 1.96 * se), delay * (diff + 1.96 * se)
+print(f"A {delay}-minute delay on both modes changes Pr(drive) by {100 * effect:+.1f} pp "
+      f"(95% CI {100 * lo:+.1f} to {100 * hi:+.1f})")
+print(f"Share driving: {df['car'].mean():.1%} now, {(df['prob_car_2a'] + effect).mean():.1%} predicted after the delay")</textarea>
+  </div>
+  <p class="try"><b>Try:</b> set <code>delay = 20</code> for a major snowstorm. The LPM predicts a share of drivers close to or below zero, the same flaw as in 2a.ii. Then test a different restriction, for example <code>"time_car = 2 * time_bus"</code>.</p>
+
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>linearHypothesis(reg_2a, 'time.car = -time.bus', vcov = vcovHC(reg_2a))
+
+## Hypothesis:
+## time.car  + time.bus = 0
+##
+## Model 1: restricted model
+## Model 2: car ~ cost.car + time.car + time.bus
+##
+##   Res.Df Df      F    Pr(&gt;F)
+## 1    997
+## 2    996  1 17.203 3.646e-05 ***</pre>
+      <p>The Wald test indicates that the time coefficients are statistically different from one another. This is intuitive because driving and riding a bus are different experiences; for example, a student can read or catch up on email on the bus but not while driving. So a minute in each mode can affect the choice differently. The marginal effect of driving time is larger in absolute value, so an equal increase in the time of both modes would decrease the utility of driving and cause some drivers to switch to the bus.</p>
+    </div>
+  </details>
+
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>From the key: \(-0.0653+0.0284=-0.0369\). How many percentage points does a 5-minute delay on both modes move the share of drivers? (About \(5\times 3.7 = 18.5\).)</li>
+      <li>Would you expect the gap between the two time coefficients to be larger or smaller in spring, when walking and biking are options too? (Problem set 2 uses that data.)</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  Source: ResEcon 703 Problem Set 1 solutions (UMass Amherst). R code and output in the solution keys are reproduced from that document; Python translations, theory notes, figures and the simulated stand-in data were written for this class page. Python runs in the browser with <a href="https://pyodide.org/" target="_blank" rel="noopener">Pyodide</a>; the first load downloads about 30&nbsp;MB.
+</footer>
+</main>
+</div>
+
+<script>
+(() => {
+  const PYODIDE_BASE = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+  const PACKAGES = ["numpy", "pandas", "matplotlib", "scipy", "statsmodels"];
+
+  // Python side: run a cell in a shared namespace, capture prints, tables and figures
+  const KERNEL = `
+import sys, io, ast, json, base64, traceback
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+plt.rcParams.update({"figure.dpi": 100, "axes.spines.top": False, "axes.spines.right": False,
+                     "font.size": 10, "axes.titleweight": "bold"})
+_NS = {"__name__": "__main__"}
+
+def _run_cell(src):
+    buf = io.StringIO()
+    old = sys.stdout, sys.stderr
+    sys.stdout = sys.stderr = buf
+    html, err = None, None
+    try:
+        tree = ast.parse(src, "<cell>", "exec")
+        last = None
+        if tree.body and isinstance(tree.body[-1], ast.Expr):
+            last = ast.Expression(tree.body.pop().value)
+        exec(compile(tree, "<cell>", "exec"), _NS)
+        if last is not None:
+            val = eval(compile(last, "<cell>", "eval"), _NS)
+            if val is not None:
+                rh = getattr(val, "_repr_html_", None)
+                h = rh() if callable(rh) else None
+                if h:
+                    html = h
+                else:
+                    print(repr(val))
+    except Exception:
+        etype, evalue, tb = sys.exc_info()
+        lines = [f for f in traceback.extract_tb(tb) if f.filename == "<cell>"]
+        where = f"Line {lines[-1].lineno}: " if lines else ""
+        err = where + "".join(traceback.format_exception_only(etype, evalue)).strip()
+    finally:
+        sys.stdout, sys.stderr = old
+    figs = []
+    for num in plt.get_fignums():
+        b = io.BytesIO()
+        plt.figure(num).savefig(b, format="png", dpi=110, bbox_inches="tight", facecolor="white")
+        figs.append(base64.b64encode(b.getvalue()).decode("ascii"))
+    plt.close("all")
+    return json.dumps({"stdout": buf.getvalue(), "html": html, "figs": figs, "error": err})
+`;
+
+  const pill = document.getElementById("py-pill");
+  const pillMsg = document.getElementById("py-msg");
+  const setStatus = (state, msg) => { pill.dataset.state = state; pillMsg.textContent = msg; };
+
+  // Build the cells
+  const cells = [...document.querySelectorAll(".cell")].map((el, i) => {
+    const ta = el.querySelector("textarea");
+    const original = ta.value;
+    const bar = document.createElement("div");
+    bar.className = "cell-bar";
+    bar.innerHTML = `<span class="cell-n">[ ]</span><span class="cell-title"></span>
+      <button type="button" class="reset">Reset</button><button type="button" class="run">Run ▸</button>`;
+    bar.querySelector(".cell-title").textContent = el.dataset.title || `Cell ${i + 1}`;
+    el.insertBefore(bar, ta);
+    const out = document.createElement("div");
+    out.className = "out"; out.setAttribute("aria-live", "polite");
+    el.appendChild(out);
+    ta.id = `cell-${i + 1}`;
+    const fit = () => { ta.style.height = "auto"; ta.style.height = (ta.scrollHeight + 4) + "px"; };
+    ta.addEventListener("input", fit);
+    requestAnimationFrame(fit);
+    ta.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && ev.shiftKey) { ev.preventDefault(); runUpTo(i); }
+      else if (ev.key === "Tab" && !ev.shiftKey) {
+        ev.preventDefault();
+        const s = ta.selectionStart, e = ta.selectionEnd;
+        ta.setRangeText("    ", s, e, "end");
+      }
+    });
+    const cell = { el, ta, out, original, fit, ran: false, n: bar.querySelector(".cell-n"),
+                   runBtn: bar.querySelector(".run") };
+    cell.runBtn.addEventListener("click", () => runUpTo(i));
+    bar.querySelector(".reset").addEventListener("click", () => { ta.value = original; fit(); });
+    return cell;
+  });
+
+  // Pyodide boot (once)
+  let pyPromise = null;
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src; s.onload = resolve;
+      s.onerror = () => reject(new Error("Could not download " + src));
+      document.head.appendChild(s);
+    });
+  }
+  function getPython() {
+    if (!pyPromise) {
+      pyPromise = (async () => {
+        setStatus("loading", "Downloading Python…");
+        await loadScript(PYODIDE_BASE + "pyodide.js");
+        const py = await loadPyodide({ indexURL: PYODIDE_BASE });
+        setStatus("loading", "Loading pandas, statsmodels…");
+        await py.loadPackage(PACKAGES);
+        py.runPython(KERNEL);
+        setStatus("ready", "Python ready");
+        return py;
+      })().catch((err) => {
+        pyPromise = null;
+        setStatus("error", "Python failed to load");
+        throw err;
+      });
+    }
+    return pyPromise;
+  }
+
+  // Cells run one at a time, in order
+  let queue = Promise.resolve();
+  let counter = 0;
+  function runUpTo(i) {
+    queue = queue.then(async () => {
+      let py;
+      try { py = await getPython(); }
+      catch (err) {
+        cells[i].out.innerHTML = "";
+        const pre = document.createElement("pre");
+        pre.className = "err";
+        pre.textContent = `${err.message}\nPython needs an internet connection to load the first time. The solution key below each question shows the expected output.`;
+        cells[i].out.appendChild(pre);
+        return;
+      }
+      for (let j = 0; j <= i; j++) {
+        if (j < i && cells[j].ran) continue;
+        const ok = await execCell(py, j);
+        if (!ok && j < i) {
+          const note = document.createElement("p");
+          note.className = "note";
+          note.textContent = `Stopped: cell [${j + 1}] above raised an error.`;
+          cells[i].out.innerHTML = ""; cells[i].out.appendChild(note);
+          return;
+        }
+      }
+    });
+    return queue;
+  }
+
+  async function execCell(py, j) {
+    const c = cells[j];
+    c.el.dataset.state = "running"; c.n.textContent = "[*]"; c.runBtn.disabled = true;
+    c.out.innerHTML = "";
+    await new Promise(requestAnimationFrame);
+    const res = JSON.parse(py.globals.get("_run_cell")(c.ta.value));
+    if (res.stdout) {
+      const pre = document.createElement("pre"); pre.textContent = res.stdout.replace(/\n$/, ""); c.out.appendChild(pre);
+    }
+    if (res.html) {
+      const div = document.createElement("div"); div.innerHTML = res.html; c.out.appendChild(div);
+    }
+    for (const b64 of res.figs) {
+      const img = document.createElement("img"); img.alt = "Figure produced by this cell"; img.src = "data:image/png;base64," + b64; c.out.appendChild(img);
+    }
+    if (res.error) {
+      const pre = document.createElement("pre"); pre.className = "err"; pre.textContent = res.error; c.out.appendChild(pre);
+    }
+    c.ran = !res.error;
+    c.el.dataset.state = res.error ? "error" : "done";
+    c.n.textContent = `[${++counter}]`;
+    c.runBtn.disabled = false;
+    return !res.error;
+  }
+
+  document.getElementById("run-all").addEventListener("click", () => {
+    cells.forEach((c) => { c.ran = false; });
+    runUpTo(cells.length - 1);
+  });
+
+  // Optional: load the real course CSV into Python's file system
+  const upload = document.getElementById("csv-upload");
+  const csvMsg = document.getElementById("csv-msg");
+  upload.addEventListener("change", async () => {
+    const file = upload.files[0];
+    if (!file) return;
+    csvMsg.textContent = "Loading Python to receive the file…";
+    try {
+      const py = await getPython();
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      py.FS.writeFile("commute_binary.csv", bytes);
+      cells.forEach((c) => { c.ran = false; });
+      csvMsg.textContent = `Loaded ${file.name}. Re-running all cells with the course data…`;
+      await runUpTo(cells.length - 1);
+      csvMsg.textContent = `Using ${file.name}. Results should now match the solution keys.`;
+    } catch (err) {
+      csvMsg.textContent = "Could not load the file: " + err.message;
+    }
+  });
+
+  // Math
+  window.addEventListener("load", () => {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [{ left: "\\[", right: "\\]", display: true }, { left: "\\(", right: "\\)", display: false }],
+        ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+        throwOnError: false
+      });
+    }
+    // Start Python in the background so it is ready when class begins
+    getPython().catch(() => {});
+  });
+})();
+</script>
+</body>
+</html>
