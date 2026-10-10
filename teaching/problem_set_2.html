@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PS2 Logit Commutes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+/* Layout: sticky question rail on the left, one reading column per question (prompt → theory → figure → code → key). */
+:root{
+  --paper:#F3F6F7; --surface:#FFFFFF; --muted:#E9EEF1; --ink:#17212A; --ink-2:#47545F; --ink-3:#77838E; --line:#D5DDE2;
+  --accent:#2B4E80; --accent-soft:#E2EAF5;
+  --car:#B4432F; --car-soft:#F6E3DE; --bus:#1F6F8B; --bus-soft:#DDEEF3;
+  --bike:#4F7A28; --walk:#7B4F9E; --mtn:#3E6B3A; --mtn-soft:#E1ECDD; --beach:#B4741A; --beach-soft:#F7EBD6;
+  --key:#FBF5E6; --key-line:#E7D9B2; --ok:#2E7D4F; --err:#B3261E; --err-soft:#FBE5E3;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:6px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0F151A; --surface:#161E25; --muted:#1D2730; --ink:#E3E9ED; --ink-2:#A8B3BD; --ink-3:#7C8893; --line:#2A353F;
+  --accent:#8FB2E6; --accent-soft:#1D2A3D;
+  --car:#E57C64; --car-soft:#3A2420; --bus:#5DB4D0; --bus-soft:#16303A;
+  --bike:#93C76C; --walk:#BB97DA; --mtn:#8DC085; --mtn-soft:#1C2E1C; --beach:#E5B160; --beach-soft:#33291A;
+  --key:#221F17; --key-line:#4A4128; --ok:#6CC495; --err:#F07B72; --err-soft:#3A1E1C;
+  color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --paper:#0F151A; --surface:#161E25; --muted:#1D2730; --ink:#E3E9ED; --ink-2:#A8B3BD; --ink-3:#7C8893; --line:#2A353F;
+  --accent:#8FB2E6; --accent-soft:#1D2A3D;
+  --car:#E57C64; --car-soft:#3A2420; --bus:#5DB4D0; --bus-soft:#16303A;
+  --bike:#93C76C; --walk:#BB97DA; --mtn:#8DC085; --mtn-soft:#1C2E1C; --beach:#E5B160; --beach-soft:#33291A;
+  --key:#221F17; --key-line:#4A4128; --ok:#6CC495; --err:#F07B72; --err-soft:#3A1E1C;
+  color-scheme:dark; }
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:20px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+a{color:var(--accent);text-underline-offset:2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;max-width:1180px;margin:0 auto;padding-inline:24px}
+
+/* Rail */
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;max-height:100vh;overflow-y:auto;padding-block:32px;font-family:var(--display)}
+.rail .course{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px}
+.rail .ps{font-size:22px;font-weight:750;line-height:1.1;margin:0 0 22px}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.rail a{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:baseline;padding:6px 8px;border-radius:var(--r);text-decoration:none;color:var(--ink-2);font-size:14px;line-height:1.3}
+.rail a:hover{background:var(--muted);color:var(--ink)}
+.rail a b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.rail .group{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:14px 8px 4px}
+.py-status{margin-top:24px;display:flex;flex-direction:column;gap:10px;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:var(--muted);color:var(--ink-2);width:max-content;max-width:100%}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex:none}
+.pill[data-state="loading"] i{background:var(--accent);animation:pulse 1s ease-in-out infinite}
+.pill[data-state="ready"] i{background:var(--ok)}
+.pill[data-state="error"] i{background:var(--err)}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion: reduce){.pill i{animation:none!important}}
+
+/* Main */
+main{min-width:0;padding-block:40px 120px}
+.hero{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:8px}
+.hero .eyebrow{font-family:var(--display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,5vw,54px);line-height:1.02;letter-spacing:-.02em;margin:10px 0 14px;text-wrap:balance}
+.hero h1 .car{color:var(--car)} .hero h1 .bus{color:var(--bus)} .hero h1 .mtn{color:var(--mtn)} .hero h1 .beach{color:var(--beach)}
+.hero p{max-width:66ch;margin:0 0 12px;color:var(--ink-2)}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px;font-family:var(--display);font-size:14px;line-height:1.4}
+.how div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;color:var(--ink-2)}
+.how b{display:block;color:var(--ink);margin-bottom:2px}
+
+section.q{overflow-wrap:break-word;padding-top:44px;border-top:1px solid var(--line);margin-top:44px}
+section.q:first-of-type{border-top:0;margin-top:0}
+.q-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.q-tag{font-family:var(--display);font-weight:800;font-size:15px;color:var(--surface);background:var(--ink);border-radius:4px;padding:2px 9px;font-variant-numeric:tabular-nums}
+.q h2{font-family:var(--display);font-weight:750;font-size:30px;line-height:1.15;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.q h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:30px 0 8px}
+.q p,.q li{max-width:68ch}
+.q ul,.q ol{padding-left:22px}
+.prompt{margin:18px 0 0;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);font-size:16px;color:var(--ink-2);max-width:72ch}
+.prompt b{color:var(--ink)}
+code{font-family:var(--mono);font-size:.84em;background:var(--muted);padding:1px 5px;border-radius:3px}
+.car-t{color:var(--car);font-weight:600} .bus-t{color:var(--bus);font-weight:600} .bike-t{color:var(--bike);font-weight:600} .walk-t{color:var(--walk);font-weight:600} .mtn-t{color:var(--mtn);font-weight:600} .beach-t{color:var(--beach);font-weight:600}
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 var(--r) var(--r) 0;max-width:68ch;margin:16px 0}
+.callout p{margin:6px 0}
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:4px 0}
+
+/* Figures */
+figure.fig{margin:20px 0;padding:14px 14px 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);max-width:720px}
+figure.fig svg{display:block;width:100%;height:auto}
+figure.fig figcaption{font-family:var(--display);font-size:13.5px;line-height:1.45;color:var(--ink-2);margin-top:8px}
+.fig-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;max-width:720px}
+.fig-row figure.fig{margin:0}
+svg text{font-family:var(--display);fill:var(--ink-2);font-size:12px}
+svg .t-strong{fill:var(--ink);font-weight:700}
+svg .t-car{fill:var(--car);font-weight:700} svg .t-bus{fill:var(--bus);font-weight:700} svg .t-err{fill:var(--err);font-weight:600}
+svg .axis{stroke:var(--ink-3);stroke-width:1;fill:none}
+svg .grid{stroke:var(--line);stroke-width:1;fill:none}
+svg .curve{stroke:var(--ink);stroke-width:2;fill:none}
+svg .area{fill:var(--muted);stroke:none}
+svg .l-car{stroke:var(--car);stroke-width:2.5;fill:none}
+svg .l-bus{stroke:var(--bus);stroke-width:2.5;fill:none}
+svg .l-acc{stroke:var(--accent);stroke-width:2.5;fill:none}
+svg .l-bike{stroke:var(--bike);stroke-width:2.5;fill:none} svg .l-walk{stroke:var(--walk);stroke-width:2.5;fill:none}
+svg .l-mtn{stroke:var(--mtn);stroke-width:2.5;fill:none} svg .l-beach{stroke:var(--beach);stroke-width:2.5;fill:none}
+svg .l-ink{stroke:var(--ink);stroke-width:2;fill:none} svg .l-dash{stroke-dasharray:6 4}
+svg .f-car{fill:var(--car)} svg .f-bus{fill:var(--bus)} svg .f-bike{fill:var(--bike)} svg .f-walk{fill:var(--walk)}
+svg .f-mtn{fill:var(--mtn)} svg .f-beach{fill:var(--beach)} svg .f-muted{fill:var(--muted)} svg .f-acc{fill:var(--accent)}
+svg .f-mtn-soft{fill:var(--mtn-soft)} svg .f-beach-soft{fill:var(--beach-soft)} svg .f-acc-soft{fill:var(--accent-soft)}
+svg .t-mtn{fill:var(--mtn);font-weight:700} svg .t-beach{fill:var(--beach);font-weight:700} svg .t-acc{fill:var(--accent);font-weight:700}
+svg .t-bike{fill:var(--bike);font-weight:700} svg .t-on{fill:var(--surface);font-weight:700} svg .t-walk{fill:var(--walk);font-weight:700} svg .t-small{font-size:11px}
+.cell .slow{font-family:var(--display);font-size:12px;color:var(--ink-3);font-weight:400}
+svg .band{fill:var(--err-soft);stroke:none}
+svg .rej{fill:var(--car-soft);stroke:none}
+svg .node{fill:var(--surface);stroke:var(--ink-3);stroke-width:1.2}
+svg .node-key{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .edge{stroke:var(--ink-3);stroke-width:1.4;fill:none}
+svg .arrowhead{fill:var(--ink-3)}
+.key-swatch{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+
+.see{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 4px;font-family:var(--display);font-size:13.5px}
+.see span{color:var(--ink-3);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+.see a{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);text-decoration:none;color:var(--ink)}
+.see a:hover{border-color:var(--accent);color:var(--accent)}
+.see a::after{content:"↗";color:var(--ink-3);font-size:11px}
+
+/* Code cells */
+.cell{margin:16px 0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;max-width:860px}
+.cell-bar{display:flex;align-items:center;gap:10px;padding:7px 8px 7px 12px;border-bottom:1px solid var(--line);background:var(--muted);font-family:var(--display);font-size:13.5px;flex-wrap:wrap}
+.cell-n{font-family:var(--mono);font-size:12px;color:var(--ink-3);min-width:34px}
+.cell-title{flex:1;min-width:0;color:var(--ink);font-weight:600}
+.cell-bar button{font-family:var(--display);font-size:13px;font-weight:650;border-radius:5px;padding:5px 12px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+.cell-bar button.run{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.cell-bar button:hover{filter:brightness(1.08)}
+.cell-bar button:disabled{opacity:.55;cursor:progress}
+.cell textarea{display:block;width:100%;border:0;resize:vertical;padding:12px 14px;margin:0;background:var(--surface);color:var(--ink);font-family:var(--mono);font-size:13.5px;line-height:1.55;tab-size:4;white-space:pre;overflow-x:auto;min-height:60px}
+.cell textarea:focus{outline:none;background:var(--paper)}
+.cell[data-state="running"] .cell-n{color:var(--accent)}
+.cell[data-state="done"] .cell-n{color:var(--ok)}
+.cell[data-state="error"] .cell-n{color:var(--err)}
+.out{border-top:1px dashed var(--line);padding:10px 14px;font-size:13.5px;overflow-x:auto}
+.out:empty{display:none}
+.out pre{margin:0;font-family:var(--mono);font-size:12.8px;line-height:1.5;white-space:pre;color:var(--ink)}
+.out pre.err{color:var(--err);background:var(--err-soft);padding:8px 10px;border-radius:4px;white-space:pre-wrap}
+.out .note{font-family:var(--display);color:var(--ink-3);font-size:13px}
+.out img{display:block;max-width:100%;height:auto;background:#FFFFFF;border-radius:4px;padding:6px;margin:8px 0}
+.out table{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;margin:4px 0}
+.out table{border:0}
+.out th,.out td{padding:4px 10px;border:0;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.out thead th{color:var(--ink-2);font-weight:600}
+.out tbody th{text-align:left;color:var(--ink)}
+.try{font-family:var(--display);font-size:13.5px;color:var(--ink-2);margin:-6px 0 16px;max-width:860px}
+.try b{color:var(--ink)}
+
+/* Solution key */
+details.key{margin:20px 0;border:1px solid var(--key-line);background:var(--key);border-radius:var(--r);max-width:860px}
+details.key summary{cursor:pointer;padding:10px 14px;font-family:var(--display);font-weight:650;font-size:14px;color:var(--ink)}
+details.key summary span{font-weight:400;color:var(--ink-3)}
+details.key .body{padding:0 16px 14px}
+details.key pre{font-family:var(--mono);font-size:12.5px;line-height:1.5;background:var(--surface);border:1px solid var(--key-line);border-radius:4px;padding:10px 12px;overflow-x:auto;margin:8px 0}
+.discuss{max-width:68ch;margin-top:18px;font-size:16px}
+.discuss h3{margin-top:22px}
+.discuss ol{margin:0}
+
+.upload{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-family:var(--display);font-size:14px;margin:12px 0;padding:12px 14px;border:1px dashed var(--line);border-radius:var(--r);max-width:860px;background:var(--surface)}
+.upload label{font-weight:650}
+.upload input{font-family:var(--display);font-size:13px;max-width:100%}
+.upload output{color:var(--ink-3)}
+.btn-all{font-family:var(--display);font-size:13px;font-weight:650;border-radius:5px;padding:7px 12px;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:var(--surface);width:max-content}
+footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--display);font-size:13px;color:var(--ink-3);max-width:72ch}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:0;padding-inline:16px}
+  .rail{position:static;max-height:none;padding-block:20px 0;border-bottom:1px solid var(--line)}
+  .rail ol{flex-direction:row;flex-wrap:wrap}
+  .rail a{grid-template-columns:auto;padding:4px 8px;border:1px solid var(--line)}
+  .rail a span{display:none}
+  .rail .group{display:none}
+  .py-status{flex-direction:row;flex-wrap:wrap;align-items:center;margin:14px 0 16px}
+  .how{grid-template-columns:minmax(0,1fr)}
+  .fig-row{grid-template-columns:minmax(0,1fr)}
+  .q h2{font-size:25px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav class="rail" aria-label="Questions">
+  <p class="course">ResEcon 703 · UMass Amherst</p>
+  <p class="ps">Problem Set 2</p>
+  <ol>
+    <li><a href="#setup"><b>0</b><span>Data &amp; setup</span></a></li>
+    <li class="group">Binary logit</li>
+    <li><a href="#p1a1"><b>1a.i</b><span>Logit coefficients</span></a></li>
+    <li><a href="#p1a2"><b>1a.ii</b><span>Marginal effects</span></a></li>
+    <li><a href="#p1a3"><b>1a.iii</b><span>Value of time</span></a></li>
+    <li><a href="#p1b1"><b>1b.i</b><span>Cost divided by income</span></a></li>
+    <li><a href="#p1b2"><b>1b.ii</b><span>Income and value of time</span></a></li>
+    <li class="group">Multinomial logit</li>
+    <li><a href="#p2a1"><b>2a.i</b><span>Four modes, one model</span></a></li>
+    <li><a href="#p2a2"><b>2a.ii</b><span>Elasticities and IIA</span></a></li>
+    <li><a href="#p2b1"><b>2b.i</b><span>Single vs. married</span></a></li>
+    <li><a href="#p2b2"><b>2b.ii</b><span>Can we compare them?</span></a></li>
+    <li><a href="#p2b3"><b>2b.iii</b><span>Value of time by group</span></a></li>
+    <li><a href="#p2c1"><b>2c.i</b><span>Faster buses</span></a></li>
+    <li><a href="#p2c2"><b>2c.ii</b><span>Consumer surplus</span></a></li>
+  </ol>
+  <div class="py-status">
+    <span class="pill" id="py-pill" data-state="idle"><i></i><span id="py-msg">Python not started</span></span>
+    <button class="btn-all" id="run-all" type="button">Run all cells</button>
+  </div>
+</nav>
+
+<main>
+<header class="hero">
+  <p class="eyebrow">Topics in Advanced Econometrics · Class notebook</p>
+  <h1>From straight lines to <span class="car">logits</span></h1>
+  <p>Problem set 1 modelled the winter choice between car and bus with a straight line. Here we replace it with the binary logit, which keeps probabilities between 0 and 1 and has a utility interpretation. Then spring arrives: biking and walking become options, and the multinomial logit lets us predict what faster buses would do to every mode.</p>
+  <p>The original problem set was solved in R with <code>glm()</code> and <code>mlogit()</code>. Every cell below is Python and runs in your browser.</p>
+  <div class="how">
+    <div><b>Run a cell</b>Press <em>Run</em> or Shift + Enter inside the code. Earlier cells run first if they haven't yet.</div>
+    <div><b>Edit freely</b>Change the code and re-run. <em>Reset</em> restores the original version.</div>
+    <div><b>Check the key</b>Each question ends with the official R output and answer, collapsed.</div>
+  </div>
+</header>
+
+<section class="q" id="setup">
+  <div class="q-head"><span class="q-tag">0</span><h2>Data and setup</h2></div>
+  <p>Two datasets describe the same 1,000 students. <code>commute_binary.csv</code> is the winter, when only the <span class="car-t">car</span> and the <span class="bus-t">bus</span> are feasible; it now also includes each student's <code>income</code> (in $ thousands) and <code>marital_status</code>. <code>commute_multinomial.csv</code> is the spring, when <span class="bike-t">biking</span> and <span class="walk-t">walking</span> are options too, with a time and a cost for each of the four modes.</p>
+  <p>Without the course files, the setup cell builds simulated stand-ins with the same columns. The winter data are the same simulation as in Problem Set 1, so the results connect across pages.</p>
+  <div class="upload">
+    <label for="csv-upload">Use the real data</label>
+    <input type="file" id="csv-upload" accept=".csv,text/csv" data-files="commute_binary.csv,commute_multinomial.csv" multiple>
+    <output id="csv-msg">No files loaded: cells use the simulated stand-ins.</output>
+  </div>
+  <p class="try">Accepted file names: <code>commute_binary.csv</code> and <code>commute_multinomial.csv</code>.</p>
+
+  <div class="cell" data-title="Load libraries and both datasets">
+<textarea spellcheck="false" aria-label="Python code: Load libraries and both datasets">import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.optimize import minimize
+from scipy.special import logsumexp
+from pathlib import Path
+import statsmodels.formula.api as smf
+
+CAR, BUS, BIKE, WALK, GREY = "#B4432F", "#1F6F8B", "#4F7A28", "#7B4F9E", "#9AA5B1"   # page colours
+
+def simulate_commute_binary(n=1000, seed=703):
+    """Stand-in for commute_binary.csv (winter: car or bus).
+    Choices come from a binary logit with known coefficients. An unobserved
+    taste for driving also nudges car lovers to live farther out, which makes
+    cost and time mildly endogenous (Problem Set 3 deals with that)."""
+    rng = np.random.default_rng(seed)
+    taste = rng.normal(0, 1, n)                                     # unobserved liking for driving
+    miles = 1 + rng.lognormal(np.log(3.2) + 0.08 * taste, 0.5, n)  # everyone lives &gt; 1 mile away
+    price_gas = np.round(rng.normal(3.2, 0.3, n), 2)               # $ per gallon
+    snowfall = np.round(rng.exponential(3, n), 1)                  # inches on the travel day
+    construction = rng.binomial(1, 0.25, n)                        # road works on the driving route
+    bus_detour = rng.binomial(1, 0.2, n)                           # detour on the bus route
+    time_car = np.maximum(3, np.round(2 + 1.7 * miles + 0.3 * snowfall + 3 * construction + rng.normal(0, 1.5, n)))
+    time_bus = np.maximum(4, np.round(4 + 1.8 * miles + 0.4 * snowfall + 4 * bus_detour + rng.normal(0, 3, n)))
+    mpg = rng.uniform(18, 50, n)
+    cost_car = np.round(miles * price_gas / mpg, 2)                # $ per trip
+    income = np.round(rng.uniform(15, 40, n), 1)                   # $ thousands per year
+    married = rng.random(n) &lt; 0.3
+    v = 2.4 - (55 / income) * cost_car - 0.33 * time_car + 0.13 * time_bus + 0.5 * taste
+    drives = v + rng.logistic(size=n) &gt; 0
+    return pd.DataFrame({"id": np.arange(1, n + 1), "mode": np.where(drives, "car", "bus"),
+                         "time.car": time_car, "cost.car": cost_car,
+                         "time.bus": time_bus, "cost.bus": 0.0,
+                         "price_gas": price_gas, "snowfall": snowfall,
+                         "construction": construction, "bus_detour": bus_detour,
+                         "income": income, "marital_status": np.where(married, "married", "single")})
+
+MODES = ["bike", "bus", "car", "walk"]          # alphabetical, like mlogit
+
+def simulate_commute_multinomial(n=1000, seed=703):
+    """Stand-in for commute_multinomial.csv (spring: bike, bus, car or walk).
+    Choices come from a multinomial logit; married students value time more."""
+    rng = np.random.default_rng(seed)
+    miles = 1 + rng.lognormal(np.log(1.6), 0.7, n)
+    married = rng.random(n) &lt; 0.3
+    income = np.round(rng.uniform(15, 40, n), 1)
+    price_gas = np.round(rng.normal(3.2, 0.3, n), 2)
+    mpg = rng.uniform(18, 50, n)
+    t = {"bike": np.round(2 + 4 * miles + rng.normal(0, 2, n)),
+         "bus": np.round(5 + 1.8 * miles + rng.normal(0, 3, n)),
+         "car": np.round(2 + 1.7 * miles + rng.normal(0, 1.5, n)),
+         "walk": np.round(14 * miles + rng.normal(0, 3, n))}
+    t = {m: np.maximum(3, x) for m, x in t.items()}                     # minutes
+    c = {"bike": np.zeros(n), "bus": np.zeros(n), "walk": np.zeros(n),
+         "car": np.round(miles * price_gas / mpg + 0.25, 2)}              # $ (fuel + wear)
+    asc = {"bike": 0.0, "bus": -1.3, "car": 1.55, "walk": 4.9}
+    gamma = {"bike": -0.29, "bus": -0.14, "car": -0.40, "walk": -0.30}
+    tmult = np.where(married, 1.5, 1.0)
+    V = np.column_stack([asc[m] - 2.6 * c[m] + gamma[m] * tmult * t[m] for m in MODES])
+    choice = np.argmax(V + rng.gumbel(size=V.shape), axis=1)             # utility maximisation
+    out = {"id": np.arange(1, n + 1), "mode": np.array(MODES)[choice]}
+    for m in ["car", "bus", "bike", "walk"]:
+        out[f"time.{m}"] = t[m]
+        out[f"cost.{m}"] = c[m]
+    out.update({"price_gas": price_gas, "income": income,
+                "marital_status": np.where(married, "married", "single")})
+    return pd.DataFrame(out)
+
+def load(name, simulate):
+    """Use the course file if it was uploaded, otherwise the simulated stand-in."""
+    if Path(name).exists():
+        return pd.read_csv(name), "course file"
+    return simulate(), "simulated stand-in"
+
+data_binary, src_b = load("commute_binary.csv", simulate_commute_binary)
+data_multi, src_m = load("commute_multinomial.csv", simulate_commute_multinomial)
+print(f"commute_binary:      {data_binary.shape[0]} rows x {data_binary.shape[1]} columns  ({src_b})")
+print(f"commute_multinomial: {data_multi.shape[0]} rows x {data_multi.shape[1]} columns  ({src_m})")
+data_multi.head()</textarea>
+  </div>
+
+</section>
+
+<section class="q" id="p1a1">
+  <div class="q-head"><span class="q-tag">1a.i</span><h2>The binary logit model</h2></div>
+  <div class="prompt">Model the choice to drive as a binary logit, \[\ln\Big(\frac{P_n}{1-P_n}\Big)=\beta_0+\beta_1C_{nc}+\beta_2T_{nc}+\beta_3T_{nb},\] where \(P_n\) is the probability that student \(n\) drives. Report the coefficients and standard errors and interpret them.</div>
+
+  <h3>Theory</h3>
+  <p><b>Random utility.</b> Student \(n\) gets utility \(U_{nj}=V_{nj}+\varepsilon_{nj}\) from mode \(j\), where \(V_{nj}\) depends on what we observe (cost, time) and \(\varepsilon_{nj}\) on what we don't. The student drives when \(U_{nc}&gt;U_{nb}\):</p>
+  \[P_n=\Pr(\varepsilon_{nb}-\varepsilon_{nc}&lt;V_{nc}-V_{nb}).\]
+  <p>If each \(\varepsilon\) is i.i.d. type-I extreme value (Gumbel), their difference is <b>logistic</b>, and</p>
+  \[P_n=\frac{1}{1+e^{-(V_{nc}-V_{nb})}}=\Lambda(x_n'\beta)\quad\Longleftrightarrow\quad \ln\frac{P_n}{1-P_n}=x_n'\beta .\]
+  <p>So the regression in the prompt is a model for the <b>log-odds</b> of driving. Each coefficient is a <b>marginal utility</b>: the change in the utility gap from one more dollar or minute. Its units are utils, and the util scale is set by fixing the variance of \(\varepsilon\) at \(\pi^2/3\). That is why coefficients are only meaningful relative to one another (2b.ii).</p>
+  <p><b>Estimation.</b> There is no error term to minimise squares of, so we use <b>maximum likelihood</b>:</p>
+  \[\ln L(\beta)=\sum_n \big[y_n\ln\Lambda(x_n'\beta)+(1-y_n)\ln(1-\Lambda(x_n'\beta))\big].\]
+  <p>R's <code>glm(family = "binomial")</code> maximises it by Fisher scoring; <code>statsmodels</code>' <code>Logit</code> uses Newton's method. Both give the same answer. In Problem Set 3 you will write this likelihood yourself.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="The logistic CDF rises in an S from 0 to 1; its slope, the logistic density, peaks at one quarter when the utility gap is zero">
+      <line class="grid" x1="52.0" y1="105.0" x2="556.0" y2="105.0"/>
+      <line class="grid" x1="52.0" y1="24.0" x2="556.0" y2="24.0"/>
+      <line class="grid" x1="52.0" y1="145.5" x2="556.0" y2="145.5"/>
+      <path class="l-car" d="M52.0,185.6 L56.2,185.6 L60.4,185.5 L64.6,185.5 L68.8,185.4 L73.0,185.3 L77.2,185.3 L81.4,185.2 L85.6,185.1 L89.8,185.0 L94.0,184.9 L98.2,184.8 L102.4,184.7 L106.6,184.5 L110.8,184.4 L115.0,184.2 L119.2,184.0 L123.4,183.8 L127.6,183.6 L131.8,183.4 L136.0,183.1 L140.2,182.8 L144.4,182.5 L148.6,182.1 L152.8,181.7 L157.0,181.3 L161.2,180.8 L165.4,180.2 L169.6,179.7 L173.8,179.0 L178.0,178.3 L182.2,177.6 L186.4,176.7 L190.6,175.8 L194.8,174.8 L199.0,173.7 L203.2,172.5 L207.4,171.2 L211.6,169.8 L215.8,168.3 L220.0,166.7 L224.2,164.9 L228.4,163.0 L232.6,161.0 L236.8,158.8 L241.0,156.4 L245.2,154.0 L249.4,151.3 L253.6,148.5 L257.8,145.5 L262.0,142.4 L266.2,139.2 L270.4,135.8 L274.6,132.2 L278.8,128.6 L283.0,124.8 L287.2,121.0 L291.4,117.1 L295.6,113.1 L299.8,109.0 L304.0,105.0 L308.2,101.0 L312.4,96.9 L316.6,92.9 L320.8,89.0 L325.0,85.2 L329.2,81.4 L333.4,77.8 L337.6,74.2 L341.8,70.8 L346.0,67.6 L350.2,64.5 L354.4,61.5 L358.6,58.7 L362.8,56.0 L367.0,53.6 L371.2,51.2 L375.4,49.0 L379.6,47.0 L383.8,45.1 L388.0,43.3 L392.2,41.7 L396.4,40.2 L400.6,38.8 L404.8,37.5 L409.0,36.3 L413.2,35.2 L417.4,34.2 L421.6,33.3 L425.8,32.4 L430.0,31.7 L434.2,31.0 L438.4,30.3 L442.6,29.8 L446.8,29.2 L451.0,28.7 L455.2,28.3 L459.4,27.9 L463.6,27.5 L467.8,27.2 L472.0,26.9 L476.2,26.6 L480.4,26.4 L484.6,26.2 L488.8,26.0 L493.0,25.8 L497.2,25.6 L501.4,25.5 L505.6,25.3 L509.8,25.2 L514.0,25.1 L518.2,25.0 L522.4,24.9 L526.6,24.8 L530.8,24.7 L535.0,24.7 L539.2,24.6 L543.4,24.5 L547.6,24.5 L551.8,24.4 L556.0,24.4"/>
+      <path class="l-acc l-dash" d="M52.0,185.6 L56.2,185.6 L60.4,185.5 L64.6,185.5 L68.8,185.4 L73.0,185.3 L77.2,185.3 L81.4,185.2 L85.6,185.1 L89.8,185.0 L94.0,184.9 L98.2,184.8 L102.4,184.7 L106.6,184.6 L110.8,184.4 L115.0,184.2 L119.2,184.1 L123.4,183.9 L127.6,183.6 L131.8,183.4 L136.0,183.1 L140.2,182.8 L144.4,182.5 L148.6,182.2 L152.8,181.8 L157.0,181.4 L161.2,180.9 L165.4,180.4 L169.6,179.9 L173.8,179.3 L178.0,178.7 L182.2,178.0 L186.4,177.2 L190.6,176.4 L194.8,175.6 L199.0,174.6 L203.2,173.6 L207.4,172.6 L211.6,171.5 L215.8,170.3 L220.0,169.0 L224.2,167.7 L228.4,166.3 L232.6,164.8 L236.8,163.4 L241.0,161.8 L245.2,160.3 L249.4,158.7 L253.6,157.2 L257.8,155.6 L262.0,154.1 L266.2,152.7 L270.4,151.3 L274.6,150.1 L278.8,148.9 L283.0,147.9 L287.2,147.1 L291.4,146.4 L295.6,145.9 L299.8,145.6 L304.0,145.5 L308.2,145.6 L312.4,145.9 L316.6,146.4 L320.8,147.1 L325.0,147.9 L329.2,148.9 L333.4,150.1 L337.6,151.3 L341.8,152.7 L346.0,154.1 L350.2,155.6 L354.4,157.2 L358.6,158.7 L362.8,160.3 L367.0,161.8 L371.2,163.4 L375.4,164.8 L379.6,166.3 L383.8,167.7 L388.0,169.0 L392.2,170.3 L396.4,171.5 L400.6,172.6 L404.8,173.6 L409.0,174.6 L413.2,175.6 L417.4,176.4 L421.6,177.2 L425.8,178.0 L430.0,178.7 L434.2,179.3 L438.4,179.9 L442.6,180.4 L446.8,180.9 L451.0,181.4 L455.2,181.8 L459.4,182.2 L463.6,182.5 L467.8,182.8 L472.0,183.1 L476.2,183.4 L480.4,183.6 L484.6,183.9 L488.8,184.1 L493.0,184.2 L497.2,184.4 L501.4,184.6 L505.6,184.7 L509.8,184.8 L514.0,184.9 L518.2,185.0 L522.4,185.1 L526.6,185.2 L530.8,185.3 L535.0,185.3 L539.2,185.4 L543.4,185.5 L547.6,185.5 L551.8,185.6 L556.0,185.6"/>
+      <line class="axis" x1="52" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="186"/>
+      <line class="axis" x1="52.0" y1="186" x2="52.0" y2="191"/><text x="52.0" y="204" text-anchor="middle">-6</text>
+      <line class="axis" x1="136.0" y1="186" x2="136.0" y2="191"/><text x="136.0" y="204" text-anchor="middle">-4</text>
+      <line class="axis" x1="220.0" y1="186" x2="220.0" y2="191"/><text x="220.0" y="204" text-anchor="middle">-2</text>
+      <line class="axis" x1="304.0" y1="186" x2="304.0" y2="191"/><text x="304.0" y="204" text-anchor="middle">0</text>
+      <line class="axis" x1="388.0" y1="186" x2="388.0" y2="191"/><text x="388.0" y="204" text-anchor="middle">2</text>
+      <line class="axis" x1="472.0" y1="186" x2="472.0" y2="191"/><text x="472.0" y="204" text-anchor="middle">4</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">6</text>
+      <text x="45" y="190.0" text-anchor="end">0</text>
+      <text x="45" y="149.5" text-anchor="end">0.25</text>
+      <text x="45" y="109.0" text-anchor="end">0.5</text>
+      <text x="45" y="28.0" text-anchor="end">1</text>
+      <text x="304.0" y="224" text-anchor="middle">utility gap V = V_car − V_bus</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">probability</text>
+      <text class="t-car" x="400.6" y="46.7" text-anchor="start">P(drive) = Λ(V)</text>
+      <text class="t-acc" x="362.8" y="153.6" text-anchor="start">slope Λ(V)(1 − Λ(V)), max ¼</text>
+    </svg>
+    <figcaption>The binary logit turns the utility gap into a probability with the logistic function. Its slope (dashed) is largest, \(1/4\), where the student is indifferent, and fades to zero for students who almost surely drive or take the bus.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Logistic_regression" target="_blank" rel="noopener">Logistic regression</a>
+    <a href="https://en.wikipedia.org/wiki/Logistic_function" target="_blank" rel="noopener">Logistic function, plotted</a>
+    <a href="https://en.wikipedia.org/wiki/Gumbel_distribution" target="_blank" rel="noopener">Gumbel distribution</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train, Discrete Choice Methods ch. 3</a>
+    <a href="https://www.statsmodels.org/stable/generated/statsmodels.discrete.discrete_model.Logit.html" target="_blank" rel="noopener">statsmodels Logit</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p><code>smf.logit</code> is the counterpart of <code>glm(..., family = "binomial")</code>.</p>
+  <div class="cell" data-title="1a.i Estimate the binary logit">
+<textarea spellcheck="false" aria-label="Python code: 1a.i Estimate the binary logit">df_b = data_binary.rename(columns=lambda c: c.replace(".", "_"))     # formulas dislike dots
+df_b["car"] = (df_b["mode"] == "car").astype(int)
+
+model_1a = smf.logit("car ~ cost_car + time_car + time_bus", data=df_b).fit(disp=0)
+print(model_1a.summary2().tables[1].iloc[:, :4].round(5))
+print(f"\nNull deviance:     {-2 * model_1a.llnull:.1f} on {int(model_1a.nobs) - 1} degrees of freedom")
+print(f"Residual deviance: {-2 * model_1a.llf:.1f} on {int(model_1a.df_resid)} degrees of freedom")
+print(f"AIC: {model_1a.aic:.1f}")</textarea>
+  </div>
+  <div class="cell" data-title="Logit vs. the linear probability model">
+<textarea spellcheck="false" aria-label="Python code: Logit vs. the linear probability model"># Rule of thumb: the logit slope at P = 0.5 is beta / 4, so beta / 4 should be close to the LPM
+lpm = smf.ols("car ~ cost_car + time_car + time_bus", data=df_b).fit()
+pd.DataFrame({"logit beta": model_1a.params,
+              "logit beta / 4": model_1a.params / 4,
+              "LPM (PS1)": lpm.params}).round(4)</textarea>
+  </div>
+  <p class="try"><b>Try:</b> add <code>+ income</code> to the formula. Does income change the probability of driving once cost and time are controlled for?</p>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept)  2.23327    0.34662   6.443 1.17e-10 ***
+## cost.car    -2.07716    0.73245  -2.836  0.00457 **
+## time.car    -0.33222    0.03534  -9.400  &lt; 2e-16 ***
+## time.bus     0.13257    0.03240   4.092 4.28e-05 ***
+##
+##     Null deviance: 1365.5  on 999  degrees of freedom
+## Residual deviance: 1200.9  on 996  degrees of freedom
+## AIC: 1208.9</pre>
+      <p>All three independent variables have statistically significant and economically meaningful coefficients, which are interpreted as marginal utilities. The cost of driving and the time spent driving both decrease the utility of driving, and the time spent riding the bus increases the utility of driving relative to riding the bus.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>The logit coefficient on driving time is about five times the LPM coefficient. Does that mean the two models disagree?</li>
+      <li>Why can the logit estimate a coefficient on <code>time.bus</code> for the <em>car</em> utility, when bus time is a property of the bus?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p1a2">
+  <div class="q-head"><span class="q-tag">1a.ii</span><h2>Marginal effects, student by student</h2></div>
+  <div class="prompt">Calculate the marginal effect of each independent variable for each student (3 variables × 1000 students = 3000 marginal effects). For each variable, report the mean, minimum, maximum and quartiles. Compare them with your LPM estimates from Problem Set 1.</div>
+
+  <h3>Theory</h3>
+  <p>In the logit, a coefficient is not a change in probability. Differentiating \(P_n=\Lambda(x_n'\beta)\):</p>
+  \[\frac{\partial P_n}{\partial x_{nk}}=\beta_k\,P_n(1-P_n).\]
+  <p>The marginal effect has the sign of \(\beta_k\), but its size varies by student. It peaks at \(\beta_k/4\) when \(P_n=1/2\) and shrinks toward 0 as \(P_n\) approaches 0 or 1. With 1,000 students and 3 variables there are 3,000 marginal effects; we summarise their distribution.</p>
+  <p>The <b>average marginal effect</b> (the mean of these) is the logit's counterpart of an LPM coefficient. The two are usually close, because OLS fits the average slope of the probability curve. What the logit adds is the <b>heterogeneity</b> around that average.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="The logit marginal effect of driving time is a U-shaped curve reaching minus 0.083 at P equals one half, while the LPM effect is a flat line at minus 0.065">
+      <line class="axis" x1="74.0" y1="32.1" x2="556.0" y2="32.1"/>
+      <path class="l-car" d="M74.0,32.1 L78.8,37.4 L83.6,42.6 L88.5,47.8 L93.3,52.8 L98.1,57.7 L102.9,62.5 L107.7,67.1 L112.6,71.7 L117.4,76.2 L122.2,80.5 L127.0,84.8 L131.8,88.9 L136.7,93.0 L141.5,96.9 L146.3,100.7 L151.1,104.4 L155.9,108.0 L160.8,111.5 L165.6,114.9 L170.4,118.2 L175.2,121.4 L180.0,124.5 L184.9,127.4 L189.7,130.3 L194.5,133.0 L199.3,135.6 L204.1,138.2 L209.0,140.6 L213.8,142.9 L218.6,145.1 L223.4,147.2 L228.2,149.2 L233.1,151.1 L237.9,152.9 L242.7,154.5 L247.5,156.1 L252.3,157.6 L257.2,158.9 L262.0,160.1 L266.8,161.3 L271.6,162.3 L276.4,163.2 L281.3,164.0 L286.1,164.7 L290.9,165.3 L295.7,165.8 L300.5,166.2 L305.4,166.4 L310.2,166.6 L315.0,166.6 L319.8,166.6 L324.6,166.4 L329.5,166.2 L334.3,165.8 L339.1,165.3 L343.9,164.7 L348.7,164.0 L353.6,163.2 L358.4,162.3 L363.2,161.3 L368.0,160.1 L372.8,158.9 L377.7,157.6 L382.5,156.1 L387.3,154.5 L392.1,152.9 L396.9,151.1 L401.8,149.2 L406.6,147.2 L411.4,145.1 L416.2,142.9 L421.0,140.6 L425.9,138.2 L430.7,135.6 L435.5,133.0 L440.3,130.3 L445.1,127.4 L450.0,124.5 L454.8,121.4 L459.6,118.2 L464.4,114.9 L469.2,111.5 L474.1,108.0 L478.9,104.4 L483.7,100.7 L488.5,96.9 L493.3,93.0 L498.2,88.9 L503.0,84.8 L507.8,80.5 L512.6,76.2 L517.4,71.7 L522.3,67.1 L527.1,62.5 L531.9,57.7 L536.7,52.8 L541.5,47.8 L546.4,42.6 L551.2,37.4 L556.0,32.1"/>
+      <path class="l-bus l-dash" d="M74.0,137.8 L556.0,137.8"/>
+      <line class="axis" x1="74" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="74" y1="24" x2="74" y2="186"/>
+      <line class="axis" x1="74.0" y1="186" x2="74.0" y2="191"/><text x="74.0" y="204" text-anchor="middle">0</text>
+      <line class="axis" x1="194.5" y1="186" x2="194.5" y2="191"/><text x="194.5" y="204" text-anchor="middle">0.25</text>
+      <line class="axis" x1="315.0" y1="186" x2="315.0" y2="191"/><text x="315.0" y="204" text-anchor="middle">0.5</text>
+      <line class="axis" x1="435.5" y1="186" x2="435.5" y2="191"/><text x="435.5" y="204" text-anchor="middle">0.75</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">1</text>
+      <text x="67" y="165.7" text-anchor="end">−0.08</text>
+      <text x="67" y="133.3" text-anchor="end">−0.06</text>
+      <text x="67" y="100.9" text-anchor="end">−0.04</text>
+      <text x="67" y="68.5" text-anchor="end">−0.02</text>
+      <text x="67" y="36.1" text-anchor="end">0</text>
+      <text x="315.0" y="224" text-anchor="middle">student's probability of driving, P</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">effect of 1 min of driving</text>
+      <text class="t-car" x="315.0" y="182.7" text-anchor="middle">logit: β·P(1−P), min −0.083</text>
+      <text class="t-bus" x="315.0" y="129.8" text-anchor="middle">LPM: −0.065 for everyone</text>
+    </svg>
+    <figcaption>With the key's coefficients: in the logit, the effect of a minute of driving depends on where the student starts. It is largest for undecided students and vanishes for those who will drive (or ride) no matter what.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Logistic_regression#Interpretation_of_these_estimates" target="_blank" rel="noopener">Marginal effects in nonlinear models</a>
+    <a href="https://www.statsmodels.org/stable/generated/statsmodels.discrete.discrete_model.LogitResults.get_margeff.html" target="_blank" rel="noopener">statsmodels get_margeff</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 3.6: derivatives and elasticities</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="1a.ii Marginal effects for every student">
+<textarea spellcheck="false" aria-label="Python code: 1a.ii Marginal effects for every student">b = model_1a.params
+# Representative utility (log-odds) and probability of driving, as in the R code
+df_b["utility_1a"] = b["Intercept"] + b["cost_car"] * df_b["cost_car"] + b["time_car"] * df_b["time_car"] + b["time_bus"] * df_b["time_bus"]
+df_b["prob_car_1a"] = 1 / (1 + np.exp(-df_b["utility_1a"]))
+df_b["prob_prod_1a"] = df_b["prob_car_1a"] * (1 - df_b["prob_car_1a"])
+for v in ["cost_car", "time_car", "time_bus"]:
+    df_b[f"mfx_{v}"] = b[v] * df_b["prob_prod_1a"]
+
+summary = df_b.filter(like="mfx_").describe().loc[["min", "25%", "50%", "mean", "75%", "max"]]
+summary.loc["LPM (PS1)"] = lpm.params[["cost_car", "time_car", "time_bus"]].to_numpy()
+summary.round(5)</textarea>
+  </div>
+  <div class="cell" data-title="See the heterogeneity">
+<textarea spellcheck="false" aria-label="Python code: See the heterogeneity">fig, axes = plt.subplots(1, 3, figsize=(11, 3.2))
+for ax, v in zip(axes, ["cost_car", "time_car", "time_bus"]):
+    ax.hist(df_b[f"mfx_{v}"], bins=30, color=GREY, edgecolor="white")
+    ax.axvline(df_b[f"mfx_{v}"].mean(), color=CAR, lw=2, label="logit average")
+    ax.axvline(lpm.params[v], color=BUS, lw=2, ls="--", label="LPM")
+    ax.set_title(f"marginal effect of {v}")
+axes[0].legend(frameon=False, fontsize=8)
+fig.tight_layout()
+
+# statsmodels computes the same average marginal effects
+print(model_1a.get_margeff(at="overall").summary_frame().iloc[:, :2].round(5))</textarea>
+  </div>
+  <p class="try"><b>Try:</b> <code>model_1a.get_margeff(at="mean")</code> gives the effect at the average student instead. Why is it larger than the average effect?</p>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>##    mfx_cost_car       mfx_time_car        mfx_time_bus
+##  Min.   :-0.51929   Min.   :-0.083054   Min.   :0.0009629
+##  1st Qu.:-0.51007   1st Qu.:-0.081579   1st Qu.:0.0248228
+##  Median :-0.47723   Median :-0.076326   Median :0.0304589
+##  Mean   :-0.43143   Mean   :-0.069001   Mean   :0.0275357
+##  3rd Qu.:-0.38892   3rd Qu.:-0.062203   3rd Qu.:0.0325551
+##  Max.   :-0.01509   Max.   :-0.002413   Max.   :0.0331436</pre>
+      <p>The means of these marginal effects are comparable to the estimated coefficients in problem 2 of problem set 1, but there is heterogeneity around these means. For each marginal effect, there is a long tail that approaches zero, corresponding to students that have a probability of driving close to 0 or 1.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>The minimum marginal effect of driving time in the key is \(-0.0831\approx -0.3322/4\). What does that tell you about the students who have it?</li>
+      <li>For which students would the LPM and the logit give very different policy advice?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p1a3">
+  <div class="q-head"><span class="q-tag">1a.iii</span><h2>What is an hour worth?</h2></div>
+  <div class="prompt">Use your coefficient estimates to calculate the dollar value that a student places on each hour spent driving and on each hour spent on the bus.</div>
+
+  <h3>Theory</h3>
+  <p>Utility has no units, but a <b>ratio</b> of marginal utilities does. Hold utility fixed and trade time for money:</p>
+  \[dV=\beta_{T}\,dT+\beta_C\,dC=0\quad\Longrightarrow\quad \frac{dC}{dT}\Big|_{V}=-\frac{\beta_T}{\beta_C}.\]
+  <p>This is the <b>value of time</b>: the dollars that compensate one more minute of commuting, measured in $ per minute; multiply by 60 for $ per hour. The arbitrary util scale (and the variance of \(\varepsilon\)) cancels in the ratio.</p>
+  <p>The bus-time coefficient sits in the car utility with a positive sign: a longer bus ride makes driving relatively better. Its value of time uses \(|\beta_{T_b}/\beta_C|\), the money a student would give up for one less minute on the bus.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="Willingness to pay to save commute time rises linearly: 9.60 dollars per hour of driving and 3.83 dollars per hour on the bus">
+      <line class="grid" x1="52.0" y1="153.6" x2="556.0" y2="153.6"/>
+      <line class="grid" x1="52.0" y1="121.2" x2="556.0" y2="121.2"/>
+      <line class="grid" x1="52.0" y1="88.8" x2="556.0" y2="88.8"/>
+      <line class="grid" x1="52.0" y1="56.4" x2="556.0" y2="56.4"/>
+      <line class="grid" x1="52.0" y1="24.0" x2="556.0" y2="24.0"/>
+      <path class="l-car" d="M52.0,186.0 L60.4,183.4 L68.8,180.8 L77.2,178.2 L85.6,175.6 L94.0,173.0 L102.4,170.5 L110.8,167.9 L119.2,165.3 L127.6,162.7 L136.0,160.1 L144.4,157.5 L152.8,154.9 L161.2,152.3 L169.6,149.7 L178.0,147.1 L186.4,144.5 L194.8,142.0 L203.2,139.4 L211.6,136.8 L220.0,134.2 L228.4,131.6 L236.8,129.0 L245.2,126.4 L253.6,123.8 L262.0,121.2 L270.4,118.6 L278.8,116.0 L287.2,113.5 L295.6,110.9 L304.0,108.3 L312.4,105.7 L320.8,103.1 L329.2,100.5 L337.6,97.9 L346.0,95.3 L354.4,92.7 L362.8,90.1 L371.2,87.5 L379.6,85.0 L388.0,82.4 L396.4,79.8 L404.8,77.2 L413.2,74.6 L421.6,72.0 L430.0,69.4 L438.4,66.8 L446.8,64.2 L455.2,61.6 L463.6,59.0 L472.0,56.5 L480.4,53.9 L488.8,51.3 L497.2,48.7 L505.6,46.1 L514.0,43.5 L522.4,40.9 L530.8,38.3 L539.2,35.7 L547.6,33.1 L556.0,30.5"/>
+      <path class="l-bus" d="M52.0,186.0 L60.4,185.0 L68.8,183.9 L77.2,182.9 L85.6,181.9 L94.0,180.8 L102.4,179.8 L110.8,178.8 L119.2,177.7 L127.6,176.7 L136.0,175.7 L144.4,174.6 L152.8,173.6 L161.2,172.6 L169.6,171.5 L178.0,170.5 L186.4,169.5 L194.8,168.4 L203.2,167.4 L211.6,166.4 L220.0,165.3 L228.4,164.3 L236.8,163.3 L245.2,162.2 L253.6,161.2 L262.0,160.2 L270.4,159.1 L278.8,158.1 L287.2,157.0 L295.6,156.0 L304.0,155.0 L312.4,153.9 L320.8,152.9 L329.2,151.9 L337.6,150.8 L346.0,149.8 L354.4,148.8 L362.8,147.7 L371.2,146.7 L379.6,145.7 L388.0,144.6 L396.4,143.6 L404.8,142.6 L413.2,141.5 L421.6,140.5 L430.0,139.5 L438.4,138.4 L446.8,137.4 L455.2,136.4 L463.6,135.3 L472.0,134.3 L480.4,133.3 L488.8,132.2 L497.2,131.2 L505.6,130.2 L514.0,129.1 L522.4,128.1 L530.8,127.1 L539.2,126.0 L547.6,125.0 L556.0,124.0"/>
+      <line class="axis" x1="52" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="186"/>
+      <line class="axis" x1="52.0" y1="186" x2="52.0" y2="191"/><text x="52.0" y="204" text-anchor="middle">0</text>
+      <line class="axis" x1="178.0" y1="186" x2="178.0" y2="191"/><text x="178.0" y="204" text-anchor="middle">15</text>
+      <line class="axis" x1="304.0" y1="186" x2="304.0" y2="191"/><text x="304.0" y="204" text-anchor="middle">30</text>
+      <line class="axis" x1="430.0" y1="186" x2="430.0" y2="191"/><text x="430.0" y="204" text-anchor="middle">45</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">60</text>
+      <text x="45" y="190.0" text-anchor="end">$0</text>
+      <text x="45" y="157.6" text-anchor="end">$2</text>
+      <text x="45" y="125.2" text-anchor="end">$4</text>
+      <text x="45" y="92.8" text-anchor="end">$6</text>
+      <text x="45" y="60.4" text-anchor="end">$8</text>
+      <text x="45" y="28.0" text-anchor="end">$10</text>
+      <text x="304.0" y="224" text-anchor="middle">minutes of commute saved</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">willingness to pay</text>
+      <text class="t-car" x="539.2" y="25.7" text-anchor="end">driving: $9.60 / hour</text>
+      <text class="t-bus" x="539.2" y="116.0" text-anchor="end">bus: $3.83 / hour</text>
+    </svg>
+    <figcaption>Values of time from the key. Each line traces the money that leaves a student exactly as well off as before when their commute gets shorter.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Value_of_time" target="_blank" rel="noopener">Value of time</a>
+    <a href="https://en.wikipedia.org/wiki/Marginal_rate_of_substitution" target="_blank" rel="noopener">Marginal rate of substitution</a>
+    <a href="https://en.wikipedia.org/wiki/Willingness_to_pay" target="_blank" rel="noopener">Willingness to pay</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="1a.iii Dollar value of an hour in each mode">
+<textarea spellcheck="false" aria-label="Python code: 1a.iii Dollar value of an hour in each mode">vot_1a = (model_1a.params[["time_car", "time_bus"]] / model_1a.params["cost_car"]).abs() * 60
+print("Value of time, $ per hour:")
+print(vot_1a.round(2).to_string())</textarea>
+  </div>
+  <div class="cell" data-title="How precise is it? (delta method)">
+<textarea spellcheck="false" aria-label="Python code: How precise is it? (delta method)"># Standard error of a ratio of coefficients via the delta method
+V = model_1a.cov_params()
+for t in ["time_car", "time_bus"]:
+    bt, bc = model_1a.params[t], model_1a.params["cost_car"]
+    grad = np.zeros(len(model_1a.params))
+    grad[list(model_1a.params.index).index(t)] = 1 / bc
+    grad[list(model_1a.params.index).index("cost_car")] = -bt / bc**2
+    se = np.sqrt(grad @ V.to_numpy() @ grad) * 60
+    print(f"{t}: ${abs(bt / bc) * 60:.2f} per hour  (SE ${se:.2f}, 95% CI ${abs(bt / bc) * 60 - 1.96 * se:.2f} to ${abs(bt / bc) * 60 + 1.96 * se:.2f})")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>abs(coef(model_1a)[3:4] / coef(model_1a)[2]) * 60
+## time.car time.bus
+## 9.596257 3.829494</pre>
+      <p>Each hour of driving has a dollar value of $9.60 and each hour of bus riding has a dollar value of $3.83. In other words, a student would be willing to pay $9.60 to spend one less hour commuting by car but only $3.83 to spend one less hour commuting by bus.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>The cost coefficient is estimated less precisely than the time coefficients. How does that uncertainty show up in the confidence interval for the value of time?</li>
+      <li>Why might an hour on the bus be worth less to avoid than an hour behind the wheel?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p1b1">
+  <div class="q-head"><span class="q-tag">1b.i</span><h2>Let the cost coefficient fall with income</h2></div>
+  <div class="prompt">Again model the choice as a binary logit, but let the parameter on cost vary inversely with income: \[\ln\Big(\frac{P_n}{1-P_n}\Big)=\beta_0+\frac{\beta_1}{I_n}C_{nc}+\beta_2T_{nc}+\beta_3T_{nb}.\] Report and interpret the coefficients.</div>
+
+  <h3>Theory</h3>
+  <p>The cost coefficient is the marginal utility of a dollar spent, i.e. minus the <b>marginal utility of income</b>. With the standard specification it is the same for every student. Dividing cost by income lets it fall as income rises:</p>
+  \[V_{nc}-V_{nb}=\beta_0+\frac{\beta_1}{I_n}C_{nc}+\beta_2T_{nc}+\beta_3T_{nb},\qquad \frac{\partial V}{\partial C_{nc}}=\frac{\beta_1}{I_n}.\]
+  <p>This is a common way to put <b>observed heterogeneity</b> into a logit: interact a coefficient with a characteristic of the decision maker. It follows from a utility that is linear in \(\ln(\text{income}-\text{cost})\), approximated for small costs. The new \(\beta_1\) is in utils per (dollar / $ thousand of income), so it is much larger in size than before; the values that matter are \(\beta_1/I\) at chosen incomes.</p>
+  <p>The value of time now varies with income too: \(\big|\beta_T/(\beta_1/I_n)\big|\times 60=|\beta_T/\beta_1|\times 60\, I_n\). Richer students value time more, as economic theory predicts.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="The marginal utility of income, 53.6 divided by income, falls from 3.58 at 15 thousand dollars to 1.53 at 35 thousand dollars">
+      <line class="grid" x1="52.0" y1="153.6" x2="556.0" y2="153.6"/>
+      <line class="grid" x1="52.0" y1="121.2" x2="556.0" y2="121.2"/>
+      <line class="grid" x1="52.0" y1="88.8" x2="556.0" y2="88.8"/>
+      <line class="grid" x1="52.0" y1="56.4" x2="556.0" y2="56.4"/>
+      <line class="grid" x1="52.0" y1="24.0" x2="556.0" y2="24.0"/>
+      <path class="l-acc" d="M85.6,41.2 L93.6,46.7 L101.5,51.8 L109.5,56.5 L117.5,61.0 L125.5,65.1 L133.4,69.0 L141.4,72.6 L149.4,76.0 L157.4,79.2 L165.3,82.2 L173.3,85.1 L181.3,87.8 L189.2,90.4 L197.2,92.8 L205.2,95.1 L213.2,97.3 L221.1,99.4 L229.1,101.4 L237.1,103.3 L245.1,105.1 L253.0,106.9 L261.0,108.6 L269.0,110.2 L276.9,111.7 L284.9,113.2 L292.9,114.6 L300.9,116.0 L308.8,117.3 L316.8,118.5 L324.8,119.8 L332.8,120.9 L340.7,122.1 L348.7,123.2 L356.7,124.2 L364.7,125.3 L372.6,126.3 L380.6,127.2 L388.6,128.1 L396.5,129.0 L404.5,129.9 L412.5,130.8 L420.5,131.6 L428.4,132.4 L436.4,133.2 L444.4,133.9 L452.4,134.6 L460.3,135.3 L468.3,136.0 L476.3,136.7 L484.2,137.4 L492.2,138.0 L500.2,138.6 L508.2,139.2 L516.1,139.8 L524.1,140.4 L532.1,141.0 L540.1,141.5 L548.0,142.0 L556.0,142.6"/>
+      <circle class="f-car" cx="136.0" cy="70.2" r="4"/>
+      <text class="t-car" x="144.0" y="64.2" text-anchor="start">3.58</text>
+      <circle class="f-car" cx="304.0" cy="116.5" r="4"/>
+      <text class="t-car" x="312.0" y="110.5" text-anchor="start">2.15</text>
+      <circle class="f-car" cx="472.0" cy="136.4" r="4"/>
+      <text class="t-car" x="480.0" y="130.4" text-anchor="start">1.53</text>
+      <line class="axis" x1="52" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="186"/>
+      <line class="axis" x1="52.0" y1="186" x2="52.0" y2="191"/><text x="52.0" y="204" text-anchor="middle">10</text>
+      <line class="axis" x1="136.0" y1="186" x2="136.0" y2="191"/><text x="136.0" y="204" text-anchor="middle">15</text>
+      <line class="axis" x1="220.0" y1="186" x2="220.0" y2="191"/><text x="220.0" y="204" text-anchor="middle">20</text>
+      <line class="axis" x1="304.0" y1="186" x2="304.0" y2="191"/><text x="304.0" y="204" text-anchor="middle">25</text>
+      <line class="axis" x1="388.0" y1="186" x2="388.0" y2="191"/><text x="388.0" y="204" text-anchor="middle">30</text>
+      <line class="axis" x1="472.0" y1="186" x2="472.0" y2="191"/><text x="472.0" y="204" text-anchor="middle">35</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">40</text>
+      <text x="45" y="190.0" text-anchor="end">0</text>
+      <text x="45" y="157.6" text-anchor="end">1</text>
+      <text x="45" y="125.2" text-anchor="end">2</text>
+      <text x="45" y="92.8" text-anchor="end">3</text>
+      <text x="45" y="60.4" text-anchor="end">4</text>
+      <text x="45" y="28.0" text-anchor="end">5</text>
+      <text x="304.0" y="224" text-anchor="middle">income ($ thousands per year)</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">utils per $</text>
+    </svg>
+    <figcaption>Marginal utility of income \(-\beta_1/I_n\) from the key. A dollar matters less to richer students, so the same trip cost weighs less on their choice.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Marginal_utility" target="_blank" rel="noopener">Marginal utility</a>
+    <a href="https://patsy.readthedocs.io/en/latest/formulas.html" target="_blank" rel="noopener">patsy I() in formulas</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 2.5: income effects</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p><code>I(cost_car / income)</code> works in Python formulas exactly as in R.</p>
+  <div class="cell" data-title="1b.i Logit with cost divided by income">
+<textarea spellcheck="false" aria-label="Python code: 1b.i Logit with cost divided by income">model_1b = smf.logit("car ~ I(cost_car / income) + time_car + time_bus", data=df_b).fit(disp=0)
+print(model_1b.summary2().tables[1].iloc[:, :4].round(5))
+print(f"\nResidual deviance: {-2 * model_1b.llf:.1f}   AIC: {model_1b.aic:.1f}   (model 1a AIC: {model_1a.aic:.1f})")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>##                      Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept)          2.26541    0.33110   6.842 7.81e-12 ***
+## I(cost.car/income) -53.63314   14.54884  -3.686 0.000227 ***
+## time.car            -0.33521    0.03484  -9.622  &lt; 2e-16 ***
+## time.bus             0.13589    0.02880   4.719 2.37e-06 ***
+##
+## Residual deviance: 1194.9  on 996  degrees of freedom
+## AIC: 1202.9</pre>
+      <p>All three independent variables again have statistically significant and economically meaningful coefficients. The time coefficients are comparable to those estimated in part (a). The cost coefficient now varies with income; a higher level of income yields a lower marginal utility of income.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>The AIC is lower with cost divided by income. Is that a test of the restriction? What test would you use instead?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p1b2">
+  <div class="q-head"><span class="q-tag">1b.ii</span><h2>Income and the value of time</h2></div>
+  <div class="prompt">Use your estimates to calculate the marginal utility of income at incomes of $15,000, $25,000 and $35,000. At each income, also calculate the dollar value of an hour spent driving and of an hour on the bus.</div>
+
+  <h3>Theory</h3>
+  <p>Plug three incomes into the formulas from 1b.i. The marginal utility of income is \(-\beta_1/I\). The value of an hour in mode \(j\) is \(|\beta_{T_j}/(\beta_1/I)|\times60\). Income enters in $ thousands, so a student earning $25,000 has \(I=25\).</p>
+  <div class="cell" data-title="1b.ii Marginal utility of income and value of time">
+<textarea spellcheck="false" aria-label="Python code: 1b.ii Marginal utility of income and value of time">b1 = model_1b.params
+beta_inc = b1["I(cost_car / income)"]
+incomes = np.array([15, 25, 35])
+table_1b = pd.DataFrame({"income ($000)": incomes,
+                         "MU of income": -beta_inc / incomes,
+                         "VOT car ($/h)": np.abs(b1["time_car"] / (beta_inc / incomes)) * 60,
+                         "VOT bus ($/h)": np.abs(b1["time_bus"] / (beta_inc / incomes)) * 60})
+table_1b.round(3)</textarea>
+  </div>
+  <div class="cell" data-title="Value of driving time across the income range">
+<textarea spellcheck="false" aria-label="Python code: Value of driving time across the income range">inc = np.linspace(df_b["income"].min(), df_b["income"].max(), 100)
+fig, ax = plt.subplots(figsize=(6.5, 3.4))
+ax.plot(inc, np.abs(b1["time_car"] / (beta_inc / inc)) * 60, color=CAR, lw=2, label="driving")
+ax.plot(inc, np.abs(b1["time_bus"] / (beta_inc / inc)) * 60, color=BUS, lw=2, label="bus")
+ax.axhline(vot_1a["time_car"], color=CAR, ls=":", label="driving, model 1a")
+ax.set_xlabel("income ($ thousands)"); ax.set_ylabel("$ per hour"); ax.legend(frameon=False)
+fig.tight_layout()</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>-coef(model_1b)[2] / c(15, 25, 35)
+## [1] 3.575543 2.145326 1.532375
+
+##  time.car  time.bus  time.car  time.bus  time.car  time.bus
+##  5.625096  2.280260  9.375160  3.800433 13.125224  5.320607</pre>
+      <p>The marginal utility of income at each of these progressively higher incomes is 3.58, 2.15, and 1.53, respectively. At each of these incomes, each hour of driving has a dollar value of $5.63, $9.38, and $13.13, respectively; and each hour of bus riding has a dollar value of $2.28, $3.80, and $5.32, respectively.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>Model 1a gives one value of time for everyone. At which income does model 1b give the same value? Why is it near the average income?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p2a1">
+  <div class="q-head"><span class="q-tag">2a.i</span><h2>The multinomial logit</h2></div>
+  <div class="prompt">Model the spring commute choice as a multinomial logit with alternative-specific intercepts, a common cost parameter, and alternative-specific time parameters: \[V_{nj}=\alpha_j+\beta_1C_{nj}+\beta_jT_{nj}.\] Report and interpret the estimates.</div>
+
+  <h3>Theory</h3>
+  <p>With \(J\) alternatives and i.i.d. Gumbel errors, the probability that student \(n\) picks \(i\) is</p>
+  \[P_{ni}=\frac{e^{V_{ni}}}{\sum_{j=1}^{J}e^{V_{nj}}},\qquad V_{nj}=\alpha_j+\beta_1C_{nj}+\beta_jT_{nj}.\]
+  <p><b>Only differences in utility matter.</b> Adding a constant to every \(V_{nj}\) leaves all \(P_{ni}\) unchanged. So:</p>
+  <ul>
+    <li>one alternative-specific constant must be fixed. <code>mlogit</code> sets the first alternative alphabetically, <span class="bike-t">bike</span>, to 0, so each \(\alpha_j\) is the average utility of mode \(j\) <em>relative to biking</em>, for equal cost and time;</li>
+    <li>a variable that is the same for every alternative (like income) can only enter with alternative-specific coefficients.</li>
+  </ul>
+  <p><b>Generic vs. alternative-specific coefficients.</b> Cost has one coefficient: a dollar is a dollar. Time has four, one per mode, because a minute biking and a minute on the bus may feel different. In <code>mlogit</code>'s formula <code>mode ~ cost | 1 | time</code>, the three parts are generic variables, individual-specific variables (here just the constants), and alternative-specific coefficients.</p>
+  <p><b>Long data.</b> The likelihood needs \(V_{nj}\) for every student and mode, so the data become an \(N\times J\times K\) array: one row per student-mode pair. That is what <code>dfidx()</code> builds in R and what <code>long_design()</code> builds below.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="The Gumbel density is skewed right with mode zero and mean 0.577">
+      <path class="area" d="M52.0,186.0 L56.2,186.0 L60.4,186.0 L64.6,186.0 L68.8,186.0 L73.0,186.0 L77.2,186.0 L81.4,186.0 L85.6,185.9 L89.8,185.9 L94.0,185.7 L98.2,185.5 L102.4,185.1 L106.6,184.5 L110.8,183.6 L115.0,182.3 L119.2,180.5 L123.4,178.1 L127.6,175.0 L131.8,171.1 L136.0,166.4 L140.2,160.9 L144.4,154.6 L148.6,147.5 L152.8,139.7 L157.0,131.4 L161.2,122.7 L165.4,113.8 L169.6,104.9 L173.8,96.1 L178.0,87.7 L182.2,79.7 L186.4,72.4 L190.6,65.7 L194.8,59.9 L199.0,55.0 L203.2,51.0 L207.4,47.9 L211.6,45.8 L215.8,44.5 L220.0,44.1 L224.2,44.5 L228.4,45.6 L232.6,47.4 L236.8,49.8 L241.0,52.7 L245.2,56.0 L249.4,59.7 L253.6,63.7 L257.8,68.0 L262.0,72.4 L266.2,76.9 L270.4,81.6 L274.6,86.2 L278.8,90.9 L283.0,95.5 L287.2,100.0 L291.4,104.5 L295.6,108.8 L299.8,113.1 L304.0,117.1 L308.2,121.1 L312.4,124.9 L316.6,128.5 L320.8,132.0 L325.0,135.3 L329.2,138.4 L333.4,141.4 L337.6,144.2 L341.8,146.9 L346.0,149.4 L350.2,151.8 L354.4,154.0 L358.6,156.2 L362.8,158.1 L367.0,160.0 L371.2,161.8 L375.4,163.4 L379.6,164.9 L383.8,166.4 L388.0,167.7 L392.2,169.0 L396.4,170.2 L400.6,171.3 L404.8,172.3 L409.0,173.2 L413.2,174.1 L417.4,175.0 L421.6,175.7 L425.8,176.5 L430.0,177.1 L434.2,177.8 L438.4,178.3 L442.6,178.9 L446.8,179.4 L451.0,179.9 L455.2,180.3 L459.4,180.7 L463.6,181.1 L467.8,181.4 L472.0,181.8 L476.2,182.1 L480.4,182.3 L484.6,182.6 L488.8,182.9 L493.0,183.1 L497.2,183.3 L501.4,183.5 L505.6,183.7 L509.8,183.8 L514.0,184.0 L518.2,184.1 L522.4,184.3 L526.6,184.4 L530.8,184.5 L535.0,184.6 L539.2,184.7 L543.4,184.8 L547.6,184.9 L551.8,185.0 L556.0,185.0 L556.0,186.0 L551.8,186.0 L547.6,186.0 L543.4,186.0 L539.2,186.0 L535.0,186.0 L530.8,186.0 L526.6,186.0 L522.4,186.0 L518.2,186.0 L514.0,186.0 L509.8,186.0 L505.6,186.0 L501.4,186.0 L497.2,186.0 L493.0,186.0 L488.8,186.0 L484.6,186.0 L480.4,186.0 L476.2,186.0 L472.0,186.0 L467.8,186.0 L463.6,186.0 L459.4,186.0 L455.2,186.0 L451.0,186.0 L446.8,186.0 L442.6,186.0 L438.4,186.0 L434.2,186.0 L430.0,186.0 L425.8,186.0 L421.6,186.0 L417.4,186.0 L413.2,186.0 L409.0,186.0 L404.8,186.0 L400.6,186.0 L396.4,186.0 L392.2,186.0 L388.0,186.0 L383.8,186.0 L379.6,186.0 L375.4,186.0 L371.2,186.0 L367.0,186.0 L362.8,186.0 L358.6,186.0 L354.4,186.0 L350.2,186.0 L346.0,186.0 L341.8,186.0 L337.6,186.0 L333.4,186.0 L329.2,186.0 L325.0,186.0 L320.8,186.0 L316.6,186.0 L312.4,186.0 L308.2,186.0 L304.0,186.0 L299.8,186.0 L295.6,186.0 L291.4,186.0 L287.2,186.0 L283.0,186.0 L278.8,186.0 L274.6,186.0 L270.4,186.0 L266.2,186.0 L262.0,186.0 L257.8,186.0 L253.6,186.0 L249.4,186.0 L245.2,186.0 L241.0,186.0 L236.8,186.0 L232.6,186.0 L228.4,186.0 L224.2,186.0 L220.0,186.0 L215.8,186.0 L211.6,186.0 L207.4,186.0 L203.2,186.0 L199.0,186.0 L194.8,186.0 L190.6,186.0 L186.4,186.0 L182.2,186.0 L178.0,186.0 L173.8,186.0 L169.6,186.0 L165.4,186.0 L161.2,186.0 L157.0,186.0 L152.8,186.0 L148.6,186.0 L144.4,186.0 L140.2,186.0 L136.0,186.0 L131.8,186.0 L127.6,186.0 L123.4,186.0 L119.2,186.0 L115.0,186.0 L110.8,186.0 L106.6,186.0 L102.4,186.0 L98.2,186.0 L94.0,186.0 L89.8,186.0 L85.6,186.0 L81.4,186.0 L77.2,186.0 L73.0,186.0 L68.8,186.0 L64.6,186.0 L60.4,186.0 L56.2,186.0 L52.0,186.0 Z"/>
+      <path class="curve" d="M52.0,186.0 L56.2,186.0 L60.4,186.0 L64.6,186.0 L68.8,186.0 L73.0,186.0 L77.2,186.0 L81.4,186.0 L85.6,185.9 L89.8,185.9 L94.0,185.7 L98.2,185.5 L102.4,185.1 L106.6,184.5 L110.8,183.6 L115.0,182.3 L119.2,180.5 L123.4,178.1 L127.6,175.0 L131.8,171.1 L136.0,166.4 L140.2,160.9 L144.4,154.6 L148.6,147.5 L152.8,139.7 L157.0,131.4 L161.2,122.7 L165.4,113.8 L169.6,104.9 L173.8,96.1 L178.0,87.7 L182.2,79.7 L186.4,72.4 L190.6,65.7 L194.8,59.9 L199.0,55.0 L203.2,51.0 L207.4,47.9 L211.6,45.8 L215.8,44.5 L220.0,44.1 L224.2,44.5 L228.4,45.6 L232.6,47.4 L236.8,49.8 L241.0,52.7 L245.2,56.0 L249.4,59.7 L253.6,63.7 L257.8,68.0 L262.0,72.4 L266.2,76.9 L270.4,81.6 L274.6,86.2 L278.8,90.9 L283.0,95.5 L287.2,100.0 L291.4,104.5 L295.6,108.8 L299.8,113.1 L304.0,117.1 L308.2,121.1 L312.4,124.9 L316.6,128.5 L320.8,132.0 L325.0,135.3 L329.2,138.4 L333.4,141.4 L337.6,144.2 L341.8,146.9 L346.0,149.4 L350.2,151.8 L354.4,154.0 L358.6,156.2 L362.8,158.1 L367.0,160.0 L371.2,161.8 L375.4,163.4 L379.6,164.9 L383.8,166.4 L388.0,167.7 L392.2,169.0 L396.4,170.2 L400.6,171.3 L404.8,172.3 L409.0,173.2 L413.2,174.1 L417.4,175.0 L421.6,175.7 L425.8,176.5 L430.0,177.1 L434.2,177.8 L438.4,178.3 L442.6,178.9 L446.8,179.4 L451.0,179.9 L455.2,180.3 L459.4,180.7 L463.6,181.1 L467.8,181.4 L472.0,181.8 L476.2,182.1 L480.4,182.3 L484.6,182.6 L488.8,182.9 L493.0,183.1 L497.2,183.3 L501.4,183.5 L505.6,183.7 L509.8,183.8 L514.0,184.0 L518.2,184.1 L522.4,184.3 L526.6,184.4 L530.8,184.5 L535.0,184.6 L539.2,184.7 L543.4,184.8 L547.6,184.9 L551.8,185.0 L556.0,185.0"/>
+      <line class="l-acc l-dash" x1="252.3" y1="186.0" x2="252.3" y2="58.7"/>
+      <text class="t-acc" x="258.3" y="62.7" text-anchor="start">mean γ ≈ 0.577</text>
+      <line class="axis" x1="52" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="186"/>
+      <line class="axis" x1="108.0" y1="186" x2="108.0" y2="191"/><text x="108.0" y="204" text-anchor="middle">-2</text>
+      <line class="axis" x1="220.0" y1="186" x2="220.0" y2="191"/><text x="220.0" y="204" text-anchor="middle">0</text>
+      <line class="axis" x1="332.0" y1="186" x2="332.0" y2="191"/><text x="332.0" y="204" text-anchor="middle">2</text>
+      <line class="axis" x1="444.0" y1="186" x2="444.0" y2="191"/><text x="444.0" y="204" text-anchor="middle">4</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">6</text>
+      <text x="45" y="190.0" text-anchor="end">0</text>
+      <text x="45" y="151.4" text-anchor="end">0.1</text>
+      <text x="45" y="112.9" text-anchor="end">0.2</text>
+      <text x="45" y="74.3" text-anchor="end">0.3</text>
+      <text x="45" y="35.7" text-anchor="end">0.4</text>
+      <text x="304.0" y="224" text-anchor="middle">unobserved utility ε</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">density</text>
+    </svg>
+    <figcaption>Type-I extreme value (Gumbel) errors. The maximum of Gumbel variables is again Gumbel, which is what gives the logit its closed-form probabilities.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Multinomial_logistic_regression" target="_blank" rel="noopener">Multinomial logit</a>
+    <a href="https://en.wikipedia.org/wiki/Discrete_choice" target="_blank" rel="noopener">Discrete choice models</a>
+    <a href="https://en.wikipedia.org/wiki/Softmax_function" target="_blank" rel="noopener">Softmax function</a>
+    <a href="https://cran.r-project.org/web/packages/mlogit/index.html" target="_blank" rel="noopener">mlogit vignettes (R)</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 3</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p>Python has no <code>mlogit</code>, so the next cell defines a compact one: build the long design array, then maximise the log-likelihood with BFGS and the exact gradient. Problem Set 3 builds the same estimator step by step.</p>
+  <div class="cell" data-title="A small mlogit for Python">
+<textarea spellcheck="false" aria-label="Python code: A small mlogit for Python">def long_design(data, time_by_mode=True, asc=True):
+    """N x J x K array: one slice per student, one row per mode, one column per coefficient."""
+    N, J = len(data), len(MODES)
+    cols, names = [], []
+    if asc:                                            # bike is the reference mode
+        for j, m in enumerate(MODES[1:], start=1):
+            x = np.zeros((N, J)); x[:, j] = 1
+            cols.append(x); names.append(f"(Intercept):{m}")
+    cols.append(np.column_stack([data[f"cost.{m}"] for m in MODES])); names.append("cost")
+    if time_by_mode:                                   # alternative-specific time coefficients
+        for j, m in enumerate(MODES):
+            x = np.zeros((N, J)); x[:, j] = data[f"time.{m}"]
+            cols.append(x); names.append(f"time:{m}")
+    else:
+        cols.append(np.column_stack([data[f"time.{m}"] for m in MODES])); names.append("time")
+    return np.stack(cols, axis=2), names
+
+def logit_probs(X, beta):
+    V = X @ beta                                       # N x J representative utilities
+    return np.exp(V - logsumexp(V, axis=1, keepdims=True))
+
+def fit_mnl(X, y, names):
+    """Maximum likelihood for the multinomial logit; y holds the chosen column for each row."""
+    rows = np.arange(len(y))
+    def neg_ll(beta):
+        V = X @ beta
+        return -(V[rows, y] - logsumexp(V, axis=1)).sum()
+    def neg_grad(beta):
+        P = logit_probs(X, beta)
+        return -(X[rows, y] - np.einsum("nj,njk-&gt;nk", P, X)).sum(axis=0)
+    res = minimize(neg_ll, np.zeros(X.shape[2]), jac=neg_grad, method="BFGS", options={"gtol": 1e-8})
+    P = logit_probs(X, res.x)
+    D = X - np.einsum("nj,njk-&gt;nk", P, X)[:, None, :]  # deviations from probability-weighted means
+    H = np.einsum("nj,njk,njl-&gt;kl", P, D, D)           # information matrix
+    se = np.sqrt(np.diag(np.linalg.inv(H)))
+    z = res.x / se
+    table = pd.DataFrame({"Estimate": res.x, "Std. Error": se, "z-value": z,
+                          "Pr(&gt;|z|)": 2 * stats.norm.sf(np.abs(z))}, index=names)
+    shares = np.bincount(y, minlength=X.shape[1]) / len(y)
+    ll0 = np.sum(np.log(shares[y]))                    # constants-only model
+    return {"table": table, "params": pd.Series(res.x, index=names), "loglik": -res.fun,
+            "ll0": ll0, "probs": P, "cov": np.linalg.inv(H)}
+
+y_multi = data_multi["mode"].map({m: j for j, m in enumerate(MODES)}).to_numpy()
+X_2a, names_2a = long_design(data_multi)
+print("Design array (students, modes, coefficients):", X_2a.shape)
+print("Student 1, one row per mode:")
+pd.DataFrame(X_2a[0], index=MODES, columns=names_2a)</textarea>
+  </div>
+  <div class="cell" data-title="2a.i Estimate the multinomial logit">
+<textarea spellcheck="false" aria-label="Python code: 2a.i Estimate the multinomial logit">model_2a = fit_mnl(X_2a, y_multi, names_2a)
+print("Frequencies of alternatives:")
+print(data_multi["mode"].value_counts(normalize=True).sort_index().round(3).to_string(), "\n")
+print(model_2a["table"].round(6))
+print(f"\nLog-likelihood: {model_2a['loglik']:.2f}")
+print(f"McFadden R^2: {1 - model_2a['loglik'] / model_2a['ll0']:.4f}")
+print(f"Likelihood ratio test vs. constants only: chisq = {2 * (model_2a['loglik'] - model_2a['ll0']):.2f}")</textarea>
+  </div>
+  <p class="try"><b>Try:</b> call <code>long_design(data_multi, time_by_mode=False)</code> to impose one generic time coefficient. How much does the log-likelihood fall?</p>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## Frequencies of alternatives:choice
+##  bike   bus   car  walk
+## 0.113 0.453 0.375 0.059
+##
+## Coefficients :
+##                    Estimate Std. Error z-value  Pr(&gt;|z|)
+## (Intercept):bus  -0.219000   0.385544 -0.5680 0.5700161
+## (Intercept):car   2.745681   0.442595  6.2036 5.518e-10 ***
+## (Intercept):walk  2.975472   0.783182  3.7992 0.0001452 ***
+## cost             -2.604415   0.823533 -3.1625 0.0015643 **
+## time:bike        -0.289389   0.038564 -7.5041 6.195e-14 ***
+## time:bus         -0.143175   0.035108 -4.0781 4.540e-05 ***
+## time:car         -0.404666   0.046377 -8.7255 &lt; 2.2e-16 ***
+## time:walk        -0.296615   0.038420 -7.7204 1.155e-14 ***
+##
+## Log-Likelihood: -982.36
+## McFadden R^2:  0.1382
+## Likelihood ratio test : chisq = 315.07 (p.value = &lt; 2.22e-16)</pre>
+      <p>All independent variables again have statistically significant and economically meaningful parameters. The cost parameter is negative, indicating that the marginal utility of cost is negative and, hence, the marginal utility of income is positive. The time parameter varies by alternative and is negative for all four alternatives, indicating that the marginal utility of commute time is consistently negative regardless of commute mode. The parameter values differ, however, providing evidence that time driving creates the greatest disutility and time riding the bus creates the least disutility.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>Interpret the car intercept of 2.75: compared with what, holding what fixed?</li>
+      <li>Why can't we estimate a cost coefficient for biking alone?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p2a2">
+  <div class="q-head"><span class="q-tag">2a.ii</span><h2>Elasticities and IIA</h2></div>
+  <div class="prompt">Calculate the elasticity of each alternative with respect to the cost of driving for each student (4 × 1000 = 4000 elasticities). Report the mean, minimum, maximum and quartiles for each alternative. How do these substitution patterns relate to an important property of the logit model?</div>
+
+  <h3>Theory</h3>
+  <p>The elasticity of \(P_{ni}\) with respect to the cost of driving \(C_{nc}\) follows from differentiating the logit formula:</p>
+  \[E_{P_{nc},C_{nc}}=\beta_1 C_{nc}(1-P_{nc})\ \ \text{(own)},\qquad E_{P_{ni},C_{nc}}=-\beta_1 C_{nc}P_{nc}\ \ \text{for every } i\neq c\ \ \text{(cross)}.\]
+  <p>The cross-elasticity does not depend on \(i\): biking, the bus and walking all gain the same <em>percentage</em>. This is the <b>independence of irrelevant alternatives (IIA)</b>. The ratio of any two probabilities,</p>
+  \[\frac{P_{ni}}{P_{nk}}=e^{V_{ni}-V_{nk}},\]
+  <p>depends only on \(i\) and \(k\). A change to the car cannot change how students split between bus and bike. If former drivers were more likely to switch to the bus (another motorised, weatherproof mode) than to walk, the logit would get the substitution wrong. That is the famous <b>red bus / blue bus</b> problem, and the reason for nested and mixed logits (Problem Sets 4 and 5).</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 170" role="img" aria-label="Two stacked bars: when the car share falls from 37.5 to 30 percent, bike, bus and walk shares all grow by the same 12 percent">
+      <rect class="f-bike" x="110.0" y="19.0" width="50.8" height="36.0"/>
+      <text class="t-on" x="135.4" y="41.0" text-anchor="middle">0.113</text>
+      <rect class="f-bus" x="160.8" y="19.0" width="203.9" height="36.0"/>
+      <text class="t-on" x="262.8" y="41.0" text-anchor="middle">0.453</text>
+      <rect class="f-car" x="364.7" y="19.0" width="168.8" height="36.0"/>
+      <text class="t-on" x="449.1" y="41.0" text-anchor="middle">0.375</text>
+      <rect class="f-walk" x="533.5" y="19.0" width="26.5" height="36.0"/>
+      <text class="t-strong" x="100.0" y="41.0" text-anchor="end">before</text>
+      <rect class="f-bike" x="110.0" y="79.0" width="57.0" height="36.0"/>
+      <text class="t-on" x="138.5" y="101.0" text-anchor="middle">0.127</text>
+      <rect class="f-bus" x="167.0" y="79.0" width="228.3" height="36.0"/>
+      <text class="t-on" x="281.1" y="101.0" text-anchor="middle">0.507</text>
+      <rect class="f-car" x="395.3" y="79.0" width="135.0" height="36.0"/>
+      <text class="t-on" x="462.8" y="101.0" text-anchor="middle">0.300</text>
+      <rect class="f-walk" x="530.3" y="79.0" width="29.7" height="36.0"/>
+      <text class="t-strong" x="100.0" y="101.0" text-anchor="end">car costs more</text>
+      <text x="110" y="162" class="t-bike">bike</text><text x="160" y="162" class="t-bus">bus</text><text x="205" y="162" class="t-car">car</text><text x="245" y="162" class="t-walk">walk</text>
+      <text x="560" y="162" text-anchor="end">every other share × 1.12</text>
+    </svg>
+    <figcaption>Proportional substitution under IIA, using the key's shares. When driving gets more expensive, the riders the car loses are spread across bike, bus and walk in proportion to their existing shares.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Independence_of_irrelevant_alternatives" target="_blank" rel="noopener">Independence of irrelevant alternatives</a>
+    <a href="https://en.wikipedia.org/wiki/Independence_of_irrelevant_alternatives#Examples" target="_blank" rel="noopener">Red bus / blue bus</a>
+    <a href="https://en.wikipedia.org/wiki/Cross_elasticity_of_demand" target="_blank" rel="noopener">Cross elasticity of demand</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 3.3: IIA</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="2a.ii Own- and cross-elasticities of driving cost">
+<textarea spellcheck="false" aria-label="Python code: 2a.ii Own- and cross-elasticities of driving cost">beta_cost = model_2a["params"]["cost"]
+P_2a = model_2a["probs"]                       # N x 4, columns in MODES order
+data_multi["prob_car_2a"] = P_2a[:, MODES.index("car")]
+data_multi["elas_own_car_cost_2a"] = beta_cost * data_multi["cost.car"] * (1 - data_multi["prob_car_2a"])
+data_multi["elas_cross_car_cost_2a"] = -beta_cost * data_multi["cost.car"] * data_multi["prob_car_2a"]
+data_multi.filter(like="elas_").describe().loc[["min", "25%", "50%", "mean", "75%", "max"]].round(4)</textarea>
+  </div>
+  <div class="cell" data-title="See IIA happen">
+<textarea spellcheck="false" aria-label="Python code: See IIA happen"># Raise every student's driving cost by $1 and recompute the probabilities
+X_dear = X_2a.copy()
+X_dear[:, MODES.index("car"), names_2a.index("cost")] += 1.0
+P_dear = logit_probs(X_dear, model_2a["params"].to_numpy())
+
+pct_change = (P_dear / P_2a - 1) * 100
+print("Student 1, % change in each probability:", {m: round(float(v), 2) for m, v in zip(MODES, pct_change[0])})
+print("Student 1, bus/bike ratio before and after:", round(float(P_2a[0, 1] / P_2a[0, 0]), 4), round(float(P_dear[0, 1] / P_dear[0, 0]), 4))
+
+fig, ax = plt.subplots(figsize=(6.5, 3.2))
+for j, (m, c) in enumerate(zip(MODES, [BIKE, BUS, CAR, WALK])):
+    ax.scatter(P_2a[:, 2], pct_change[:, j], s=6, color=c, label=m, alpha=0.6)
+ax.axhline(0, color="black", lw=0.8)
+ax.set_xlabel("initial probability of driving"); ax.set_ylabel("% change in probability")
+ax.legend(frameon=False, markerscale=3); fig.tight_layout()</textarea>
+  </div>
+  <p class="try"><b>Read it:</b> for every student the three non-car points sit on top of one another. Only the car's own change differs.</p>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>##  elas_own_car_cost_2a elas_cross_car_cost_2a
+##  Min.   :-4.6129      Min.   :0.02001
+##  1st Qu.:-0.8759      1st Qu.:0.25086
+##  Median :-0.5256      Median :0.34872
+##  Mean   :-0.7237      Mean   :0.34964
+##  3rd Qu.:-0.3550      3rd Qu.:0.44536
+##  Max.   :-0.1088      Max.   :0.91753</pre>
+      <p>All three other alternatives (biking, riding the bus, and walking) have the same elasticity with respect to the cost of driving. This common cross-elasticity is an example of the independence of irrelevant alternatives (IIA), which implies proportional substitution to or from all other alternatives.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>Give an example of a policy for which IIA would badly mislead the university.</li>
+      <li>Is IIA a property of each student or of the whole population? (Hint: it holds student by student but not for population shares when students differ.)</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p2b1">
+  <div class="q-head"><span class="q-tag">2b.i</span><h2>Single and married students, separately</h2></div>
+  <div class="prompt">Estimate the model from part (a) on two subsets: single students only, and married students only. Report and interpret the estimates.</div>
+
+  <h3>Theory</h3>
+  <p>Splitting the sample lets <em>every</em> coefficient differ between single and married students: different tastes for each mode, different sensitivity to cost and time. This is the most flexible way to model observed heterogeneity by a discrete characteristic. It costs precision, especially for the smaller group.</p>
+  <p>The pooled model of 2a is the special case where all coefficients are equal across groups. Because the pooled model is <b>nested</b> in the pair of split models, a likelihood ratio test compares them:</p>
+  \[LR=2\big[(\ln L_{\text{single}}+\ln L_{\text{married}})-\ln L_{\text{pooled}}\big]\sim\chi^2_{K}.\]
+  <p>A caveat: if only the <em>scale</em> of utility differs between groups (2b.ii), this test can reject even when tastes are identical.</p>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Likelihood-ratio_test" target="_blank" rel="noopener">Likelihood-ratio test</a>
+    <a href="https://en.wikipedia.org/wiki/Chow_test" target="_blank" rel="noopener">Chow test (the regression analogue)</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="2b.i Estimate one model per marital status">
+<textarea spellcheck="false" aria-label="Python code: 2b.i Estimate one model per marital status">models_2b = {}
+for status in ["single", "married"]:
+    keep = (data_multi["marital_status"] == status).to_numpy()
+    models_2b[status] = fit_mnl(X_2a[keep], y_multi[keep], names_2a)
+    print(f"{status}: {keep.sum()} students, log-likelihood {models_2b[status]['loglik']:.2f}")
+
+pd.concat({s: m["table"][["Estimate", "Std. Error", "Pr(&gt;|z|)"]] for s, m in models_2b.items()}, axis=1).round(4)</textarea>
+  </div>
+  <div class="cell" data-title="Do the groups differ? A likelihood ratio test">
+<textarea spellcheck="false" aria-label="Python code: Do the groups differ? A likelihood ratio test">lr = 2 * (models_2b["single"]["loglik"] + models_2b["married"]["loglik"] - model_2a["loglik"])
+df = len(names_2a)
+print(f"LR = {lr:.2f} with {df} degrees of freedom, p = {stats.chi2.sf(lr, df):.3g}")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## single students                      married students
+##                    Estimate  Pr(&gt;|z|)               Estimate  Pr(&gt;|z|)
+## (Intercept):bus  -0.552670 0.2210298  (Intercept):bus   0.154527 0.8466446
+## (Intercept):car   1.934913 0.0001041  (Intercept):car   4.781125 1.284e-06
+## (Intercept):walk  2.687992 0.0009754  (Intercept):walk  4.610041 0.0601533
+## cost             -2.711833 0.0077799  cost             -2.726736 0.0670753
+## time:bike        -0.272877 3.404e-09  time:bike        -0.362261 3.580e-06
+## time:bus         -0.128379 0.0039357  time:bus         -0.182139 0.0020125
+## time:car         -0.316254 2.854e-09  time:car         -0.656574 7.494e-11
+## time:walk        -0.269539 9.366e-12  time:walk        -0.439187 0.0007654
+## Log-Likelihood: -666.61                Log-Likelihood: -292.07</pre>
+      <p>In both models, the marginal utility parameters are again statistically significant (at the 10% level in some cases) and economically meaningful. They also have the same signs as in part (a), so the general interpretation is the same.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p2b2">
+  <div class="q-head"><span class="q-tag">2b.ii</span><h2>Can the two cost coefficients be compared?</h2></div>
+  <div class="prompt">Can you use your estimates to compare the marginal utility of income for single students to that for married students? If so, describe the difference. If not, explain why not. (Hint: think about what component of the random utility model is assumed to be the same in both models.)</div>
+
+  <h3>Theory</h3>
+  <p>Write utility with its true scale: \(U_{nj}=V^*_{nj}+\sigma\varepsilon_{nj}\), with \(\varepsilon\) standard Gumbel. Dividing by \(\sigma\) does not change any choice, so the logit estimates</p>
+  \[\beta=\frac{\beta^*}{\sigma}.\]
+  <p>We never see \(\beta^*\) and \(\sigma\) separately. Each logit fixes \(\sigma\) at the same value by assumption. If married students' unobserved utility is less noisy (smaller \(\sigma\)), all their coefficients look larger, even with identical tastes \(\beta^*\). So comparing a cost coefficient of \(-2.71\) to one of \(-2.73\) across models does <b>not</b> compare marginal utilities of income.</p>
+  <p>Ratios are safe: \(\beta_k/\beta_l=\beta^*_k/\beta^*_l\). The scale cancels, which is why 2b.iii can compare values of time.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="Two logistic densities: scale 1 is tall and narrow, scale 2 is flat and wide">
+      <path class="l-acc" d="M52.0,185.8 L55.1,185.8 L58.3,185.8 L61.4,185.7 L64.6,185.7 L67.8,185.7 L70.9,185.6 L74.1,185.6 L77.2,185.6 L80.4,185.5 L83.5,185.5 L86.6,185.4 L89.8,185.3 L92.9,185.3 L96.1,185.2 L99.2,185.1 L102.4,185.0 L105.6,184.9 L108.7,184.8 L111.9,184.7 L115.0,184.5 L118.1,184.4 L121.3,184.2 L124.5,184.0 L127.6,183.8 L130.8,183.6 L133.9,183.3 L137.1,183.0 L140.2,182.7 L143.4,182.4 L146.5,182.0 L149.6,181.6 L152.8,181.1 L156.0,180.6 L159.1,180.1 L162.2,179.5 L165.4,178.8 L168.6,178.1 L171.7,177.3 L174.9,176.4 L178.0,175.4 L181.2,174.3 L184.3,173.2 L187.4,171.9 L190.6,170.5 L193.8,168.9 L196.9,167.2 L200.1,165.4 L203.2,163.4 L206.4,161.3 L209.5,158.9 L212.7,156.3 L215.8,153.6 L219.0,150.6 L222.1,147.4 L225.2,143.9 L228.4,140.2 L231.6,136.3 L234.7,132.1 L237.9,127.7 L241.0,123.0 L244.2,118.1 L247.3,113.0 L250.5,107.6 L253.6,102.1 L256.8,96.5 L259.9,90.8 L263.1,85.0 L266.2,79.3 L269.4,73.6 L272.5,68.0 L275.6,62.7 L278.8,57.7 L282.0,53.0 L285.1,48.7 L288.2,45.0 L291.4,41.8 L294.6,39.3 L297.7,37.5 L300.9,36.4 L304.0,36.0 L307.1,36.4 L310.3,37.5 L313.5,39.3 L316.6,41.8 L319.8,45.0 L322.9,48.7 L326.1,53.0 L329.2,57.7 L332.4,62.7 L335.5,68.0 L338.6,73.6 L341.8,79.3 L345.0,85.0 L348.1,90.8 L351.2,96.5 L354.4,102.1 L357.6,107.6 L360.7,113.0 L363.9,118.1 L367.0,123.0 L370.2,127.7 L373.3,132.1 L376.5,136.3 L379.6,140.2 L382.8,143.9 L385.9,147.4 L389.1,150.6 L392.2,153.6 L395.4,156.3 L398.5,158.9 L401.7,161.3 L404.8,163.4 L408.0,165.4 L411.1,167.2 L414.2,168.9 L417.4,170.5 L420.6,171.9 L423.7,173.2 L426.9,174.3 L430.0,175.4 L433.2,176.4 L436.3,177.3 L439.5,178.1 L442.6,178.8 L445.8,179.5 L448.9,180.1 L452.1,180.6 L455.2,181.1 L458.4,181.6 L461.5,182.0 L464.7,182.4 L467.8,182.7 L471.0,183.0 L474.1,183.3 L477.2,183.6 L480.4,183.8 L483.6,184.0 L486.7,184.2 L489.9,184.4 L493.0,184.5 L496.2,184.7 L499.3,184.8 L502.5,184.9 L505.6,185.0 L508.8,185.1 L511.9,185.2 L515.0,185.3 L518.2,185.3 L521.4,185.4 L524.5,185.5 L527.7,185.5 L530.8,185.6 L534.0,185.6 L537.1,185.6 L540.2,185.7 L543.4,185.7 L546.5,185.7 L549.7,185.8 L552.9,185.8 L556.0,185.8"/>
+      <path class="l-walk" d="M52.0,180.7 L55.1,180.4 L58.3,180.2 L61.4,179.9 L64.6,179.6 L67.8,179.3 L70.9,178.9 L74.1,178.6 L77.2,178.2 L80.4,177.9 L83.5,177.5 L86.6,177.1 L89.8,176.6 L92.9,176.2 L96.1,175.7 L99.2,175.2 L102.4,174.7 L105.6,174.2 L108.7,173.6 L111.9,173.0 L115.0,172.4 L118.1,171.8 L121.3,171.2 L124.5,170.5 L127.6,169.8 L130.8,169.1 L133.9,168.3 L137.1,167.5 L140.2,166.7 L143.4,165.8 L146.5,165.0 L149.6,164.1 L152.8,163.1 L156.0,162.2 L159.1,161.2 L162.2,160.1 L165.4,159.1 L168.6,158.0 L171.7,156.8 L174.9,155.7 L178.0,154.5 L181.2,153.3 L184.3,152.0 L187.4,150.8 L190.6,149.5 L193.8,148.2 L196.9,146.8 L200.1,145.5 L203.2,144.1 L206.4,142.7 L209.5,141.3 L212.7,139.8 L215.8,138.4 L219.0,137.0 L222.1,135.5 L225.2,134.1 L228.4,132.6 L231.6,131.2 L234.7,129.8 L237.9,128.4 L241.0,127.0 L244.2,125.7 L247.3,124.3 L250.5,123.1 L253.6,121.8 L256.8,120.6 L259.9,119.5 L263.1,118.4 L266.2,117.4 L269.4,116.4 L272.5,115.5 L275.6,114.7 L278.8,113.9 L282.0,113.3 L285.1,112.7 L288.2,112.2 L291.4,111.7 L294.6,111.4 L297.7,111.2 L300.9,111.0 L304.0,111.0 L307.1,111.0 L310.3,111.2 L313.5,111.4 L316.6,111.7 L319.8,112.2 L322.9,112.7 L326.1,113.3 L329.2,113.9 L332.4,114.7 L335.5,115.5 L338.6,116.4 L341.8,117.4 L345.0,118.4 L348.1,119.5 L351.2,120.6 L354.4,121.8 L357.6,123.1 L360.7,124.3 L363.9,125.7 L367.0,127.0 L370.2,128.4 L373.3,129.8 L376.5,131.2 L379.6,132.6 L382.8,134.1 L385.9,135.5 L389.1,137.0 L392.2,138.4 L395.4,139.8 L398.5,141.3 L401.7,142.7 L404.8,144.1 L408.0,145.5 L411.1,146.8 L414.2,148.2 L417.4,149.5 L420.6,150.8 L423.7,152.0 L426.9,153.3 L430.0,154.5 L433.2,155.7 L436.3,156.8 L439.5,158.0 L442.6,159.1 L445.8,160.1 L448.9,161.2 L452.1,162.2 L455.2,163.1 L458.4,164.1 L461.5,165.0 L464.7,165.8 L467.8,166.7 L471.0,167.5 L474.1,168.3 L477.2,169.1 L480.4,169.8 L483.6,170.5 L486.7,171.2 L489.9,171.8 L493.0,172.4 L496.2,173.0 L499.3,173.6 L502.5,174.2 L505.6,174.7 L508.8,175.2 L511.9,175.7 L515.0,176.2 L518.2,176.6 L521.4,177.1 L524.5,177.5 L527.7,177.9 L530.8,178.2 L534.0,178.6 L537.1,178.9 L540.2,179.3 L543.4,179.6 L546.5,179.9 L549.7,180.2 L552.9,180.4 L556.0,180.7"/>
+      <line class="axis" x1="52" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="186"/>
+      <line class="axis" x1="52.0" y1="186" x2="52.0" y2="191"/><text x="52.0" y="204" text-anchor="middle">-8</text>
+      <line class="axis" x1="178.0" y1="186" x2="178.0" y2="191"/><text x="178.0" y="204" text-anchor="middle">-4</text>
+      <line class="axis" x1="304.0" y1="186" x2="304.0" y2="191"/><text x="304.0" y="204" text-anchor="middle">0</text>
+      <line class="axis" x1="430.0" y1="186" x2="430.0" y2="191"/><text x="430.0" y="204" text-anchor="middle">4</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">8</text>
+      <text x="45" y="190.0" text-anchor="end">0</text>
+      <text x="45" y="130.0" text-anchor="end">0.1</text>
+      <text x="45" y="70.0" text-anchor="end">0.2</text>
+      <text x="304.0" y="224" text-anchor="middle">ε_ni − ε_nj</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">density</text>
+      <text class="t-acc" x="341.8" y="45.0" text-anchor="start">σ = 1: coefficients β</text>
+      <text class="t-walk" x="404.8" y="132.0" text-anchor="start">σ = 2: coefficients β / 2</text>
+    </svg>
+    <figcaption>If one group has noisier unobserved utility, its estimated coefficients shrink by the same factor. Identical tastes then produce different-looking coefficients.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 2.5: normalisation of scale</a>
+    <a href="https://en.wikipedia.org/wiki/Logistic_distribution" target="_blank" rel="noopener">Logistic distribution</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p>A simulation makes the point concrete: take the pooled estimates as true tastes, generate choices twice (once with standard errors, once with errors twice as noisy) and re-estimate.</p>
+  <div class="cell" data-title="Same tastes, different noise">
+<textarea spellcheck="false" aria-label="Python code: Same tastes, different noise">rng = np.random.default_rng(1)
+beta_true = model_2a["params"].to_numpy()
+X_big = np.tile(X_2a, (10, 1, 1))              # 10 copies of every student: less sampling noise
+V_true = X_big @ beta_true
+results = {"true tastes": model_2a["params"]}
+for sigma in [1, 2]:
+    y_sim = np.argmax(V_true + sigma * rng.gumbel(size=V_true.shape), axis=1)
+    results[f"sigma = {sigma}"] = fit_mnl(X_big, y_sim, names_2a)["params"]
+compare = pd.DataFrame(results)
+compare.loc["VOT car ($/h)"] = compare.loc["time:car"] / compare.loc["cost"] * 60
+compare.loc["VOT bus ($/h)"] = compare.loc["time:bus"] / compare.loc["cost"] * 60
+compare.loc["time:car / time:bus"] = compare.loc["time:car"] / compare.loc["time:bus"]
+compare.round(3)</textarea>
+  </div>
+  <p class="try"><b>Read it:</b> with σ = 2 every coefficient is about half its true value, but the ratios (values of time, and time:car / time:bus) stay close to the truth. The cost coefficient is the least precise, so its ratios are the noisiest.</p>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>(No R code for this part.)</pre>
+      <p>The marginal utility parameters are not directly comparable because they are estimated in different models. In every logit model, the variance of the random utility component has the same assumed value. In reality, however, this variance may differ for single and married students. As a result, the parameters of these models are estimated relative to the true variance of the random utility component; greater variance of random utility yields lower parameter estimates. Thus, if single students and married students have different variances of random utility, these models could yield different parameter estimates, even for the same underlying preferences and valuations of commute time. Conversely, these models could yield similar parameter estimates, even for very different underlying preferences and valuations of commute time, so long as the variances differ similarly.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p2b3">
+  <div class="q-head"><span class="q-tag">2b.iii</span><h2>Value of time, single vs. married</h2></div>
+  <div class="prompt">For each marital status, calculate the dollar value of one hour of commute time for each of the four modes. Can you compare these values across the two groups? If so, describe the difference.</div>
+
+  <h3>Theory</h3>
+  <p>The value of an hour in mode \(j\) is \(|\beta_{T_j}/\beta_C|\times 60\). It is a ratio, so the unknown scale of each group's model cancels (2b.ii) and the two groups <em>can</em> be compared. To judge whether a difference is real, add a standard error with the delta method (as in 1a.iii) or bootstrap.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 252" role="img" aria-label="Value of an hour by mode for single and married students from the key">
+      <text x="140" y="30.0" text-anchor="end">bike, single</text>
+      <rect class="f-acc" x="150.0" y="21" width="135.8" height="12" rx="2"/>
+      <text class="t-strong" x="291.8" y="30.0" text-anchor="start">$6.04</text>
+      <text x="140" y="54.0" text-anchor="end">bike, married</text>
+      <rect class="f-bike" x="150.0" y="45" width="179.4" height="12" rx="2"/>
+      <text class="t-strong" x="335.4" y="54.0" text-anchor="start">$7.97</text>
+      <text x="140" y="78.0" text-anchor="end">bus, single</text>
+      <rect class="f-acc" x="150.0" y="69" width="63.9" height="12" rx="2"/>
+      <text class="t-strong" x="219.9" y="78.0" text-anchor="start">$2.84</text>
+      <text x="140" y="102.0" text-anchor="end">bus, married</text>
+      <rect class="f-bus" x="150.0" y="93" width="90.2" height="12" rx="2"/>
+      <text class="t-strong" x="246.2" y="102.0" text-anchor="start">$4.01</text>
+      <text x="140" y="126.0" text-anchor="end">car, single</text>
+      <rect class="f-acc" x="150.0" y="117" width="157.4" height="12" rx="2"/>
+      <text class="t-strong" x="313.4" y="126.0" text-anchor="start">$7.00</text>
+      <text x="140" y="150.0" text-anchor="end">car, married</text>
+      <rect class="f-car" x="150.0" y="141" width="325.1" height="12" rx="2"/>
+      <text class="t-strong" x="481.1" y="150.0" text-anchor="start">$14.45</text>
+      <text x="140" y="174.0" text-anchor="end">walk, single</text>
+      <rect class="f-acc" x="150.0" y="165" width="134.2" height="12" rx="2"/>
+      <text class="t-strong" x="290.2" y="174.0" text-anchor="start">$5.96</text>
+      <text x="140" y="198.0" text-anchor="end">walk, married</text>
+      <rect class="f-walk" x="150.0" y="189" width="217.4" height="12" rx="2"/>
+      <text class="t-strong" x="373.4" y="198.0" text-anchor="start">$9.66</text>
+      <line class="axis" x1="150.0" y1="12" x2="150.0" y2="212"/>
+      <text x="150.0" y="228" text-anchor="middle">0</text>
+      <text x="240.0" y="228" text-anchor="middle">4</text>
+      <text x="330.0" y="228" text-anchor="middle">8</text>
+      <text x="420.0" y="228" text-anchor="middle">12</text>
+      <text x="510.0" y="228" text-anchor="middle">16</text>
+      <text x="330.0" y="248" text-anchor="middle">$ per hour (solution key)</text>
+    </svg>
+    <figcaption>Values of time from the key. Married students value time more in every mode, most of all time spent driving.</figcaption>
+  </figure>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="2b.iii Value of time by mode and marital status">
+<textarea spellcheck="false" aria-label="Python code: 2b.iii Value of time by mode and marital status">vot_2b = pd.DataFrame({s: (m["params"][[f"time:{x}" for x in MODES]] / m["params"]["cost"]).abs() * 60
+                       for s, m in models_2b.items()})
+vot_2b.index = MODES
+vot_2b["married / single"] = vot_2b["married"] / vot_2b["single"]
+vot_2b.round(2)</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>abs(coef(model_2b_single)[5:8] / coef(model_2b_single)[4]) * 60
+## time:bike  time:bus  time:car time:walk
+##  6.037481  2.840412  6.997210  5.963612
+abs(coef(model_2b_married)[5:8] / coef(model_2b_married)[4]) * 60
+## time:bike  time:bus  time:car time:walk
+##  7.971306  4.007852 14.447473  9.664010</pre>
+      <p>A single student has an hourly dollar value of $6.04 for biking, $2.84 for riding the bus, $7.00 for driving, and $5.96 for walking. A married student has an hourly dollar value of $7.97 for biking, $4.01 for riding the bus, $14.45 for driving, and $9.66 for walking. Yes, these dollar values can be compared. Intuitively, dollars provide a standardized metric for comparison, unlike utility. Mathematically, taking the ratio of two model parameters cancels out the normalization due to the assumed variance of the random utility component. These hourly dollar values indicate that married students place a greater value on their commute time, especially time spent driving.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>Why might married students value driving time in particular so much more?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p2c1">
+  <div class="q-head"><span class="q-tag">2c.i</span><h2>Counterfactual: buses 20% faster</h2></div>
+  <div class="prompt">More buses on existing routes would cut bus commute time by 20%. Using your estimates from part (a), how many additional students (of 1000) do you expect to take the bus? How many fewer will choose each of the other three modes?</div>
+
+  <h3>Theory</h3>
+  <p>A counterfactual changes the data, not the model. With estimates \(\hat\theta\), predicted demand for mode \(j\) is the sum of choice probabilities:</p>
+  \[\widehat{D}_j=\sum_{n=1}^{N}P_{nj}(\hat\theta,\,x_n).\]
+  <p>Recompute with bus time multiplied by 0.8 and take the difference. Under IIA the new bus riders are drawn from each mode in proportion to that mode's probability, student by student. Summing over students with different probabilities is what makes the aggregate pattern less rigid.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 180" role="img" aria-label="Predicted change in students per mode from 20 percent faster buses: bus plus 78, car minus 55, bike minus 18, walk minus 6">
+      <text x="140" y="33.0" text-anchor="end">bike</text>
+      <rect class="f-bike" x="267.8" y="21" width="39.7" height="18" rx="2"/>
+      <text class="t-strong" x="261.8" y="33.0" text-anchor="end">-17.6</text>
+      <text x="140" y="63.0" text-anchor="end">bus</text>
+      <rect class="f-bus" x="307.5" y="51" width="175.9" height="18" rx="2"/>
+      <text class="t-strong" x="489.4" y="63.0" text-anchor="start">+78.2</text>
+      <text x="140" y="93.0" text-anchor="end">car</text>
+      <rect class="f-car" x="184.5" y="81" width="123.0" height="18" rx="2"/>
+      <text class="t-strong" x="178.5" y="93.0" text-anchor="end">-54.7</text>
+      <text x="140" y="123.0" text-anchor="end">walk</text>
+      <rect class="f-walk" x="294.4" y="111" width="13.1" height="18" rx="2"/>
+      <text class="t-strong" x="288.4" y="123.0" text-anchor="end">-5.8</text>
+      <line class="axis" x1="307.5" y1="12" x2="307.5" y2="140"/>
+      <text x="172.5" y="156" text-anchor="middle">-60</text>
+      <text x="240.0" y="156" text-anchor="middle">-30</text>
+      <text x="307.5" y="156" text-anchor="middle">0</text>
+      <text x="375.0" y="156" text-anchor="middle">30</text>
+      <text x="442.5" y="156" text-anchor="middle">60</text>
+      <text x="510.0" y="156" text-anchor="middle">90</text>
+      <text x="330.0" y="176" text-anchor="middle">change in expected students (solution key)</text>
+    </svg>
+    <figcaption>Expected change in the number of students using each mode when bus time falls by 20%, from the key. Most new riders come from the car, because the car is the most popular alternative (IIA again).</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Counterfactual_conditional" target="_blank" rel="noopener">Counterfactual analysis in demand models</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 2.6: aggregation and forecasting</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="2c.i Predict the effect of 20% faster buses">
+<textarea spellcheck="false" aria-label="Python code: 2c.i Predict the effect of 20% faster buses">data_counter = data_multi.copy()
+data_counter["time.bus"] = 0.8 * data_counter["time.bus"]
+X_counter, _ = long_design(data_counter)
+
+beta_2a = model_2a["params"].to_numpy()
+agg_choices_obs = logit_probs(X_2a, beta_2a).sum(axis=0)
+agg_choices_counter = logit_probs(X_counter, beta_2a).sum(axis=0)
+pd.DataFrame({"observed": agg_choices_obs, "faster buses": agg_choices_counter,
+              "change": agg_choices_counter - agg_choices_obs}, index=MODES).round(2)</textarea>
+  </div>
+  <p class="try"><b>Try:</b> what bus-time reduction would cut the number of drivers by 100?</p>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>colSums(agg_choices_counter - agg_choices_obs)
+##       bike        bus        car       walk
+## -17.646719  78.164883 -54.675570  -5.842595</pre>
+      <p>This reduction in bus commute time is expected to yield an additional 78.2 students riding the bus, or an additional 7.82% of the students in the dataset. Of these 78.2 additional bus riders, 17.6 previously biked, 54.7 previously drove, and 5.8 previously walked.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p2c2">
+  <div class="q-head"><span class="q-tag">2c.ii</span><h2>What is the policy worth?</h2></div>
+  <div class="prompt">How much additional economic surplus do you expect the reduction in bus commute time to generate for the 1000 students?</div>
+
+  <h3>Theory</h3>
+  <p>Students care about the <em>best</em> option they have. With Gumbel errors, the expected maximum utility has a closed form, the <b>log-sum</b>:</p>
+  \[\mathbb E\big[\max_j U_{nj}\big]=\ln\Big(\sum_j e^{V_{nj}}\Big)+C .\]
+  <p>The unknown constant \(C\) cancels in a <em>change</em>. Dividing by the marginal utility of income \(\alpha_n=-\beta_C\) converts utils to dollars:</p>
+  \[\Delta CS_n=\frac{1}{\alpha_n}\Big[\ln\sum_j e^{V^{1}_{nj}}-\ln\sum_j e^{V^{0}_{nj}}\Big].\]
+  <p>This requires utility to be linear in income (no income effects), which holds here because cost enters linearly. Summing over the 1,000 students gives the daily surplus gain to compare with the cost of running more buses.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="The log-sum curve is a smooth version of the maximum of bus utility and the best other option; it always lies above both">
+      <line class="grid" x1="52.0" y1="169.8" x2="556.0" y2="169.8"/>
+      <path class="l-ink l-dash" d="M52.0,169.8 L58.3,169.8 L64.6,169.8 L70.9,169.8 L77.2,169.8 L83.5,169.8 L89.8,169.8 L96.1,169.8 L102.4,169.8 L108.7,169.8 L115.0,169.8 L121.3,169.8 L127.6,169.8 L133.9,169.8 L140.2,169.8 L146.5,169.8 L152.8,169.8 L159.1,169.8 L165.4,169.8 L171.7,169.8 L178.0,169.8 L184.3,169.8 L190.6,169.8 L196.9,169.8 L203.2,169.8 L209.5,169.8 L215.8,169.8 L222.1,169.8 L228.4,169.8 L234.7,169.8 L241.0,169.8 L247.3,169.8 L253.6,169.8 L259.9,169.8 L266.2,169.8 L272.5,169.8 L278.8,169.8 L285.1,169.8 L291.4,169.8 L297.7,169.8 L304.0,169.8 L310.3,166.6 L316.6,163.3 L322.9,160.1 L329.2,156.8 L335.5,153.6 L341.8,150.4 L348.1,147.1 L354.4,143.9 L360.7,140.6 L367.0,137.4 L373.3,134.2 L379.6,130.9 L385.9,127.7 L392.2,124.4 L398.5,121.2 L404.8,118.0 L411.1,114.7 L417.4,111.5 L423.7,108.2 L430.0,105.0 L436.3,101.8 L442.6,98.5 L448.9,95.3 L455.2,92.0 L461.5,88.8 L467.8,85.6 L474.1,82.3 L480.4,79.1 L486.7,75.8 L493.0,72.6 L499.3,69.4 L505.6,66.1 L511.9,62.9 L518.2,59.6 L524.5,56.4 L530.8,53.2 L537.1,49.9 L543.4,46.7 L549.7,43.4 L556.0,40.2"/>
+      <path class="l-bus" d="M52.0,169.2 L58.3,169.2 L64.6,169.1 L70.9,169.0 L77.2,168.9 L83.5,168.8 L89.8,168.7 L96.1,168.6 L102.4,168.5 L108.7,168.4 L115.0,168.2 L121.3,168.1 L127.6,167.9 L133.9,167.7 L140.2,167.5 L146.5,167.2 L152.8,167.0 L159.1,166.7 L165.4,166.4 L171.7,166.1 L178.0,165.7 L184.3,165.3 L190.6,164.8 L196.9,164.4 L203.2,163.8 L209.5,163.3 L215.8,162.7 L222.1,162.0 L228.4,161.3 L234.7,160.5 L241.0,159.7 L247.3,158.7 L253.6,157.8 L259.9,156.7 L266.2,155.6 L272.5,154.4 L278.8,153.2 L285.1,151.8 L291.4,150.4 L297.7,148.9 L304.0,147.3 L310.3,145.7 L316.6,143.9 L322.9,142.1 L329.2,140.2 L335.5,138.2 L341.8,136.2 L348.1,134.1 L354.4,131.9 L360.7,129.6 L367.0,127.3 L373.3,124.9 L379.6,122.4 L385.9,119.9 L392.2,117.3 L398.5,114.7 L404.8,112.0 L411.1,109.3 L417.4,106.5 L423.7,103.7 L430.0,100.9 L436.3,98.0 L442.6,95.1 L448.9,92.2 L455.2,89.2 L461.5,86.2 L467.8,83.2 L474.1,80.2 L480.4,77.2 L486.7,74.1 L493.0,71.0 L499.3,67.9 L505.6,64.8 L511.9,61.7 L518.2,58.6 L524.5,55.4 L530.8,52.3 L537.1,49.1 L543.4,46.0 L549.7,42.8 L556.0,39.6"/>
+      <line class="axis" x1="52" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="186"/>
+      <line class="axis" x1="52.0" y1="186" x2="52.0" y2="191"/><text x="52.0" y="204" text-anchor="middle">-4</text>
+      <line class="axis" x1="178.0" y1="186" x2="178.0" y2="191"/><text x="178.0" y="204" text-anchor="middle">-2</text>
+      <line class="axis" x1="304.0" y1="186" x2="304.0" y2="191"/><text x="304.0" y="204" text-anchor="middle">0</text>
+      <line class="axis" x1="430.0" y1="186" x2="430.0" y2="191"/><text x="430.0" y="204" text-anchor="middle">2</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">4</text>
+      <text x="45" y="173.8" text-anchor="end">0</text>
+      <text x="45" y="141.4" text-anchor="end">1</text>
+      <text x="45" y="109.0" text-anchor="end">2</text>
+      <text x="45" y="76.6" text-anchor="end">3</text>
+      <text x="45" y="44.2" text-anchor="end">4</text>
+      <text x="304.0" y="224" text-anchor="middle">utility of the bus, V_bus (best other mode fixed at 0)</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">expected max utility</text>
+      <text class="t-bus" x="64.6" y="145.5" text-anchor="start">ln(e^V_bus + e^0): expected max</text>
+      <text x="423.7" y="121.2" text-anchor="start">max(V_bus, 0)</text>
+    </svg>
+    <figcaption>The log-sum is the expected value of the best option. Raising \(V_{\text{bus}}\) helps a lot when the bus is already attractive and little when it is not; the change, converted to dollars, is the gain in consumer surplus.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/LogSumExp" target="_blank" rel="noopener">LogSumExp</a>
+    <a href="https://en.wikipedia.org/wiki/Economic_surplus#Consumer_surplus" target="_blank" rel="noopener">Consumer surplus</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Small and Rosen (1981) in Train ch. 3.5</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="2c.ii Change in consumer surplus">
+<textarea spellcheck="false" aria-label="Python code: 2c.ii Change in consumer surplus">logsum_obs = logsumexp(X_2a @ beta_2a, axis=1)          # one value per student
+logsum_counter = logsumexp(X_counter @ beta_2a, axis=1)
+delta_cs = (logsum_counter - logsum_obs) / -model_2a["params"]["cost"]
+print(f"Total gain in consumer surplus: ${delta_cs.sum():.2f} per day for {len(delta_cs)} students")
+print(f"Average per student: ${delta_cs.mean():.3f};  largest: ${delta_cs.max():.2f}")
+fig, ax = plt.subplots(figsize=(6.5, 3))
+ax.hist(delta_cs, bins=40, color=BUS, alpha=0.8, edgecolor="white")
+ax.set_xlabel("daily gain per student ($)"); ax.set_ylabel("students"); fig.tight_layout()</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>logsum_obs &lt;- logsum(model_2a, data = data_dfidx)
+logsum_counter &lt;- logsum(model_2a, data = data_counter_dfidx)
+sum((logsum_counter - logsum_obs) / -coef(model_2a)[4])
+## [1] 82.74048</pre>
+      <p>This reduction in bus commute time is expected to generate $82.74 in economic surplus for these 1000 students each day.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>Who gains most: students who already ride the bus, or students who switch? Check with the histogram.</li>
+      <li>Over a 70-day spring semester, how much could the university spend on extra buses and still pass a cost-benefit test (ignoring environmental benefits)?</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <p><a href="problem_set_1.html">Problem Set 1</a> · <b>Problem Set 2</b> · <a href="problem_set_3.html">Problem Set 3</a> · <a href="problem_set_4.html">Problem Set 4</a> · <a href="problem_set_5.html">Problem Set 5</a></p>
+  Source: ResEcon 703 Problem Set 2 solutions (UMass Amherst). R code and output in the solution keys are reproduced from that document; Python translations, theory notes, figures and the simulated stand-in data were written for this class page. Python runs in the browser with <a href="https://pyodide.org/" target="_blank" rel="noopener">Pyodide</a>; the first load downloads about 30&nbsp;MB.
+</footer>
+</main>
+</div>
+
+<script>
+(() => {
+  const PYODIDE_BASE = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+  const PACKAGES = ["numpy", "pandas", "matplotlib", "scipy", "statsmodels"];
+
+  // Python side: run a cell in a shared namespace, capture prints, tables and figures
+  const KERNEL = `
+import sys, io, ast, json, base64, traceback
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+plt.rcParams.update({"figure.dpi": 100, "axes.spines.top": False, "axes.spines.right": False,
+                     "font.size": 10, "axes.titleweight": "bold"})
+_NS = {"__name__": "__main__"}
+
+def _run_cell(src):
+    buf = io.StringIO()
+    old = sys.stdout, sys.stderr
+    sys.stdout = sys.stderr = buf
+    html, err = None, None
+    try:
+        tree = ast.parse(src, "<cell>", "exec")
+        last = None
+        if tree.body and isinstance(tree.body[-1], ast.Expr):
+            last = ast.Expression(tree.body.pop().value)
+        exec(compile(tree, "<cell>", "exec"), _NS)
+        if last is not None:
+            val = eval(compile(last, "<cell>", "eval"), _NS)
+            if val is not None:
+                rh = getattr(val, "_repr_html_", None)
+                h = rh() if callable(rh) else None
+                if h:
+                    html = h
+                else:
+                    print(repr(val))
+    except Exception:
+        etype, evalue, tb = sys.exc_info()
+        lines = [f for f in traceback.extract_tb(tb) if f.filename == "<cell>"]
+        where = f"Line {lines[-1].lineno}: " if lines else ""
+        err = where + "".join(traceback.format_exception_only(etype, evalue)).strip()
+    finally:
+        sys.stdout, sys.stderr = old
+    figs = []
+    for num in plt.get_fignums():
+        b = io.BytesIO()
+        plt.figure(num).savefig(b, format="png", dpi=110, bbox_inches="tight", facecolor="white")
+        figs.append(base64.b64encode(b.getvalue()).decode("ascii"))
+    plt.close("all")
+    return json.dumps({"stdout": buf.getvalue(), "html": html, "figs": figs, "error": err})
+`;
+
+  const pill = document.getElementById("py-pill");
+  const pillMsg = document.getElementById("py-msg");
+  const setStatus = (state, msg) => { pill.dataset.state = state; pillMsg.textContent = msg; };
+
+  // Build the cells
+  const cells = [...document.querySelectorAll(".cell")].map((el, i) => {
+    const ta = el.querySelector("textarea");
+    const original = ta.value;
+    const bar = document.createElement("div");
+    bar.className = "cell-bar";
+    bar.innerHTML = `<span class="cell-n">[ ]</span><span class="cell-title"></span>
+      <button type="button" class="reset">Reset</button><button type="button" class="run">Run ▸</button>`;
+    bar.querySelector(".cell-title").textContent = el.dataset.title || `Cell ${i + 1}`;
+    if (el.dataset.slow) {
+      const slow = document.createElement("span");
+      slow.className = "slow"; slow.textContent = " · " + el.dataset.slow;
+      bar.querySelector(".cell-title").appendChild(slow);
+    }
+    el.insertBefore(bar, ta);
+    const out = document.createElement("div");
+    out.className = "out"; out.setAttribute("aria-live", "polite");
+    el.appendChild(out);
+    ta.id = `cell-${i + 1}`;
+    const fit = () => { ta.style.height = "auto"; ta.style.height = (ta.scrollHeight + 4) + "px"; };
+    ta.addEventListener("input", fit);
+    requestAnimationFrame(fit);
+    ta.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && ev.shiftKey) { ev.preventDefault(); runUpTo(i); }
+      else if (ev.key === "Tab" && !ev.shiftKey) {
+        ev.preventDefault();
+        const s = ta.selectionStart, e = ta.selectionEnd;
+        ta.setRangeText("    ", s, e, "end");
+      }
+    });
+    const cell = { el, ta, out, original, fit, ran: false, n: bar.querySelector(".cell-n"),
+                   runBtn: bar.querySelector(".run") };
+    cell.runBtn.addEventListener("click", () => runUpTo(i));
+    bar.querySelector(".reset").addEventListener("click", () => { ta.value = original; fit(); });
+    return cell;
+  });
+
+  // Pyodide boot (once)
+  let pyPromise = null;
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src; s.onload = resolve;
+      s.onerror = () => reject(new Error("Could not download " + src));
+      document.head.appendChild(s);
+    });
+  }
+  function getPython() {
+    if (!pyPromise) {
+      pyPromise = (async () => {
+        setStatus("loading", "Downloading Python…");
+        await loadScript(PYODIDE_BASE + "pyodide.js");
+        const py = await loadPyodide({ indexURL: PYODIDE_BASE });
+        setStatus("loading", "Loading pandas, statsmodels…");
+        await py.loadPackage(PACKAGES);
+        py.runPython(KERNEL);
+        setStatus("ready", "Python ready");
+        return py;
+      })().catch((err) => {
+        pyPromise = null;
+        setStatus("error", "Python failed to load");
+        throw err;
+      });
+    }
+    return pyPromise;
+  }
+
+  // Cells run one at a time, in order
+  let queue = Promise.resolve();
+  let counter = 0;
+  function runUpTo(i) {
+    queue = queue.then(async () => {
+      let py;
+      try { py = await getPython(); }
+      catch (err) {
+        cells[i].out.innerHTML = "";
+        const pre = document.createElement("pre");
+        pre.className = "err";
+        pre.textContent = `${err.message}\nPython needs an internet connection to load the first time. The solution key below each question shows the expected output.`;
+        cells[i].out.appendChild(pre);
+        return;
+      }
+      for (let j = 0; j <= i; j++) {
+        if (j < i && cells[j].ran) continue;
+        const ok = await execCell(py, j);
+        if (!ok && j < i) {
+          const note = document.createElement("p");
+          note.className = "note";
+          note.textContent = `Stopped: cell [${j + 1}] above raised an error.`;
+          cells[i].out.innerHTML = ""; cells[i].out.appendChild(note);
+          return;
+        }
+      }
+    });
+    return queue;
+  }
+
+  async function execCell(py, j) {
+    const c = cells[j];
+    c.el.dataset.state = "running"; c.n.textContent = "[*]"; c.runBtn.disabled = true;
+    c.out.innerHTML = "";
+    await new Promise(requestAnimationFrame);
+    const res = JSON.parse(py.globals.get("_run_cell")(c.ta.value));
+    if (res.stdout) {
+      const pre = document.createElement("pre"); pre.textContent = res.stdout.replace(/\n$/, ""); c.out.appendChild(pre);
+    }
+    if (res.html) {
+      const div = document.createElement("div"); div.innerHTML = res.html; c.out.appendChild(div);
+    }
+    for (const b64 of res.figs) {
+      const img = document.createElement("img"); img.alt = "Figure produced by this cell"; img.src = "data:image/png;base64," + b64; c.out.appendChild(img);
+    }
+    if (res.error) {
+      const pre = document.createElement("pre"); pre.className = "err"; pre.textContent = res.error; c.out.appendChild(pre);
+    }
+    c.ran = !res.error;
+    c.el.dataset.state = res.error ? "error" : "done";
+    c.n.textContent = `[${++counter}]`;
+    c.runBtn.disabled = false;
+    return !res.error;
+  }
+
+  document.getElementById("run-all").addEventListener("click", () => {
+    cells.forEach((c) => { c.ran = false; });
+    runUpTo(cells.length - 1);
+  });
+
+  // Optional: load the real course CSV into Python's file system
+  const upload = document.getElementById("csv-upload");
+  const csvMsg = document.getElementById("csv-msg");
+  upload.addEventListener("change", async () => {
+    const files = [...upload.files];
+    if (!files.length) return;
+    const expected = (upload.dataset.files || "").split(",").filter(Boolean);
+    const unknown = files.filter((f) => !expected.includes(f.name)).map((f) => f.name);
+    if (unknown.length) {
+      csvMsg.textContent = `Rename ${unknown.join(", ")} to ${expected.join(" or ")} so the setup cell can find it.`;
+      return;
+    }
+    csvMsg.textContent = "Loading Python to receive the files…";
+    try {
+      const py = await getPython();
+      for (const file of files) {
+        py.FS.writeFile(file.name, new Uint8Array(await file.arrayBuffer()));
+      }
+      const names = files.map((f) => f.name).join(", ");
+      cells.forEach((c) => { c.ran = false; });
+      csvMsg.textContent = `Loaded ${names}. Re-running all cells with the course data…`;
+      await runUpTo(cells.length - 1);
+      csvMsg.textContent = `Using ${names}. Results should now match the solution keys.`;
+    } catch (err) {
+      csvMsg.textContent = "Could not load the files: " + err.message;
+    }
+  });
+
+  // Math
+  window.addEventListener("load", () => {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [{ left: "\\[", right: "\\]", display: true }, { left: "\\(", right: "\\)", display: false }],
+        ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+        throwOnError: false
+      });
+    }
+    // Start Python in the background so it is ready when class begins
+    getPython().catch(() => {});
+  });
+})();
+</script>
+</body>
+</html>

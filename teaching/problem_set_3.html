@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PS3 Estimators by Hand</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+/* Layout: sticky question rail on the left, one reading column per question (prompt → theory → figure → code → key). */
+:root{
+  --paper:#F3F6F7; --surface:#FFFFFF; --muted:#E9EEF1; --ink:#17212A; --ink-2:#47545F; --ink-3:#77838E; --line:#D5DDE2;
+  --accent:#2B4E80; --accent-soft:#E2EAF5;
+  --car:#B4432F; --car-soft:#F6E3DE; --bus:#1F6F8B; --bus-soft:#DDEEF3;
+  --bike:#4F7A28; --walk:#7B4F9E; --mtn:#3E6B3A; --mtn-soft:#E1ECDD; --beach:#B4741A; --beach-soft:#F7EBD6;
+  --key:#FBF5E6; --key-line:#E7D9B2; --ok:#2E7D4F; --err:#B3261E; --err-soft:#FBE5E3;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:6px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0F151A; --surface:#161E25; --muted:#1D2730; --ink:#E3E9ED; --ink-2:#A8B3BD; --ink-3:#7C8893; --line:#2A353F;
+  --accent:#8FB2E6; --accent-soft:#1D2A3D;
+  --car:#E57C64; --car-soft:#3A2420; --bus:#5DB4D0; --bus-soft:#16303A;
+  --bike:#93C76C; --walk:#BB97DA; --mtn:#8DC085; --mtn-soft:#1C2E1C; --beach:#E5B160; --beach-soft:#33291A;
+  --key:#221F17; --key-line:#4A4128; --ok:#6CC495; --err:#F07B72; --err-soft:#3A1E1C;
+  color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --paper:#0F151A; --surface:#161E25; --muted:#1D2730; --ink:#E3E9ED; --ink-2:#A8B3BD; --ink-3:#7C8893; --line:#2A353F;
+  --accent:#8FB2E6; --accent-soft:#1D2A3D;
+  --car:#E57C64; --car-soft:#3A2420; --bus:#5DB4D0; --bus-soft:#16303A;
+  --bike:#93C76C; --walk:#BB97DA; --mtn:#8DC085; --mtn-soft:#1C2E1C; --beach:#E5B160; --beach-soft:#33291A;
+  --key:#221F17; --key-line:#4A4128; --ok:#6CC495; --err:#F07B72; --err-soft:#3A1E1C;
+  color-scheme:dark; }
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:20px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+a{color:var(--accent);text-underline-offset:2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;max-width:1180px;margin:0 auto;padding-inline:24px}
+
+/* Rail */
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;max-height:100vh;overflow-y:auto;padding-block:32px;font-family:var(--display)}
+.rail .course{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px}
+.rail .ps{font-size:22px;font-weight:750;line-height:1.1;margin:0 0 22px}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.rail a{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:baseline;padding:6px 8px;border-radius:var(--r);text-decoration:none;color:var(--ink-2);font-size:14px;line-height:1.3}
+.rail a:hover{background:var(--muted);color:var(--ink)}
+.rail a b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.rail .group{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:14px 8px 4px}
+.py-status{margin-top:24px;display:flex;flex-direction:column;gap:10px;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:var(--muted);color:var(--ink-2);width:max-content;max-width:100%}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex:none}
+.pill[data-state="loading"] i{background:var(--accent);animation:pulse 1s ease-in-out infinite}
+.pill[data-state="ready"] i{background:var(--ok)}
+.pill[data-state="error"] i{background:var(--err)}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion: reduce){.pill i{animation:none!important}}
+
+/* Main */
+main{min-width:0;padding-block:40px 120px}
+.hero{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:8px}
+.hero .eyebrow{font-family:var(--display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,5vw,54px);line-height:1.02;letter-spacing:-.02em;margin:10px 0 14px;text-wrap:balance}
+.hero h1 .car{color:var(--car)} .hero h1 .bus{color:var(--bus)} .hero h1 .mtn{color:var(--mtn)} .hero h1 .beach{color:var(--beach)}
+.hero p{max-width:66ch;margin:0 0 12px;color:var(--ink-2)}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px;font-family:var(--display);font-size:14px;line-height:1.4}
+.how div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;color:var(--ink-2)}
+.how b{display:block;color:var(--ink);margin-bottom:2px}
+
+section.q{overflow-wrap:break-word;padding-top:44px;border-top:1px solid var(--line);margin-top:44px}
+section.q:first-of-type{border-top:0;margin-top:0}
+.q-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.q-tag{font-family:var(--display);font-weight:800;font-size:15px;color:var(--surface);background:var(--ink);border-radius:4px;padding:2px 9px;font-variant-numeric:tabular-nums}
+.q h2{font-family:var(--display);font-weight:750;font-size:30px;line-height:1.15;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.q h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:30px 0 8px}
+.q p,.q li{max-width:68ch}
+.q ul,.q ol{padding-left:22px}
+.prompt{margin:18px 0 0;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);font-size:16px;color:var(--ink-2);max-width:72ch}
+.prompt b{color:var(--ink)}
+code{font-family:var(--mono);font-size:.84em;background:var(--muted);padding:1px 5px;border-radius:3px}
+.car-t{color:var(--car);font-weight:600} .bus-t{color:var(--bus);font-weight:600} .bike-t{color:var(--bike);font-weight:600} .walk-t{color:var(--walk);font-weight:600} .mtn-t{color:var(--mtn);font-weight:600} .beach-t{color:var(--beach);font-weight:600}
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 var(--r) var(--r) 0;max-width:68ch;margin:16px 0}
+.callout p{margin:6px 0}
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:4px 0}
+
+/* Figures */
+figure.fig{margin:20px 0;padding:14px 14px 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);max-width:720px}
+figure.fig svg{display:block;width:100%;height:auto}
+figure.fig figcaption{font-family:var(--display);font-size:13.5px;line-height:1.45;color:var(--ink-2);margin-top:8px}
+.fig-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;max-width:720px}
+.fig-row figure.fig{margin:0}
+svg text{font-family:var(--display);fill:var(--ink-2);font-size:12px}
+svg .t-strong{fill:var(--ink);font-weight:700}
+svg .t-car{fill:var(--car);font-weight:700} svg .t-bus{fill:var(--bus);font-weight:700} svg .t-err{fill:var(--err);font-weight:600}
+svg .axis{stroke:var(--ink-3);stroke-width:1;fill:none}
+svg .grid{stroke:var(--line);stroke-width:1;fill:none}
+svg .curve{stroke:var(--ink);stroke-width:2;fill:none}
+svg .area{fill:var(--muted);stroke:none}
+svg .l-car{stroke:var(--car);stroke-width:2.5;fill:none}
+svg .l-bus{stroke:var(--bus);stroke-width:2.5;fill:none}
+svg .l-acc{stroke:var(--accent);stroke-width:2.5;fill:none}
+svg .l-bike{stroke:var(--bike);stroke-width:2.5;fill:none} svg .l-walk{stroke:var(--walk);stroke-width:2.5;fill:none}
+svg .l-mtn{stroke:var(--mtn);stroke-width:2.5;fill:none} svg .l-beach{stroke:var(--beach);stroke-width:2.5;fill:none}
+svg .l-ink{stroke:var(--ink);stroke-width:2;fill:none} svg .l-dash{stroke-dasharray:6 4}
+svg .f-car{fill:var(--car)} svg .f-bus{fill:var(--bus)} svg .f-bike{fill:var(--bike)} svg .f-walk{fill:var(--walk)}
+svg .f-mtn{fill:var(--mtn)} svg .f-beach{fill:var(--beach)} svg .f-muted{fill:var(--muted)} svg .f-acc{fill:var(--accent)}
+svg .f-mtn-soft{fill:var(--mtn-soft)} svg .f-beach-soft{fill:var(--beach-soft)} svg .f-acc-soft{fill:var(--accent-soft)}
+svg .t-mtn{fill:var(--mtn);font-weight:700} svg .t-beach{fill:var(--beach);font-weight:700} svg .t-acc{fill:var(--accent);font-weight:700}
+svg .t-bike{fill:var(--bike);font-weight:700} svg .t-on{fill:var(--surface);font-weight:700} svg .t-walk{fill:var(--walk);font-weight:700} svg .t-small{font-size:11px}
+.cell .slow{font-family:var(--display);font-size:12px;color:var(--ink-3);font-weight:400}
+svg .band{fill:var(--err-soft);stroke:none}
+svg .rej{fill:var(--car-soft);stroke:none}
+svg .node{fill:var(--surface);stroke:var(--ink-3);stroke-width:1.2}
+svg .node-key{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .edge{stroke:var(--ink-3);stroke-width:1.4;fill:none}
+svg .arrowhead{fill:var(--ink-3)}
+.key-swatch{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+
+.see{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 4px;font-family:var(--display);font-size:13.5px}
+.see span{color:var(--ink-3);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+.see a{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);text-decoration:none;color:var(--ink)}
+.see a:hover{border-color:var(--accent);color:var(--accent)}
+.see a::after{content:"↗";color:var(--ink-3);font-size:11px}
+
+/* Code cells */
+.cell{margin:16px 0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;max-width:860px}
+.cell-bar{display:flex;align-items:center;gap:10px;padding:7px 8px 7px 12px;border-bottom:1px solid var(--line);background:var(--muted);font-family:var(--display);font-size:13.5px;flex-wrap:wrap}
+.cell-n{font-family:var(--mono);font-size:12px;color:var(--ink-3);min-width:34px}
+.cell-title{flex:1;min-width:0;color:var(--ink);font-weight:600}
+.cell-bar button{font-family:var(--display);font-size:13px;font-weight:650;border-radius:5px;padding:5px 12px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+.cell-bar button.run{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.cell-bar button:hover{filter:brightness(1.08)}
+.cell-bar button:disabled{opacity:.55;cursor:progress}
+.cell textarea{display:block;width:100%;border:0;resize:vertical;padding:12px 14px;margin:0;background:var(--surface);color:var(--ink);font-family:var(--mono);font-size:13.5px;line-height:1.55;tab-size:4;white-space:pre;overflow-x:auto;min-height:60px}
+.cell textarea:focus{outline:none;background:var(--paper)}
+.cell[data-state="running"] .cell-n{color:var(--accent)}
+.cell[data-state="done"] .cell-n{color:var(--ok)}
+.cell[data-state="error"] .cell-n{color:var(--err)}
+.out{border-top:1px dashed var(--line);padding:10px 14px;font-size:13.5px;overflow-x:auto}
+.out:empty{display:none}
+.out pre{margin:0;font-family:var(--mono);font-size:12.8px;line-height:1.5;white-space:pre;color:var(--ink)}
+.out pre.err{color:var(--err);background:var(--err-soft);padding:8px 10px;border-radius:4px;white-space:pre-wrap}
+.out .note{font-family:var(--display);color:var(--ink-3);font-size:13px}
+.out img{display:block;max-width:100%;height:auto;background:#FFFFFF;border-radius:4px;padding:6px;margin:8px 0}
+.out table{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;margin:4px 0}
+.out table{border:0}
+.out th,.out td{padding:4px 10px;border:0;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.out thead th{color:var(--ink-2);font-weight:600}
+.out tbody th{text-align:left;color:var(--ink)}
+.try{font-family:var(--display);font-size:13.5px;color:var(--ink-2);margin:-6px 0 16px;max-width:860px}
+.try b{color:var(--ink)}
+
+/* Solution key */
+details.key{margin:20px 0;border:1px solid var(--key-line);background:var(--key);border-radius:var(--r);max-width:860px}
+details.key summary{cursor:pointer;padding:10px 14px;font-family:var(--display);font-weight:650;font-size:14px;color:var(--ink)}
+details.key summary span{font-weight:400;color:var(--ink-3)}
+details.key .body{padding:0 16px 14px}
+details.key pre{font-family:var(--mono);font-size:12.5px;line-height:1.5;background:var(--surface);border:1px solid var(--key-line);border-radius:4px;padding:10px 12px;overflow-x:auto;margin:8px 0}
+.discuss{max-width:68ch;margin-top:18px;font-size:16px}
+.discuss h3{margin-top:22px}
+.discuss ol{margin:0}
+
+.upload{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-family:var(--display);font-size:14px;margin:12px 0;padding:12px 14px;border:1px dashed var(--line);border-radius:var(--r);max-width:860px;background:var(--surface)}
+.upload label{font-weight:650}
+.upload input{font-family:var(--display);font-size:13px;max-width:100%}
+.upload output{color:var(--ink-3)}
+.btn-all{font-family:var(--display);font-size:13px;font-weight:650;border-radius:5px;padding:7px 12px;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:var(--surface);width:max-content}
+footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--display);font-size:13px;color:var(--ink-3);max-width:72ch}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:0;padding-inline:16px}
+  .rail{position:static;max-height:none;padding-block:20px 0;border-bottom:1px solid var(--line)}
+  .rail ol{flex-direction:row;flex-wrap:wrap}
+  .rail a{grid-template-columns:auto;padding:4px 8px;border:1px solid var(--line)}
+  .rail a span{display:none}
+  .rail .group{display:none}
+  .py-status{flex-direction:row;flex-wrap:wrap;align-items:center;margin:14px 0 16px}
+  .how{grid-template-columns:minmax(0,1fr)}
+  .fig-row{grid-template-columns:minmax(0,1fr)}
+  .q h2{font-size:25px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav class="rail" aria-label="Questions">
+  <p class="course">ResEcon 703 · UMass Amherst</p>
+  <p class="ps">Problem Set 3</p>
+  <ol>
+    <li><a href="#setup"><b>0</b><span>Data &amp; tools</span></a></li>
+    <li class="group">Maximum likelihood</li>
+    <li><a href="#p1a"><b>1a</b><span>Cost and time only</span></a></li>
+    <li><a href="#p1b1"><b>1b.i</b><span>Add mode intercepts</span></a></li>
+    <li><a href="#p1b2"><b>1b.ii</b><span>LR test: intercepts</span></a></li>
+    <li><a href="#p1c1"><b>1c.i</b><span>Time by mode</span></a></li>
+    <li><a href="#p1c2"><b>1c.ii</b><span>LR test: equal time</span></a></li>
+    <li class="group">Method of moments</li>
+    <li><a href="#p2a"><b>2a</b><span>Logit by moments</span></a></li>
+    <li><a href="#p2b1"><b>2b.i</b><span>GMM with instruments</span></a></li>
+    <li><a href="#p2b2"><b>2b.ii</b><span>Overidentification test</span></a></li>
+  </ol>
+  <div class="py-status">
+    <span class="pill" id="py-pill" data-state="idle"><i></i><span id="py-msg">Python not started</span></span>
+    <button class="btn-all" id="run-all" type="button">Run all cells</button>
+  </div>
+</nav>
+
+<main>
+<header class="hero">
+  <p class="eyebrow">Topics in Advanced Econometrics · Class notebook</p>
+  <h1>Open the <span class="bus">black box</span></h1>
+  <p>Problem set 2 let <code>glm()</code> and <code>mlogit()</code> do the work. Here we write the estimators ourselves: a log-likelihood that an optimiser climbs, and moment conditions that a GMM routine sets to zero. Writing them out shows what the canned routines assume, and it lets us fix one of their weaknesses: cost and time may be endogenous.</p>
+  <p>The original problem set used R's <code>optim()</code> and the <code>gmm</code> package. Here the same steps use <code>scipy.optimize</code> and a few lines of numpy.</p>
+  <div class="how">
+    <div><b>Run a cell</b>Press <em>Run</em> or Shift + Enter inside the code. Earlier cells run first if they haven't yet.</div>
+    <div><b>Edit freely</b>Change the code and re-run. <em>Reset</em> restores the original version.</div>
+    <div><b>Check the key</b>Each question ends with the official R output and answer, collapsed.</div>
+  </div>
+</header>
+
+<section class="q" id="setup">
+  <div class="q-head"><span class="q-tag">0</span><h2>Data and tools</h2></div>
+  <p>Problem 1 uses the spring data (<span class="bike-t">bike</span>, <span class="bus-t">bus</span>, <span class="car-t">car</span>, <span class="walk-t">walk</span>); Problem 2 uses the winter data (car or bus), which includes four candidate instruments: <code>price_gas</code>, <code>snowfall</code>, <code>construction</code> and <code>bus_detour</code>. Without the course files, the setup cell builds the same simulated stand-ins as Problem Set 2.</p>
+  <div class="upload">
+    <label for="csv-upload">Use the real data</label>
+    <input type="file" id="csv-upload" accept=".csv,text/csv" data-files="commute_binary.csv,commute_multinomial.csv" multiple>
+    <output id="csv-msg">No files loaded: cells use the simulated stand-ins.</output>
+  </div>
+  <p class="try">Accepted file names: <code>commute_binary.csv</code> and <code>commute_multinomial.csv</code>.</p>
+
+  <div class="cell" data-title="Load libraries and both datasets">
+<textarea spellcheck="false" aria-label="Python code: Load libraries and both datasets">import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.optimize import minimize
+from scipy.special import logsumexp
+from pathlib import Path
+import statsmodels.formula.api as smf
+
+CAR, BUS, BIKE, WALK, GREY = "#B4432F", "#1F6F8B", "#4F7A28", "#7B4F9E", "#9AA5B1"   # page colours
+
+def simulate_commute_binary(n=1000, seed=703):
+    """Stand-in for commute_binary.csv (winter: car or bus).
+    Choices come from a binary logit with known coefficients. An unobserved
+    taste for driving also nudges car lovers to live farther out, which makes
+    cost and time mildly endogenous (Problem Set 3 deals with that)."""
+    rng = np.random.default_rng(seed)
+    taste = rng.normal(0, 1, n)                                     # unobserved liking for driving
+    miles = 1 + rng.lognormal(np.log(3.2) + 0.08 * taste, 0.5, n)  # everyone lives &gt; 1 mile away
+    price_gas = np.round(rng.normal(3.2, 0.3, n), 2)               # $ per gallon
+    snowfall = np.round(rng.exponential(3, n), 1)                  # inches on the travel day
+    construction = rng.binomial(1, 0.25, n)                        # road works on the driving route
+    bus_detour = rng.binomial(1, 0.2, n)                           # detour on the bus route
+    time_car = np.maximum(3, np.round(2 + 1.7 * miles + 0.3 * snowfall + 3 * construction + rng.normal(0, 1.5, n)))
+    time_bus = np.maximum(4, np.round(4 + 1.8 * miles + 0.4 * snowfall + 4 * bus_detour + rng.normal(0, 3, n)))
+    mpg = rng.uniform(18, 50, n)
+    cost_car = np.round(miles * price_gas / mpg, 2)                # $ per trip
+    income = np.round(rng.uniform(15, 40, n), 1)                   # $ thousands per year
+    married = rng.random(n) &lt; 0.3
+    v = 2.4 - (55 / income) * cost_car - 0.33 * time_car + 0.13 * time_bus + 0.5 * taste
+    drives = v + rng.logistic(size=n) &gt; 0
+    return pd.DataFrame({"id": np.arange(1, n + 1), "mode": np.where(drives, "car", "bus"),
+                         "time.car": time_car, "cost.car": cost_car,
+                         "time.bus": time_bus, "cost.bus": 0.0,
+                         "price_gas": price_gas, "snowfall": snowfall,
+                         "construction": construction, "bus_detour": bus_detour,
+                         "income": income, "marital_status": np.where(married, "married", "single")})
+
+MODES = ["bike", "bus", "car", "walk"]          # alphabetical, like mlogit
+
+def simulate_commute_multinomial(n=1000, seed=703):
+    """Stand-in for commute_multinomial.csv (spring: bike, bus, car or walk).
+    Choices come from a multinomial logit; married students value time more."""
+    rng = np.random.default_rng(seed)
+    miles = 1 + rng.lognormal(np.log(1.6), 0.7, n)
+    married = rng.random(n) &lt; 0.3
+    income = np.round(rng.uniform(15, 40, n), 1)
+    price_gas = np.round(rng.normal(3.2, 0.3, n), 2)
+    mpg = rng.uniform(18, 50, n)
+    t = {"bike": np.round(2 + 4 * miles + rng.normal(0, 2, n)),
+         "bus": np.round(5 + 1.8 * miles + rng.normal(0, 3, n)),
+         "car": np.round(2 + 1.7 * miles + rng.normal(0, 1.5, n)),
+         "walk": np.round(14 * miles + rng.normal(0, 3, n))}
+    t = {m: np.maximum(3, x) for m, x in t.items()}                     # minutes
+    c = {"bike": np.zeros(n), "bus": np.zeros(n), "walk": np.zeros(n),
+         "car": np.round(miles * price_gas / mpg + 0.25, 2)}              # $ (fuel + wear)
+    asc = {"bike": 0.0, "bus": -1.3, "car": 1.55, "walk": 4.9}
+    gamma = {"bike": -0.29, "bus": -0.14, "car": -0.40, "walk": -0.30}
+    tmult = np.where(married, 1.5, 1.0)
+    V = np.column_stack([asc[m] - 2.6 * c[m] + gamma[m] * tmult * t[m] for m in MODES])
+    choice = np.argmax(V + rng.gumbel(size=V.shape), axis=1)             # utility maximisation
+    out = {"id": np.arange(1, n + 1), "mode": np.array(MODES)[choice]}
+    for m in ["car", "bus", "bike", "walk"]:
+        out[f"time.{m}"] = t[m]
+        out[f"cost.{m}"] = c[m]
+    out.update({"price_gas": price_gas, "income": income,
+                "marital_status": np.where(married, "married", "single")})
+    return pd.DataFrame(out)
+
+def load(name, simulate):
+    if Path(name).exists():
+        return pd.read_csv(name), "course file"
+    return simulate(), "simulated stand-in"
+
+data_binary, src_b = load("commute_binary.csv", simulate_commute_binary)
+data_multi, src_m = load("commute_multinomial.csv", simulate_commute_multinomial)
+print(f"commute_binary:      {data_binary.shape[0]} rows x {data_binary.shape[1]} columns  ({src_b})")
+print(f"commute_multinomial: {data_multi.shape[0]} rows x {data_multi.shape[1]} columns  ({src_m})")</textarea>
+  </div>
+
+  <p>The second cell translates the two helper functions from the R solutions, plus the two things R's <code>optim()</code> did for us: run BFGS, and compute the Hessian numerically at the optimum.</p>
+  <div class="cell" data-title="Tools: optim, Hessian, summaries, LR test">
+<textarea spellcheck="false" aria-label="Python code: Tools: optim, Hessian, summaries, LR test">def numerical_hessian(f, x, rel_step=1e-4):
+    """Central-difference Hessian, what optim(..., hessian = TRUE) computes in R."""
+    x = np.asarray(x, float)
+    k = len(x)
+    h = rel_step * np.maximum(1.0, np.abs(x))
+    H = np.zeros((k, k))
+    for i in range(k):
+        for j in range(i, k):
+            ei = np.zeros(k); ei[i] = h[i]
+            ej = np.zeros(k); ej[j] = h[j]
+            H[i, j] = H[j, i] = (f(x + ei + ej) - f(x + ei - ej) - f(x - ei + ej) + f(x - ei - ej)) / (4 * h[i] * h[j])
+    return H
+
+def optim(fn, start, data):
+    """Minimise fn(params, data) with BFGS and return R-style output: par, value, hessian."""
+    res = minimize(fn, np.asarray(start, float), args=(data,), method="BFGS")
+    return {"par": res.x, "value": res.fun, "converged": res.success,
+            "hessian": numerical_hessian(lambda p: fn(p, data), res.x)}
+
+def summarize_mle(model, names):
+    """Estimates, standard errors from the inverse Hessian, z-stats and p-values."""
+    parameters = model["par"]
+    std_errors = np.sqrt(np.diag(np.linalg.inv(model["hessian"])))
+    z_stats = parameters / std_errors
+    p_values = 2 * stats.norm.cdf(-np.abs(z_stats))
+    return pd.DataFrame({"names": names, "parameters": parameters, "std_errors": std_errors,
+                         "z_stats": z_stats, "p_values": p_values})
+
+def test_likelihood_ratio(model_rest, model_unrest):
+    """LR test: twice the gain in log-likelihood, chi-squared with (extra parameters) df."""
+    test_stat = 2 * (model_rest["value"] - model_unrest["value"])   # values are negative log-likelihoods
+    df = len(model_unrest["par"]) - len(model_rest["par"])
+    return {"reject": bool(test_stat &gt; stats.chi2.ppf(0.95, df)), "test_stat": float(test_stat),
+            "df": df, "p_value": float(1 - stats.chi2.cdf(test_stat, df))}
+
+print("Tools ready: numerical_hessian, optim, summarize_mle, test_likelihood_ratio")</textarea>
+  </div>
+
+</section>
+
+<section class="q" id="p1a">
+  <div class="q-head"><span class="q-tag">1a</span><h2>Maximum likelihood by hand</h2></div>
+  <div class="prompt">Model the spring choice as a multinomial logit with common parameters on cost and time, \(V_{nj}=\beta C_{nj}+\gamma T_{nj}\). Write a function that computes utilities, the probability of each student's chosen mode, and the negative log-likelihood; maximise it with BFGS. Report estimates, standard errors, z-stats and p-values.</div>
+
+  <h3>Theory</h3>
+  <p><b>The likelihood.</b> If student \(n\) chose mode \(i_n\), the probability of what we observed is \(P_{ni_n}(\theta)\). Students are independent, so the log-likelihood is</p>
+  \[\ln L(\theta)=\sum_{n=1}^{N}\ln P_{ni_n}(\theta),\qquad P_{ni}(\theta)=\frac{e^{V_{ni}}}{\sum_j e^{V_{nj}}},\quad V_{nj}=\beta C_{nj}+\gamma T_{nj}.\]
+  <p>The maximum likelihood estimator \(\hat\theta\) maximises it. Under correct specification it is consistent, asymptotically normal and efficient, with</p>
+  \[\hat\theta\ \overset{a}{\sim}\ \mathcal N\Big(\theta,\ \big[-\mathbb E\,\nabla^2\ln L(\theta)\big]^{-1}\Big).\]
+  <p><b>The algorithm.</b> Optimisers minimise, so we return \(-\ln L\). BFGS climbs using the gradient and builds an approximation to the Hessian along the way. That approximation is not reliable for standard errors, so we compute the Hessian again by finite differences at the optimum (R's <code>hessian = TRUE</code>). The steps in the prompt map one-to-one onto the function below.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="Two concave log-likelihood curves peak at the same estimate; the sharper one has a smaller standard error">
+      <line class="grid" x1="52.0" y1="36.5" x2="556.0" y2="36.5"/>
+      <path class="l-bus" d="M149.7,186.0 L153.5,178.6 L157.4,171.4 L161.3,164.4 L165.1,157.6 L169.0,151.0 L172.8,144.5 L176.7,138.2 L180.5,132.2 L184.4,126.3 L188.3,120.6 L192.1,115.1 L196.0,109.7 L199.8,104.6 L203.7,99.6 L207.6,94.9 L211.4,90.3 L215.3,85.9 L219.1,81.7 L223.0,77.7 L226.8,73.8 L230.7,70.2 L234.6,66.7 L238.4,63.5 L242.3,60.4 L246.1,57.5 L250.0,54.8 L253.8,52.3 L257.7,49.9 L261.6,47.8 L265.4,45.8 L269.3,44.0 L273.1,42.4 L277.0,41.0 L280.9,39.8 L284.7,38.8 L288.6,38.0 L292.4,37.3 L296.3,36.8 L300.1,36.6 L304.0,36.5 L307.9,36.6 L311.7,36.8 L315.6,37.3 L319.4,38.0 L323.3,38.8 L327.1,39.8 L331.0,41.0 L334.9,42.4 L338.7,44.0 L342.6,45.8 L346.4,47.8 L350.3,49.9 L354.2,52.3 L358.0,54.8 L361.9,57.5 L365.7,60.4 L369.6,63.5 L373.4,66.7 L377.3,70.2 L381.2,73.8 L385.0,77.7 L388.9,81.7 L392.7,85.9 L396.6,90.3 L400.4,94.9 L404.3,99.6 L408.2,104.6 L412.0,109.7 L415.9,115.1 L419.7,120.6 L423.6,126.3 L427.5,132.2 L431.3,138.2 L435.2,144.5 L439.0,151.0 L442.9,157.6 L446.7,164.4 L450.6,171.4 L454.5,178.6 L458.3,186.0"/>
+      <path class="l-walk" d="M52.0,96.3 L56.2,94.3 L60.4,92.4 L64.6,90.4 L68.8,88.6 L73.0,86.7 L77.2,84.9 L81.4,83.1 L85.6,81.4 L89.8,79.7 L94.0,78.0 L98.2,76.4 L102.4,74.7 L106.6,73.2 L110.8,71.6 L115.0,70.1 L119.2,68.6 L123.4,67.2 L127.6,65.8 L131.8,64.4 L136.0,63.0 L140.2,61.7 L144.4,60.5 L148.6,59.2 L152.8,58.0 L157.0,56.8 L161.2,55.7 L165.4,54.6 L169.6,53.5 L173.8,52.4 L178.0,51.4 L182.2,50.4 L186.4,49.5 L190.6,48.6 L194.8,47.7 L199.0,46.8 L203.2,46.0 L207.4,45.3 L211.6,44.5 L215.8,43.8 L220.0,43.1 L224.2,42.5 L228.4,41.8 L232.6,41.3 L236.8,40.7 L241.0,40.2 L245.2,39.7 L249.4,39.3 L253.6,38.9 L257.8,38.5 L262.0,38.1 L266.2,37.8 L270.4,37.5 L274.6,37.3 L278.8,37.1 L283.0,36.9 L287.2,36.7 L291.4,36.6 L295.6,36.5 L299.8,36.5 L304.0,36.5 L308.2,36.5 L312.4,36.5 L316.6,36.6 L320.8,36.7 L325.0,36.9 L329.2,37.1 L333.4,37.3 L337.6,37.5 L341.8,37.8 L346.0,38.1 L350.2,38.5 L354.4,38.9 L358.6,39.3 L362.8,39.7 L367.0,40.2 L371.2,40.7 L375.4,41.3 L379.6,41.8 L383.8,42.5 L388.0,43.1 L392.2,43.8 L396.4,44.5 L400.6,45.3 L404.8,46.0 L409.0,46.8 L413.2,47.7 L417.4,48.6 L421.6,49.5 L425.8,50.4 L430.0,51.4 L434.2,52.4 L438.4,53.5 L442.6,54.6 L446.8,55.7 L451.0,56.8 L455.2,58.0 L459.4,59.2 L463.6,60.5 L467.8,61.7 L472.0,63.0 L476.2,64.4 L480.4,65.8 L484.6,67.2 L488.8,68.6 L493.0,70.1 L497.2,71.6 L501.4,73.2 L505.6,74.7 L509.8,76.4 L514.0,78.0 L518.2,79.7 L522.4,81.4 L526.6,83.1 L530.8,84.9 L535.0,86.7 L539.2,88.6 L543.4,90.4 L547.6,92.4 L551.8,94.3 L556.0,96.3"/>
+      <line class="l-acc l-dash" x1="304.0" y1="186.0" x2="304.0" y2="36.5"/>
+      <line class="axis" x1="52" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="186"/>
+      <line class="axis" x1="52.0" y1="186" x2="52.0" y2="191"/><text x="52.0" y="204" text-anchor="middle">-3</text>
+      <line class="axis" x1="178.0" y1="186" x2="178.0" y2="191"/><text x="178.0" y="204" text-anchor="middle">-2</text>
+      <line class="axis" x1="304.0" y1="186" x2="304.0" y2="191"/><text x="304.0" y="204" text-anchor="middle">-1</text>
+      <line class="axis" x1="430.0" y1="186" x2="430.0" y2="191"/><text x="430.0" y="204" text-anchor="middle">0</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">1</text>
+      <text x="45" y="40.5" text-anchor="end">max</text>
+      <text x="45" y="90.3" text-anchor="end">−20</text>
+      <text x="45" y="140.2" text-anchor="end">−40</text>
+      <text x="45" y="190.0" text-anchor="end">−60</text>
+      <text x="304.0" y="224" text-anchor="middle">parameter value θ</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">ln L(θ) − max</text>
+      <text class="t-acc" x="310.0" y="28.5" text-anchor="start">MLE</text>
+      <text class="t-bus" x="171.7" y="166.1" text-anchor="start">sharp peak: precise</text>
+      <text class="t-walk" x="436.3" y="111.2" text-anchor="start">flat peak: imprecise</text>
+    </svg>
+    <figcaption>Maximum likelihood picks the peak. The curvature at the peak (the Hessian) measures how much information the data carry: \(\widehat{\operatorname{Var}}(\hat\theta)=\big[-\nabla^2\ln L(\hat\theta)\big]^{-1}\).</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Maximum_likelihood_estimation" target="_blank" rel="noopener">Maximum likelihood estimation</a>
+    <a href="https://seeing-theory.brown.edu/bayesian-inference/index.html" target="_blank" rel="noopener">Seeing Theory: likelihood</a>
+    <a href="https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm" target="_blank" rel="noopener">BFGS algorithm</a>
+    <a href="https://en.wikipedia.org/wiki/Fisher_information" target="_blank" rel="noopener">Fisher information</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 8: numerical maximisation</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="1a Log-likelihood written by hand">
+<textarea spellcheck="false" aria-label="Python code: 1a Log-likelihood written by hand">def ll_fn_1a(params, data):
+    beta_1, beta_2 = params
+    # i. representative utility of every mode for every student
+    utility = {m: beta_1 * data[f"cost.{m}"] + beta_2 * data[f"time.{m}"] for m in MODES}
+    # ii. logit probabilities, then the probability of the mode actually chosen
+    prob_denom = sum(np.exp(utility[m]) for m in MODES)
+    prob = {m: np.exp(utility[m]) / prob_denom for m in MODES}
+    prob_choice = sum(prob[m] * (data["mode"] == m) for m in MODES)
+    # iii. sum the logs; iv. return the negative
+    return -np.sum(np.log(prob_choice))
+
+print("Negative log-likelihood at (0, 0):", round(ll_fn_1a([0, 0], data_multi), 2), "= 1000 * ln 4 =", round(1000 * np.log(4), 2))
+model_1a = optim(ll_fn_1a, [0, 0], data_multi)
+summarize_mle(model_1a, ["cost", "time"])</textarea>
+  </div>
+  <div class="cell" data-title="Look at the likelihood surface" data-slow="a few seconds">
+<textarea spellcheck="false" aria-label="Python code: Look at the likelihood surface"># The log-likelihood over a grid of (cost, time) coefficients, with the maximum marked
+b1 = np.linspace(model_1a["par"][0] - 1.2, model_1a["par"][0] + 1.2, 24)
+b2 = np.linspace(model_1a["par"][1] - 0.06, model_1a["par"][1] + 0.06, 24)
+Z = np.array([[-ll_fn_1a([x, y], data_multi) for x in b1] for y in b2])
+fig, ax = plt.subplots(figsize=(6, 4))
+cs = ax.contour(b1, b2, Z, levels=15, cmap="viridis")
+ax.clabel(cs, fontsize=7, fmt="%.0f")
+ax.plot(*model_1a["par"], "o", color=CAR)
+ax.set_xlabel("cost coefficient"); ax.set_ylabel("time coefficient"); fig.tight_layout()</textarea>
+  </div>
+  <p class="try"><b>Try:</b> start <code>optim</code> from <code>[-5, 1]</code>. Does it reach the same peak? A logit log-likelihood is globally concave, so it should.</p>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## # A tibble: 2 x 5
+##   names parameters std_errors z_stats p_values
+## 1 cost      -1.00      0.175    -5.72 1.07e- 8
+## 2 time      -0.126     0.0100  -12.6  3.31e-36</pre>
+      <p>Both parameters are statistically significant and are interpreted as marginal utilities. The cost of driving decreases the utility of driving, and the time spent commuting by a particular travel mode decreases the utility of taking that mode. This result is intuitive since people like both money and leisure time.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>At \((0,0)\) every mode has probability 1/4. Why is the negative log-likelihood there exactly \(1000\ln 4\)?</li>
+      <li>This model has no intercepts. What does it implicitly assume about a bike and a car that take the same time and cost the same?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p1b1">
+  <div class="q-head"><span class="q-tag">1b.i</span><h2>Add alternative-specific intercepts</h2></div>
+  <div class="prompt">Again model the spring choice as a multinomial logit, now with intercepts for all but one alternative: \(V_{nj}=\alpha_j+\beta C_{nj}+\gamma T_{nj}\). Estimate by maximum likelihood and interpret.</div>
+
+  <h3>Theory</h3>
+  <p>Alternative-specific constants \(\alpha_j\) capture everything about mode \(j\) that cost and time miss: comfort, exercise, weather exposure, the hassle of parking. Only differences in utility are identified, so one constant is fixed at 0. Biking is the reference here, which is why <code>utility_bike</code> has no intercept.</p>
+  <p>With a full set of constants, the multinomial logit reproduces the observed market shares exactly: at the MLE, the average predicted probability of each mode equals its sample share. That is the first-order condition for each \(\alpha_j\), and the next cell checks it.</p>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 2.5: alternative-specific constants</a>
+    <a href="https://en.wikipedia.org/wiki/Identifiability" target="_blank" rel="noopener">Fixed effects and identification</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="1b.i Add alternative-specific intercepts">
+<textarea spellcheck="false" aria-label="Python code: 1b.i Add alternative-specific intercepts">def ll_fn_1b(params, data):
+    alpha_bus, alpha_car, alpha_walk, beta_1, beta_2 = params
+    alpha = {"bike": 0.0, "bus": alpha_bus, "car": alpha_car, "walk": alpha_walk}   # bike is the reference
+    utility = {m: alpha[m] + beta_1 * data[f"cost.{m}"] + beta_2 * data[f"time.{m}"] for m in MODES}
+    prob_denom = sum(np.exp(utility[m]) for m in MODES)
+    prob_choice = sum(np.exp(utility[m]) / prob_denom * (data["mode"] == m) for m in MODES)
+    return -np.sum(np.log(prob_choice))
+
+model_1b = optim(ll_fn_1b, np.zeros(5), data_multi)
+summarize_mle(model_1b, ["bus_int", "car_int", "walk_int", "cost", "time"])</textarea>
+  </div>
+  <div class="cell" data-title="Check: intercepts reproduce the market shares">
+<textarea spellcheck="false" aria-label="Python code: Check: intercepts reproduce the market shares">a_bus, a_car, a_walk, b1, b2 = model_1b["par"]
+alpha = {"bike": 0.0, "bus": a_bus, "car": a_car, "walk": a_walk}
+U = np.column_stack([alpha[m] + b1 * data_multi[f"cost.{m}"] + b2 * data_multi[f"time.{m}"] for m in MODES])
+P = np.exp(U - logsumexp(U, axis=1, keepdims=True))
+pd.DataFrame({"observed share": data_multi["mode"].value_counts(normalize=True).reindex(MODES),
+              "mean predicted probability": P.mean(axis=0)}, index=MODES).round(4)</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## # A tibble: 5 x 5
+##   names    parameters std_errors z_stats p_values
+## 1 bus_int       1.76      0.113     15.6 4.69e-55
+## 2 car_int       2.92      0.200     14.6 2.39e-48
+## 3 walk_int      3.17      0.306     10.4 3.46e-25
+## 4 cost         -6.05      0.511    -11.9 2.11e-32
+## 5 time         -0.296     0.0246   -12.0 2.08e-33</pre>
+      <p>As in the previous model, the cost parameter and the time parameter are both negative, indicating that the cost and the time spent commuting by a particular travel mode decrease the utility of taking that mode. Additionally, all three alternative-specific intercepts are positive and significant, suggesting that, <em>ceteris paribus</em>, all other modes would be preferred to biking.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>The cost coefficient jumps from about −1 to about −6 once intercepts are added. Which variation in the data identified the cost coefficient in 1a, and why was it misleading?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p1b2">
+  <div class="q-head"><span class="q-tag">1b.ii</span><h2>Are the intercepts jointly significant?</h2></div>
+  <div class="prompt">Conduct a likelihood ratio test of \(H_0:\ \alpha_{bus}=\alpha_{car}=\alpha_{walk}=0\). Do you reject? What is the p-value? Interpret.</div>
+
+  <h3>Theory</h3>
+  <p>Model 1a is model 1b with the restriction \(\alpha_{bus}=\alpha_{car}=\alpha_{walk}=0\). When one model is a restricted version of another, the <b>likelihood ratio test</b> compares their maximised log-likelihoods:</p>
+  \[LR=2\big[\ln L(\hat\theta_U)-\ln L(\hat\theta_R)\big]\ \overset{H_0}{\sim}\ \chi^2_q ,\]
+  <p>where \(q\) is the number of restrictions (here 3). Adding parameters can never lower the maximised likelihood; the test asks whether it rises by more than chance would allow.</p>
+  <p>LR is one of the "trinity" with the Wald test (Problem Set 1) and the Lagrange multiplier test. LR needs both models estimated; Wald needs only the unrestricted one. They agree asymptotically.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="Chi-squared density with three degrees of freedom; the five percent critical value is 7.81">
+      <path class="rej" d="M248.9,172.0 L254.1,173.2 L259.3,174.3 L264.5,175.4 L269.7,176.3 L275.0,177.1 L280.2,177.9 L285.4,178.6 L290.6,179.3 L295.8,179.9 L301.0,180.4 L306.2,180.9 L311.4,181.4 L316.6,181.8 L321.8,182.2 L327.0,182.5 L332.2,182.8 L337.4,183.1 L342.6,183.4 L347.8,183.6 L353.0,183.8 L358.2,184.0 L363.4,184.2 L368.6,184.4 L373.8,184.5 L379.0,184.6 L384.2,184.8 L389.5,184.9 L394.7,185.0 L399.9,185.1 L405.1,185.2 L410.3,185.2 L415.5,185.3 L420.7,185.4 L425.9,185.4 L431.1,185.5 L436.3,185.5 L441.5,185.6 L446.7,185.6 L451.9,185.6 L457.1,185.7 L462.3,185.7 L467.5,185.7 L472.7,185.8 L477.9,185.8 L483.1,185.8 L488.3,185.8 L493.5,185.8 L498.7,185.9 L504.0,185.9 L509.2,185.9 L514.4,185.9 L519.6,185.9 L524.8,185.9 L530.0,185.9 L535.2,185.9 L540.4,185.9 L545.6,185.9 L550.8,185.9 L556.0,185.9 L556.0,186.0 L550.8,186.0 L545.6,186.0 L540.4,186.0 L535.2,186.0 L530.0,186.0 L524.8,186.0 L519.6,186.0 L514.4,186.0 L509.2,186.0 L504.0,186.0 L498.7,186.0 L493.5,186.0 L488.3,186.0 L483.1,186.0 L477.9,186.0 L472.7,186.0 L467.5,186.0 L462.3,186.0 L457.1,186.0 L451.9,186.0 L446.7,186.0 L441.5,186.0 L436.3,186.0 L431.1,186.0 L425.9,186.0 L420.7,186.0 L415.5,186.0 L410.3,186.0 L405.1,186.0 L399.9,186.0 L394.7,186.0 L389.5,186.0 L384.2,186.0 L379.0,186.0 L373.8,186.0 L368.6,186.0 L363.4,186.0 L358.2,186.0 L353.0,186.0 L347.8,186.0 L342.6,186.0 L337.4,186.0 L332.2,186.0 L327.0,186.0 L321.8,186.0 L316.6,186.0 L311.4,186.0 L306.2,186.0 L301.0,186.0 L295.8,186.0 L290.6,186.0 L285.4,186.0 L280.2,186.0 L275.0,186.0 L269.7,186.0 L264.5,186.0 L259.3,186.0 L254.1,186.0 L248.9,186.0 Z"/>
+      <path class="curve" d="M53.3,131.8 L55.8,96.6 L58.3,76.2 L60.8,62.5 L63.4,52.8 L65.9,45.9 L68.4,41.1 L70.9,38.0 L73.5,36.1 L76.0,35.3 L78.5,35.3 L81.0,36.0 L83.6,37.3 L86.1,39.0 L88.6,41.1 L91.2,43.5 L93.7,46.2 L96.2,49.0 L98.7,52.1 L101.3,55.2 L103.8,58.5 L106.3,61.8 L108.8,65.1 L111.4,68.5 L113.9,71.9 L116.4,75.3 L118.9,78.7 L121.5,82.0 L124.0,85.3 L126.5,88.6 L129.0,91.8 L131.6,94.9 L134.1,98.0 L136.6,101.0 L139.2,104.0 L141.7,106.9 L144.2,109.7 L146.7,112.4 L149.3,115.1 L151.8,117.7 L154.3,120.2 L156.8,122.7 L159.4,125.0 L161.9,127.3 L164.4,129.6 L166.9,131.7 L169.5,133.8 L172.0,135.8 L174.5,137.8 L177.1,139.7 L179.6,141.5 L182.1,143.3 L184.6,145.0 L187.2,146.6 L189.7,148.2 L192.2,149.7 L194.7,151.2 L197.3,152.6 L199.8,153.9 L202.3,155.2 L204.8,156.5 L207.4,157.7 L209.9,158.9 L212.4,160.0 L214.9,161.1 L217.5,162.1 L220.0,163.1 L222.5,164.1 L225.1,165.0 L227.6,165.9 L230.1,166.7 L232.6,167.5 L235.2,168.3 L237.7,169.1 L240.2,169.8 L242.7,170.5 L245.3,171.1 L247.8,171.8 L250.3,172.4 L252.8,173.0 L255.4,173.5 L257.9,174.0 L260.4,174.6 L262.9,175.1 L265.5,175.5 L268.0,176.0 L270.5,176.4 L273.1,176.8 L275.6,177.2 L278.1,177.6 L280.6,178.0 L283.2,178.3 L285.7,178.7 L288.2,179.0 L290.7,179.3 L293.3,179.6 L295.8,179.9 L298.3,180.1 L300.8,180.4 L303.4,180.6 L305.9,180.9 L308.4,181.1 L310.9,181.3 L313.5,181.5 L316.0,181.7 L318.5,181.9 L321.1,182.1 L323.6,182.3 L326.1,182.4 L328.6,182.6 L331.2,182.7 L333.7,182.9 L336.2,183.0 L338.7,183.2 L341.3,183.3 L343.8,183.4 L346.3,183.5 L348.8,183.6 L351.4,183.7 L353.9,183.8 L356.4,183.9 L358.9,184.0 L361.5,184.1 L364.0,184.2 L366.5,184.3 L369.1,184.4 L371.6,184.4 L374.1,184.5 L376.6,184.6 L379.2,184.6 L381.7,184.7 L384.2,184.8 L386.7,184.8 L389.3,184.9 L391.8,184.9 L394.3,185.0 L396.8,185.0 L399.4,185.1 L401.9,185.1 L404.4,185.1 L406.9,185.2 L409.5,185.2 L412.0,185.3 L414.5,185.3 L417.1,185.3 L419.6,185.4 L422.1,185.4 L424.6,185.4 L427.2,185.4 L429.7,185.5 L432.2,185.5 L434.7,185.5 L437.3,185.5 L439.8,185.6 L442.3,185.6 L444.8,185.6 L447.4,185.6 L449.9,185.6 L452.4,185.6 L454.9,185.7 L457.5,185.7 L460.0,185.7 L462.5,185.7 L465.1,185.7 L467.6,185.7 L470.1,185.7 L472.6,185.8 L475.2,185.8 L477.7,185.8 L480.2,185.8 L482.7,185.8 L485.3,185.8 L487.8,185.8 L490.3,185.8 L492.8,185.8 L495.4,185.8 L497.9,185.8 L500.4,185.9 L502.9,185.9 L505.5,185.9 L508.0,185.9 L510.5,185.9 L513.1,185.9 L515.6,185.9 L518.1,185.9 L520.6,185.9 L523.2,185.9 L525.7,185.9 L528.2,185.9 L530.7,185.9 L533.3,185.9 L535.8,185.9 L538.3,185.9 L540.8,185.9 L543.4,185.9 L545.9,185.9 L548.4,185.9 L550.9,185.9 L553.5,185.9 L556.0,185.9"/>
+      <line class="l-acc l-dash" x1="248.9" y1="186.0" x2="248.9" y2="61.4"/>
+      <text class="t-acc" x="254.9" y="65.4" text-anchor="start">5% critical value 7.81</text>
+      <line class="axis" x1="52" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="186"/>
+      <line class="axis" x1="52.0" y1="186" x2="52.0" y2="191"/><text x="52.0" y="204" text-anchor="middle">0</text>
+      <line class="axis" x1="178.0" y1="186" x2="178.0" y2="191"/><text x="178.0" y="204" text-anchor="middle">5</text>
+      <line class="axis" x1="304.0" y1="186" x2="304.0" y2="191"/><text x="304.0" y="204" text-anchor="middle">10</text>
+      <line class="axis" x1="430.0" y1="186" x2="430.0" y2="191"/><text x="430.0" y="204" text-anchor="middle">15</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">20</text>
+      <text x="45" y="190.0" text-anchor="end">0</text>
+      <text x="45" y="127.7" text-anchor="end">0.1</text>
+      <text x="45" y="65.4" text-anchor="end">0.2</text>
+      <text x="304.0" y="224" text-anchor="middle">LR = 2 (ln L_unrestricted − ln L_restricted) under H₀</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">density</text>
+    </svg>
+    <figcaption>Under \(H_0\) the LR statistic is \(\chi^2_3\) (three restrictions). The key's statistic is so large that the p-value prints as 0.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Likelihood-ratio_test" target="_blank" rel="noopener">Likelihood-ratio test</a>
+    <a href="https://en.wikipedia.org/wiki/Wilks%27_theorem" target="_blank" rel="noopener">Wilks' theorem</a>
+    <a href="https://en.wikipedia.org/wiki/Chi-squared_distribution" target="_blank" rel="noopener">χ² distribution</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="1b.ii Likelihood ratio test of the intercepts">
+<textarea spellcheck="false" aria-label="Python code: 1b.ii Likelihood ratio test of the intercepts">test_1b = test_likelihood_ratio(model_1a, model_1b)
+print(f"ln L restricted (1a):   {-model_1a['value']:.2f}")
+print(f"ln L unrestricted (1b): {-model_1b['value']:.2f}")
+test_1b</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>test_1b &lt;- test_likelihood_ratio(model_1a, model_1b)
+## $reject
+## [1] TRUE
+##
+## $p_value
+## [1] 0</pre>
+      <p>We reject this null hypothesis and conclude that the alternative-specific intercepts are jointly significant. That is, this model provides a better fit than the model in part (a), which restricted these parameters to all be zero.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>A p-value of exactly 0 is a floating-point artefact. How would you report it in a paper?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p1c1">
+  <div class="q-head"><span class="q-tag">1c.i</span><h2>Let the value of time differ by mode</h2></div>
+  <div class="prompt">Now allow the time parameter to be alternative-specific: \(V_{nj}=\alpha_j+\beta C_{nj}+\gamma_j T_{nj}\). Estimate by maximum likelihood and interpret.</div>
+
+  <h3>Theory</h3>
+  <p>Letting each mode have its own time coefficient \(\gamma_j\) says that a minute on a bike, on a bus, in a car and on foot can be worth different amounts. This is the specification of Problem Set 2, part 2a, so the estimates should match <code>mlogit()</code> exactly; that is a good check on hand-written code.</p>
+  <p>Eight parameters with BFGS and numerical gradients take a little longer, but the problem is still concave.</p>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 2.5: specifying utility</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="1c.i Alternative-specific time coefficients">
+<textarea spellcheck="false" aria-label="Python code: 1c.i Alternative-specific time coefficients">def ll_fn_1c(params, data):
+    alpha_bus, alpha_car, alpha_walk, beta = params[:4]
+    gamma = dict(zip(MODES, params[4:]))                       # bike, bus, car, walk
+    alpha = {"bike": 0.0, "bus": alpha_bus, "car": alpha_car, "walk": alpha_walk}
+    utility = {m: alpha[m] + beta * data[f"cost.{m}"] + gamma[m] * data[f"time.{m}"] for m in MODES}
+    prob_denom = sum(np.exp(utility[m]) for m in MODES)
+    prob_choice = sum(np.exp(utility[m]) / prob_denom * (data["mode"] == m) for m in MODES)
+    return -np.sum(np.log(prob_choice))
+
+model_1c = optim(ll_fn_1c, np.zeros(8), data_multi)
+summarize_mle(model_1c, ["bus_int", "car_int", "walk_int", "cost", "time_bike", "time_bus", "time_car", "time_walk"])</textarea>
+  </div>
+  <div class="cell" data-title="Which time coefficients differ? Pairwise Wald tests">
+<textarea spellcheck="false" aria-label="Python code: Which time coefficients differ? Pairwise Wald tests">V = np.linalg.inv(model_1c["hessian"])
+g = model_1c["par"][4:]; Vg = V[4:, 4:]
+rows = []
+for i in range(4):
+    for j in range(i + 1, 4):
+        d = g[i] - g[j]; se = np.sqrt(Vg[i, i] + Vg[j, j] - 2 * Vg[i, j])
+        rows.append((f"{MODES[i]} vs {MODES[j]}", d, se, 2 * stats.norm.sf(abs(d / se))))
+pd.DataFrame(rows, columns=["pair", "difference", "std_error", "p_value"]).round(4)</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## # A tibble: 8 x 5
+##   names     parameters std_errors z_stats p_values
+## 1 bus_int       -0.219     0.386   -0.568 5.70e- 1
+## 2 car_int        2.75      0.443    6.20  5.52e-10
+## 3 walk_int       2.98      0.783    3.80  1.44e- 4
+## 4 cost          -2.60      0.824   -3.16  1.56e- 3
+## 5 time_bike     -0.289     0.0386  -7.51  6.12e-14
+## 6 time_bus      -0.143     0.0351  -4.08  4.53e- 5
+## 7 time_car      -0.405     0.0464  -8.73  2.63e-18
+## 8 time_walk     -0.297     0.0384  -7.72  1.14e-14</pre>
+      <p>As in the previous models, the cost parameter is negative. The alternative-specific parameters on time are all negative but tend to be different from one another: the bike and walk parameters are not statistically different from one another, but all other pairwise combinations of parameters are. These parameters indicate that the time spent commuting by a particular travel mode always decreases the utility of taking that mode, but that these marginal utilities of time differ by travel mode. Additionally, the car and walk intercepts are positive and significant, while the bus intercept is not statistically significant. These results suggest that, <em>ceteris paribus</em>, driving or walking would be preferred to taking the bus or biking.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p1c2">
+  <div class="q-head"><span class="q-tag">1c.ii</span><h2>Are all time coefficients equal?</h2></div>
+  <div class="prompt">Conduct a likelihood ratio test of \(H_0:\ \gamma_{bike}=\gamma_{bus}=\gamma_{car}=\gamma_{walk}\). Do you reject? What is the p-value? Interpret.</div>
+
+  <h3>Theory</h3>
+  <p>Model 1b is model 1c with \(\gamma_{bike}=\gamma_{bus}=\gamma_{car}=\gamma_{walk}\): three restrictions (four coefficients collapse into one). The same LR machinery applies, with \(q=3\).</p>
+  <div class="cell" data-title="1c.ii Likelihood ratio test of equal time coefficients">
+<textarea spellcheck="false" aria-label="Python code: 1c.ii Likelihood ratio test of equal time coefficients">test_1c = test_likelihood_ratio(model_1b, model_1c)
+test_1c</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>test_1c &lt;- test_likelihood_ratio(model_1b, model_1c)
+## $reject
+## [1] TRUE
+##
+## $p_value
+## [1] 5.179395e-10</pre>
+      <p>We reject this null hypothesis and conclude that the alternative-specific marginal utilities of time are not all equal to one another. That is, this model provides a better fit than the model in part (b), which restricted these parameters to be equal.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>Write the restriction "biking time and walking time are valued equally" and test it with an LR test. (Hint: write <code>ll_fn_1c_bw</code> with seven parameters.)</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p2a">
+  <div class="q-head"><span class="q-tag">2a</span><h2>The binary logit by method of moments</h2></div>
+  <div class="prompt">Model the winter choice as a binary logit with \(V_{nc}=\alpha+\beta C_{nc}+\gamma_{car}T_{nc}\) and \(V_{nb}=\gamma_{bus}T_{nb}\), so \(P_{nc}=1/(1+e^{-(V_{nc}-V_{nb})})\). Write the four moment conditions, a function returning the \(N\times L\) matrix of individual moments, and estimate by method of moments.</div>
+
+  <h3>Theory</h3>
+  <p>The model says the residual \(y_n-P_n(\theta)\) has mean zero given the regressors, so it is uncorrelated with any function of them. Each regressor gives one <b>moment condition</b>:</p>
+  \[\mathbb E\big[(y_n-P_n(\theta_0))\,x_n\big]=0,\qquad x_n=(1,\ C_{nc},\ T_{nc},\ -T_{nb})',\quad P_n=\frac{1}{1+e^{-x_n'\theta}} .\]
+  <p>Four conditions, four unknowns: the model is <b>exactly identified</b>. The <b>method of moments</b> (MM) sets the sample averages to zero:</p>
+  \[\bar g(\hat\theta)=\frac1N\sum_n\big(y_n-P_n(\hat\theta)\big)x_n=0 .\]
+  <p>These are exactly the first-order conditions of the binary logit likelihood, so <b>MM = MLE</b> here. The estimates should match <code>glm()</code> (Problem Set 2) to many decimals. (The bus time enters as \(-T_{nb}\) so that \(\gamma_{bus}\) is the coefficient in \(V_{nb}=\gamma_{bus}T_{nb}\).)</p>
+  <p>In practice we minimise \(Q(\theta)=N\,\bar g(\theta)'W\bar g(\theta)\), which is zero at the solution for any weight matrix \(W\). Standard errors come from the sandwich \(\widehat{\operatorname{Var}}(\hat\theta)=\frac1N(G'S^{-1}G)^{-1}\), with \(G=\partial\bar g/\partial\theta'\) and \(S=\frac1N\sum_n g_ng_n'\).</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="The sample moment falls as the parameter rises and crosses zero at the method of moments estimate">
+      <line class="axis" x1="52.0" y1="105.0" x2="556.0" y2="105.0"/>
+      <path class="l-acc" d="M52.0,39.9 L57.1,40.1 L62.2,40.3 L67.3,40.6 L72.4,40.8 L77.5,41.1 L82.5,41.4 L87.6,41.7 L92.7,42.1 L97.8,42.4 L102.9,42.8 L108.0,43.3 L113.1,43.7 L118.2,44.2 L123.3,44.8 L128.4,45.3 L133.5,45.9 L138.5,46.6 L143.6,47.3 L148.7,48.1 L153.8,48.9 L158.9,49.8 L164.0,50.7 L169.1,51.7 L174.2,52.8 L179.3,53.9 L184.4,55.1 L189.5,56.4 L194.5,57.7 L199.6,59.1 L204.7,60.6 L209.8,62.2 L214.9,63.9 L220.0,65.7 L225.1,67.5 L230.2,69.4 L235.3,71.4 L240.4,73.5 L245.5,75.7 L250.5,78.0 L255.6,80.3 L260.7,82.7 L265.8,85.1 L270.9,87.7 L276.0,90.2 L281.1,92.9 L286.2,95.5 L291.3,98.2 L296.4,100.9 L301.5,103.6 L306.5,106.4 L311.6,109.1 L316.7,111.8 L321.8,114.5 L326.9,117.1 L332.0,119.8 L337.1,122.3 L342.2,124.9 L347.3,127.3 L352.4,129.7 L357.5,132.0 L362.5,134.3 L367.6,136.5 L372.7,138.6 L377.8,140.6 L382.9,142.5 L388.0,144.3 L393.1,146.1 L398.2,147.8 L403.3,149.4 L408.4,150.9 L413.5,152.3 L418.5,153.6 L423.6,154.9 L428.7,156.1 L433.8,157.2 L438.9,158.3 L444.0,159.3 L449.1,160.2 L454.2,161.1 L459.3,161.9 L464.4,162.7 L469.5,163.4 L474.5,164.1 L479.6,164.7 L484.7,165.2 L489.8,165.8 L494.9,166.3 L500.0,166.7 L505.1,167.2 L510.2,167.6 L515.3,167.9 L520.4,168.3 L525.5,168.6 L530.5,168.9 L535.6,169.2 L540.7,169.4 L545.8,169.7 L550.9,169.9 L556.0,170.1"/>
+      <line class="l-car l-dash" x1="304.0" y1="186.0" x2="304.0" y2="24.0"/>
+      <circle class="f-car" cx="304.0" cy="105.0" r="4"/>
+      <text class="t-car" x="312.0" y="97.0" text-anchor="start">estimate: ḡ(θ) = 0</text>
+      <line class="axis" x1="52" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="186"/>
+      <line class="axis" x1="52.0" y1="186" x2="52.0" y2="191"/><text x="52.0" y="204" text-anchor="middle">-1</text>
+      <line class="axis" x1="178.0" y1="186" x2="178.0" y2="191"/><text x="178.0" y="204" text-anchor="middle">0</text>
+      <line class="axis" x1="304.0" y1="186" x2="304.0" y2="191"/><text x="304.0" y="204" text-anchor="middle">1</text>
+      <line class="axis" x1="430.0" y1="186" x2="430.0" y2="191"/><text x="430.0" y="204" text-anchor="middle">2</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">3</text>
+      <text x="45" y="176.5" text-anchor="end">-0.5</text>
+      <text x="45" y="109.0" text-anchor="end">0</text>
+      <text x="45" y="41.5" text-anchor="end">0.5</text>
+      <text x="304.0" y="224" text-anchor="middle">parameter θ</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">ḡ(θ)</text>
+    </svg>
+    <figcaption>Method of moments: choose \(\theta\) so the sample average of the moment function is exactly zero, mirroring the population condition \(\mathbb E[g(\theta_0)]=0\).</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Method_of_moments_(statistics)" target="_blank" rel="noopener">Method of moments</a>
+    <a href="https://en.wikipedia.org/wiki/Generalized_method_of_moments" target="_blank" rel="noopener">Generalized method of moments</a>
+    <a href="https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method" target="_blank" rel="noopener">Nelder–Mead simplex</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 10: moments and simulation</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p>A short <code>gmm()</code> function plays the role of R's <code>gmm</code> package: a first step with \(W=I\), then a second step with \(W=S^{-1}\) (<code>vcov = "iid"</code>), Nelder–Mead in both, the sandwich variance, and Hansen's J statistic.</p>
+  <div class="cell" data-title="A small gmm() for Python">
+<textarea spellcheck="false" aria-label="Python code: A small gmm() for Python">def numerical_jacobian(f, x, rel_step=1e-6):
+    x = np.asarray(x, float)
+    f0 = np.asarray(f(x))
+    J = np.zeros((len(f0), len(x)))
+    for k in range(len(x)):
+        h = rel_step * max(1.0, abs(x[k]))
+        e = np.zeros(len(x)); e[k] = h
+        J[:, k] = (np.asarray(f(x + e)) - np.asarray(f(x - e))) / (2 * h)
+    return J
+
+def gmm(g, x, t0, W0=None, maxiter=20000):
+    """Two-step GMM. g(theta, x) returns the N x L matrix of individual moments.
+    Step 1 uses W0 (identity by default, like R's gmm); step 2 uses the efficient S^-1."""
+    N = x.shape[0]
+    def Q(theta, W):
+        gbar = g(theta, x).mean(axis=0)
+        return N * gbar @ W @ gbar
+    opts = {"xatol": 1e-10, "fatol": 1e-14, "maxiter": maxiter, "maxfev": maxiter}
+    L = g(np.asarray(t0, float), x).shape[1]
+    W1 = np.eye(L) if W0 is None else W0
+    step1 = minimize(Q, t0, args=(W1,), method="Nelder-Mead", options=opts)
+    G1 = g(step1.x, x)
+    W = np.linalg.inv(G1.T @ G1 / N)                   # efficient weight from step 1
+    step2 = minimize(Q, step1.x, args=(W,), method="Nelder-Mead", options=opts)
+    theta = step2.x
+    gi = g(theta, x)
+    S = gi.T @ gi / N
+    G = numerical_jacobian(lambda t: g(t, x).mean(axis=0), theta)
+    V = np.linalg.inv(G.T @ np.linalg.inv(S) @ G) / N
+    se = np.sqrt(np.diag(V))
+    df = L - len(theta)
+    table = pd.DataFrame({"Estimate": theta, "Std. Error": se, "t value": theta / se,
+                          "Pr(&gt;|t|)": 2 * stats.norm.sf(np.abs(theta / se))},
+                         index=[f"Theta[{k + 1}]" for k in range(len(theta))])
+    return {"coef": theta, "table": table, "J": step2.fun, "J_df": df,
+            "J_p": stats.chi2.sf(step2.fun, df) if df &gt; 0 else np.nan,
+            "converged": step1.success and step2.success, "initial": step1.x}
+print("gmm() ready")</textarea>
+  </div>
+  <div class="cell" data-title="2a Method of moments for the binary logit">
+<textarea spellcheck="false" aria-label="Python code: 2a Method of moments for the binary logit"># Data matrix: choice, constant, cost.car, time.car, -time.bus
+data_2a = np.column_stack([(data_binary["mode"] == "car").astype(float), np.ones(len(data_binary)),
+                           data_binary["cost.car"], data_binary["time.car"], -data_binary["time.bus"]])
+
+def mm_fn_2a(params, data):
+    X = data[:, 1:]                            # N x K regressors
+    y = data[:, 0]                             # N outcomes
+    utility = X @ params                       # V_car - V_bus
+    prob = 1 / (1 + np.exp(-utility))          # logit probability of driving
+    residuals = y - prob
+    return residuals[:, None] * X              # N x K individual moments
+
+model_2a = gmm(mm_fn_2a, data_2a, t0=np.zeros(4))
+print(model_2a["table"].round(5))
+print(f"\nJ-test: degrees of freedom is {model_2a['J_df']};  J = {model_2a['J']:.3g}  (zero up to numerical precision)")</textarea>
+  </div>
+  <div class="cell" data-title="Check: method of moments equals maximum likelihood">
+<textarea spellcheck="false" aria-label="Python code: Check: method of moments equals maximum likelihood">df_b = data_binary.rename(columns=lambda c: c.replace(".", "_"))
+df_b["car"] = (df_b["mode"] == "car").astype(int)
+mle = smf.logit("car ~ cost_car + time_car + time_bus", data=df_b).fit(disp=0)
+pd.DataFrame({"GMM (moments)": model_2a["coef"] * np.array([1, 1, 1, -1]),
+              "MLE (glm / logit)": mle.params.to_numpy()},
+             index=["alpha", "beta (cost)", "gamma_car", "coef on time.bus = -gamma_bus"]).round(5)</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## Coefficients:
+##           Estimate     Std. Error   t value      Pr(&gt;|t|)
+## Theta[1]   2.2333e+00   3.7522e-01   5.9518e+00   2.6516e-09
+## Theta[2]  -2.0772e+00   7.1798e-01  -2.8930e+00   3.8153e-03
+## Theta[3]  -3.3222e-01   3.7929e-02  -8.7590e+00   1.9707e-18
+## Theta[4]  -1.3257e-01   3.1928e-02  -4.1523e+00   3.2919e-05
+##
+## J-Test: degrees of freedom is 0
+##                 J-test                P-value
+## Test E(g)=0:    9.48387867832971e-23  *******</pre>
+      <p>The parameters on cost and time are statistically significant and are interpreted as marginal utilities. The cost of driving decreases the utility of driving, and the time spent commuting by a particular travel mode decreases the utility of taking that mode. This result is intuitive since people like both money and leisure time. Notably, the marginal utility of time spent driving and the marginal utility of time spent on the bus are different, indicating that time on the bus is preferred to time driving.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>The point estimates equal the MLE, but the standard errors differ slightly from <code>glm()</code>'s. Why? (Hint: the sandwich does not impose the logit variance \(P(1-P)\).)</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p2b1">
+  <div class="q-head"><span class="q-tag">2b.i</span><h2>GMM with instruments</h2></div>
+  <div class="prompt">Cost and time may be endogenous: a student who enjoys driving may live farther from campus. Using the instruments constant, <code>price_gas</code>, <code>snowfall</code>, <code>construction</code> and <code>bus_detour</code>, estimate the model of part (a) by generalized method of moments (four parameters, five moment conditions). Start from <code>t0 = c(0, 0, -0.3, -0.1)</code>.</div>
+
+  <h3>Theory</h3>
+  <p><b>Endogeneity.</b> If unobserved utility is correlated with cost or time, \(\mathbb E[(y_n-P_n)x_n]\neq0\) and both MLE and the MM estimator of 2a are inconsistent. Instead we use <b>instruments</b> \(z_n\): variables that move cost and time (<em>relevance</em>) but are unrelated to the unobserved taste (<em>exogeneity</em>):</p>
+  \[\mathbb E\big[(y_n-P_n(\theta_0))\,z_n\big]=0,\qquad z_n=(1,\ \text{price\_gas},\ \text{snowfall},\ \text{construction},\ \text{bus\_detour})'.\]
+  <p>Five moments, four parameters: <b>over-identified</b>. We cannot set all five sample moments to zero, so <b>GMM</b> minimises a weighted distance from zero,</p>
+  \[\hat\theta=\arg\min_\theta\ N\,\bar g(\theta)'\,W\,\bar g(\theta).\]
+  <p>The efficient weight is \(W=S^{-1}\), the inverse variance of the moments: precise moments get more weight. Since \(S\) depends on \(\theta\), we estimate in two steps.</p>
+  <p><b>Weak instruments.</b> Gas prices barely move the cost of a short commute, so cost is identified from very little variation. The price is precision: standard errors balloon, as in the key. The first-stage cell below measures instrument strength.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="Diagram: an unobserved taste for driving affects both where students live, and so their cost and time, and their choice. Instruments shift cost and time but not taste.">
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrowhead" d="M0,0 L10,5 L0,10 Z"/></marker></defs>
+      <rect class="node-key" x="10" y="12" width="150" height="40" rx="6"/><text class="t-strong" x="85" y="37" text-anchor="middle">Taste for driving</text>
+      <rect class="node" x="210" y="80" width="150" height="40" rx="6"/><text x="285" y="105" text-anchor="middle">cost, time.car, time.bus</text>
+      <rect class="node" x="440" y="80" width="126" height="40" rx="6"/><text class="t-car" x="503" y="105" text-anchor="middle">Drives?</text>
+      <rect class="node" x="10" y="150" width="190" height="66" rx="6"/>
+      <text x="105" y="170" text-anchor="middle">price_gas · snowfall</text>
+      <text x="105" y="186" text-anchor="middle">construction · bus_detour</text>
+      <text class="t-acc" x="105" y="206" text-anchor="middle">instruments</text>
+      <path class="edge" marker-end="url(#arr)" d="M140,52 L230,80"/>
+      <path class="edge" marker-end="url(#arr)" d="M160,30 C330,20 470,40 497,78"/>
+      <path class="edge" marker-end="url(#arr)" d="M360,100 L438,100"/>
+      <path class="edge" marker-end="url(#arr)" d="M170,150 L240,122"/>
+      <text class="t-err" x="200" y="62">lives farther out</text>
+      <text class="t-err" x="330" y="22">direct effect</text>
+      <text class="t-acc" x="215" y="150">shifts cost and time only</text>
+    </svg>
+    <figcaption>Why cost and time may be endogenous. A student who likes driving may choose to live farther away, so the unobserved taste is correlated with cost and time. Instruments move cost and time for reasons unrelated to taste.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Instrumental_variables_estimation" target="_blank" rel="noopener">Instrumental variables</a>
+    <a href="https://en.wikipedia.org/wiki/Endogeneity_(econometrics)" target="_blank" rel="noopener">Endogeneity</a>
+    <a href="https://en.wikipedia.org/wiki/Generalized_method_of_moments" target="_blank" rel="noopener">GMM: efficient weighting</a>
+    <a href="https://en.wikipedia.org/wiki/Instrumental_variables_estimation#Weak_instruments" target="_blank" rel="noopener">Weak instruments</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 13: endogeneity</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="2b.i GMM with five instruments">
+<textarea spellcheck="false" aria-label="Python code: 2b.i GMM with five instruments"># Data matrix: choice | constant, cost.car, time.car, -time.bus | price_gas, snowfall, construction, bus_detour
+data_2b = np.column_stack([data_2a, data_binary[["price_gas", "snowfall", "construction", "bus_detour"]].to_numpy()])
+
+def gmm_fn_2b(params, data):
+    X = data[:, 1:5]                                # regressors
+    y = data[:, 0]
+    Z = data[:, [1, 5, 6, 7, 8]]                    # instruments: constant + four excluded
+    prob = 1 / (1 + np.exp(-(X @ params)))
+    return (y - prob)[:, None] * Z                  # N x L moments
+
+# Step-1 weight (Z'Z/N)^-1 puts the instruments on a common scale (the 2SLS choice);
+# with the identity matrix, step 1 can wander far before step 2 corrects it.
+Z = data_2b[:, [1, 5, 6, 7, 8]]
+model_2b = gmm(gmm_fn_2b, data_2b, t0=np.array([0, 0, -0.3, -0.1]), W0=np.linalg.inv(Z.T @ Z / len(Z)))
+print(model_2b["table"].round(5))
+print(f"\nInitial (step-1) values: {np.round(model_2b['initial'], 4)}   converged: {model_2b['converged']}")</textarea>
+  </div>
+  <div class="cell" data-title="How strong are the instruments? First stages">
+<textarea spellcheck="false" aria-label="Python code: How strong are the instruments? First stages">inst = "price_gas + snowfall + construction + bus_detour"
+for v in ["cost_car", "time_car", "time_bus"]:
+    fs = smf.ols(f"{v} ~ {inst}", data=df_b).fit()
+    excl = fs.f_test("price_gas = 0, snowfall = 0, construction = 0, bus_detour = 0")
+    print(f"{v:9s}  R^2 = {fs.rsquared:.3f}   F (excluded instruments) = {float(np.squeeze(excl.fvalue)):7.1f}")</textarea>
+  </div>
+  <p class="try"><b>Read it:</b> the usual rule of thumb asks for a first-stage F above 10. Which regressor is weakly instrumented, and which coefficient has the largest standard error?</p>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## Coefficients:
+##           Estimate    Std. Error  t value     Pr(&gt;|t|)
+## Theta[1]   2.9119906   3.8112198   0.7640574   0.4448330
+## Theta[2]  -3.9860509   8.0529192  -0.4949821   0.6206128
+## Theta[3]  -0.3509452   0.1228629  -2.8563968   0.0042848
+## Theta[4]  -0.1502996   0.0525380  -2.8607774   0.0042260
+##
+## Initial values of the coefficients
+##   Theta[1]   Theta[2]   Theta[3]   Theta[4]
+##  2.0681542 -2.1903611 -0.3290997 -0.1453720</pre>
+      <p>The parameter estimates are roughly the same as those in the previous model. However, the intercept and cost parameters now have much larger standard errors, rendering those parameters not statistically significant. Using instruments can reduce the precision of our parameter estimates, especially if they are not sufficiently correlated with the relevant variables, which may be the case here.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>Is snowfall a plausible instrument? Could heavy snow affect the choice directly, not only through travel time?</li>
+      <li>In the simulation, car lovers live farther out. Which direction should that bias the MLE cost and time coefficients? Do the GMM estimates move that way?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p2b2">
+  <div class="q-head"><span class="q-tag">2b.ii</span><h2>Test the overidentifying restriction</h2></div>
+  <div class="prompt">Test whether your model is correctly specified with an overidentifying restrictions test. Report and interpret the result.</div>
+
+  <h3>Theory</h3>
+  <p>With \(L&gt;K\) moments, the minimised GMM objective is itself a test statistic. If all instruments are valid, every population moment is zero and</p>
+  \[J=N\,\bar g(\hat\theta)'\,\hat S^{-1}\,\bar g(\hat\theta)\ \overset{H_0}{\sim}\ \chi^2_{L-K}.\]
+  <p>A large \(J\) means no \(\theta\) can make all moments small at once: at least one instrument is invalid, or the model is misspecified. A small \(J\) is <em>consistent</em> with valid instruments but cannot prove it. The test has power only against violations that make instruments disagree with one another; if all instruments are invalid in the same way, \(J\) will not notice. This is the Sargan–Hansen test.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 200" role="img" aria-label="Chi-squared density with one degree of freedom; the key's J statistic of 0.006 is far below the critical value 3.84">
+      <path class="rej" d="M245.5,152.1 L250.8,152.3 L256.1,152.5 L261.3,152.8 L266.6,153.0 L271.8,153.2 L277.1,153.3 L282.4,153.5 L287.6,153.6 L292.9,153.8 L298.2,153.9 L303.4,154.1 L308.7,154.2 L313.9,154.3 L319.2,154.4 L324.5,154.5 L329.7,154.6 L335.0,154.7 L340.3,154.7 L345.5,154.8 L350.8,154.9 L356.0,154.9 L361.3,155.0 L366.6,155.1 L371.8,155.1 L377.1,155.2 L382.4,155.2 L387.6,155.3 L392.9,155.3 L398.1,155.4 L403.4,155.4 L408.7,155.4 L413.9,155.5 L419.2,155.5 L424.4,155.5 L429.7,155.5 L435.0,155.6 L440.2,155.6 L445.5,155.6 L450.8,155.6 L456.0,155.7 L461.3,155.7 L466.5,155.7 L471.8,155.7 L477.1,155.7 L482.3,155.7 L487.6,155.8 L492.9,155.8 L498.1,155.8 L503.4,155.8 L508.6,155.8 L513.9,155.8 L519.2,155.8 L524.4,155.8 L529.7,155.9 L535.0,155.9 L540.2,155.9 L545.5,155.9 L550.7,155.9 L556.0,155.9 L556.0,156.0 L550.7,156.0 L545.5,156.0 L540.2,156.0 L535.0,156.0 L529.7,156.0 L524.4,156.0 L519.2,156.0 L513.9,156.0 L508.6,156.0 L503.4,156.0 L498.1,156.0 L492.9,156.0 L487.6,156.0 L482.3,156.0 L477.1,156.0 L471.8,156.0 L466.5,156.0 L461.3,156.0 L456.0,156.0 L450.8,156.0 L445.5,156.0 L440.2,156.0 L435.0,156.0 L429.7,156.0 L424.4,156.0 L419.2,156.0 L413.9,156.0 L408.7,156.0 L403.4,156.0 L398.1,156.0 L392.9,156.0 L387.6,156.0 L382.4,156.0 L377.1,156.0 L371.8,156.0 L366.6,156.0 L361.3,156.0 L356.0,156.0 L350.8,156.0 L345.5,156.0 L340.3,156.0 L335.0,156.0 L329.7,156.0 L324.5,156.0 L319.2,156.0 L313.9,156.0 L308.7,156.0 L303.4,156.0 L298.2,156.0 L292.9,156.0 L287.6,156.0 L282.4,156.0 L277.1,156.0 L271.8,156.0 L266.6,156.0 L261.3,156.0 L256.1,156.0 L250.8,156.0 L245.5,156.0 Z"/>
+      <path class="curve" d="M53.0,24.0 L55.5,24.0 L58.1,24.0 L60.6,38.9 L63.1,55.6 L65.6,67.6 L68.2,76.8 L70.7,84.2 L73.2,90.3 L75.8,95.4 L78.3,99.8 L80.8,103.7 L83.3,107.1 L85.9,110.1 L88.4,112.8 L90.9,115.3 L93.4,117.5 L96.0,119.6 L98.5,121.4 L101.0,123.2 L103.6,124.8 L106.1,126.3 L108.6,127.7 L111.1,129.0 L113.7,130.2 L116.2,131.3 L118.7,132.4 L121.3,133.4 L123.8,134.4 L126.3,135.2 L128.8,136.1 L131.4,136.9 L133.9,137.7 L136.4,138.4 L138.9,139.1 L141.5,139.7 L144.0,140.4 L146.5,140.9 L149.1,141.5 L151.6,142.1 L154.1,142.6 L156.6,143.1 L159.2,143.5 L161.7,144.0 L164.2,144.4 L166.7,144.8 L169.3,145.2 L171.8,145.6 L174.3,146.0 L176.9,146.3 L179.4,146.6 L181.9,147.0 L184.4,147.3 L187.0,147.6 L189.5,147.9 L192.0,148.1 L194.6,148.4 L197.1,148.6 L199.6,148.9 L202.1,149.1 L204.7,149.3 L207.2,149.6 L209.7,149.8 L212.2,150.0 L214.8,150.2 L217.3,150.4 L219.8,150.5 L222.4,150.7 L224.9,150.9 L227.4,151.0 L229.9,151.2 L232.5,151.4 L235.0,151.5 L237.5,151.6 L240.1,151.8 L242.6,151.9 L245.1,152.0 L247.6,152.2 L250.2,152.3 L252.7,152.4 L255.2,152.5 L257.7,152.6 L260.3,152.7 L262.8,152.8 L265.3,152.9 L267.9,153.0 L270.4,153.1 L272.9,153.2 L275.4,153.3 L278.0,153.4 L280.5,153.4 L283.0,153.5 L285.5,153.6 L288.1,153.7 L290.6,153.7 L293.1,153.8 L295.7,153.9 L298.2,153.9 L300.7,154.0 L303.2,154.0 L305.8,154.1 L308.3,154.2 L310.8,154.2 L313.4,154.3 L315.9,154.3 L318.4,154.4 L320.9,154.4 L323.5,154.5 L326.0,154.5 L328.5,154.6 L331.0,154.6 L333.6,154.6 L336.1,154.7 L338.6,154.7 L341.2,154.8 L343.7,154.8 L346.2,154.8 L348.7,154.9 L351.3,154.9 L353.8,154.9 L356.3,155.0 L358.8,155.0 L361.4,155.0 L363.9,155.0 L366.4,155.1 L369.0,155.1 L371.5,155.1 L374.0,155.1 L376.5,155.2 L379.1,155.2 L381.6,155.2 L384.1,155.2 L386.7,155.3 L389.2,155.3 L391.7,155.3 L394.2,155.3 L396.8,155.3 L399.3,155.4 L401.8,155.4 L404.3,155.4 L406.9,155.4 L409.4,155.4 L411.9,155.4 L414.5,155.5 L417.0,155.5 L419.5,155.5 L422.0,155.5 L424.6,155.5 L427.1,155.5 L429.6,155.5 L432.1,155.6 L434.7,155.6 L437.2,155.6 L439.7,155.6 L442.3,155.6 L444.8,155.6 L447.3,155.6 L449.8,155.6 L452.4,155.6 L454.9,155.7 L457.4,155.7 L460.0,155.7 L462.5,155.7 L465.0,155.7 L467.5,155.7 L470.1,155.7 L472.6,155.7 L475.1,155.7 L477.6,155.7 L480.2,155.7 L482.7,155.7 L485.2,155.8 L487.8,155.8 L490.3,155.8 L492.8,155.8 L495.3,155.8 L497.9,155.8 L500.4,155.8 L502.9,155.8 L505.4,155.8 L508.0,155.8 L510.5,155.8 L513.0,155.8 L515.6,155.8 L518.1,155.8 L520.6,155.8 L523.1,155.8 L525.7,155.8 L528.2,155.8 L530.7,155.9 L533.3,155.9 L535.8,155.9 L538.3,155.9 L540.8,155.9 L543.4,155.9 L545.9,155.9 L548.4,155.9 L550.9,155.9 L553.5,155.9 L556.0,155.9"/>
+      <line class="l-acc l-dash" x1="245.5" y1="156.0" x2="245.5" y2="76.8"/>
+      <text class="t-acc" x="251.5" y="80.8" text-anchor="start">5% critical value 3.84</text>
+      <circle class="f-car" cx="52.3" cy="156.0" r="5"/>
+      <text class="t-car" x="82.2" y="43.8" text-anchor="start">J = 0.006 in the key (p = 0.94): the red dot at the far left</text>
+      <line class="axis" x1="52" y1="156" x2="556" y2="156"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="156"/>
+      <line class="axis" x1="52.0" y1="156" x2="52.0" y2="161"/><text x="52.0" y="174" text-anchor="middle">0</text>
+      <line class="axis" x1="152.8" y1="156" x2="152.8" y2="161"/><text x="152.8" y="174" text-anchor="middle">2</text>
+      <line class="axis" x1="253.6" y1="156" x2="253.6" y2="161"/><text x="253.6" y="174" text-anchor="middle">4</text>
+      <line class="axis" x1="354.4" y1="156" x2="354.4" y2="161"/><text x="354.4" y="174" text-anchor="middle">6</text>
+      <line class="axis" x1="455.2" y1="156" x2="455.2" y2="161"/><text x="455.2" y="174" text-anchor="middle">8</text>
+      <line class="axis" x1="556.0" y1="156" x2="556.0" y2="161"/><text x="556.0" y="174" text-anchor="middle">10</text>
+      <text x="45" y="160.0" text-anchor="end">0</text>
+      <text x="45" y="94.0" text-anchor="end">0.5</text>
+      <text x="45" y="28.0" text-anchor="end">1</text>
+      <text x="304.0" y="194" text-anchor="middle">J statistic under H₀: χ²(L − K) = χ²(1)</text>
+      <text x="14" y="90.0" text-anchor="middle" transform="rotate(-90 14 90.0)">density</text>
+    </svg>
+    <figcaption>Hansen's J test. With one more moment than parameters, \(J\sim\chi^2_1\) if every instrument is valid. A tiny J means the moments can all be set close to zero at once.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Sargan%E2%80%93Hansen_test" target="_blank" rel="noopener">Sargan–Hansen J test</a>
+    <a href="https://en.wikipedia.org/wiki/Generalized_method_of_moments#Sargan%E2%80%93Hansen_J-test" target="_blank" rel="noopener">Overidentifying restrictions</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="2b.ii Test the overidentifying restriction">
+<textarea spellcheck="false" aria-label="Python code: 2b.ii Test the overidentifying restriction">print(f"J-Test: degrees of freedom is {model_2b['J_df']}")
+print(f"J = {model_2b['J']:.6f},  p-value = {model_2b['J_p']:.4f}")
+print("Reject at 5%:", model_2b["J"] &gt; stats.chi2.ppf(0.95, model_2b["J_df"]))</textarea>
+  </div>
+  <p class="try"><b>Try:</b> rerun 2b.i with <code>W0=None</code> (identity weight in step 1, as in R) and compare the step-1 values. Then add an invalid instrument, a variable that affects the choice directly. Append <code>(data_binary["mode"] == "car") + np.random.default_rng(0).normal(0, 1, len(data_binary))</code> as a ninth column and a sixth instrument. What happens to J?</p>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>specTest(model_2b)
+##  ##  J-Test: degrees of freedom is 1  ##
+##                 J-test     P-value
+## Test E(g)=0:    0.0060018  0.9382488</pre>
+      <p>The overidentifying restrictions test fails to reject the null hypothesis, so we conclude that all empirical moments are sufficiently close to zero. This result implies that this model is correctly specified and provides a good fit for our data.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>The key concludes the model "is correctly specified". Is that stronger than the test allows? How would you phrase it?</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <p><a href="problem_set_1.html">Problem Set 1</a> · <a href="problem_set_2.html">Problem Set 2</a> · <b>Problem Set 3</b> · <a href="problem_set_4.html">Problem Set 4</a> · <a href="problem_set_5.html">Problem Set 5</a></p>
+  Source: ResEcon 703 Problem Set 3 solutions (UMass Amherst). R code and output in the solution keys are reproduced from that document; Python translations, theory notes, figures and the simulated stand-in data were written for this class page. Python runs in the browser with <a href="https://pyodide.org/" target="_blank" rel="noopener">Pyodide</a>; the first load downloads about 30&nbsp;MB.
+</footer>
+</main>
+</div>
+
+<script>
+(() => {
+  const PYODIDE_BASE = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+  const PACKAGES = ["numpy", "pandas", "matplotlib", "scipy", "statsmodels"];
+
+  // Python side: run a cell in a shared namespace, capture prints, tables and figures
+  const KERNEL = `
+import sys, io, ast, json, base64, traceback
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+plt.rcParams.update({"figure.dpi": 100, "axes.spines.top": False, "axes.spines.right": False,
+                     "font.size": 10, "axes.titleweight": "bold"})
+_NS = {"__name__": "__main__"}
+
+def _run_cell(src):
+    buf = io.StringIO()
+    old = sys.stdout, sys.stderr
+    sys.stdout = sys.stderr = buf
+    html, err = None, None
+    try:
+        tree = ast.parse(src, "<cell>", "exec")
+        last = None
+        if tree.body and isinstance(tree.body[-1], ast.Expr):
+            last = ast.Expression(tree.body.pop().value)
+        exec(compile(tree, "<cell>", "exec"), _NS)
+        if last is not None:
+            val = eval(compile(last, "<cell>", "eval"), _NS)
+            if val is not None:
+                rh = getattr(val, "_repr_html_", None)
+                h = rh() if callable(rh) else None
+                if h:
+                    html = h
+                else:
+                    print(repr(val))
+    except Exception:
+        etype, evalue, tb = sys.exc_info()
+        lines = [f for f in traceback.extract_tb(tb) if f.filename == "<cell>"]
+        where = f"Line {lines[-1].lineno}: " if lines else ""
+        err = where + "".join(traceback.format_exception_only(etype, evalue)).strip()
+    finally:
+        sys.stdout, sys.stderr = old
+    figs = []
+    for num in plt.get_fignums():
+        b = io.BytesIO()
+        plt.figure(num).savefig(b, format="png", dpi=110, bbox_inches="tight", facecolor="white")
+        figs.append(base64.b64encode(b.getvalue()).decode("ascii"))
+    plt.close("all")
+    return json.dumps({"stdout": buf.getvalue(), "html": html, "figs": figs, "error": err})
+`;
+
+  const pill = document.getElementById("py-pill");
+  const pillMsg = document.getElementById("py-msg");
+  const setStatus = (state, msg) => { pill.dataset.state = state; pillMsg.textContent = msg; };
+
+  // Build the cells
+  const cells = [...document.querySelectorAll(".cell")].map((el, i) => {
+    const ta = el.querySelector("textarea");
+    const original = ta.value;
+    const bar = document.createElement("div");
+    bar.className = "cell-bar";
+    bar.innerHTML = `<span class="cell-n">[ ]</span><span class="cell-title"></span>
+      <button type="button" class="reset">Reset</button><button type="button" class="run">Run ▸</button>`;
+    bar.querySelector(".cell-title").textContent = el.dataset.title || `Cell ${i + 1}`;
+    if (el.dataset.slow) {
+      const slow = document.createElement("span");
+      slow.className = "slow"; slow.textContent = " · " + el.dataset.slow;
+      bar.querySelector(".cell-title").appendChild(slow);
+    }
+    el.insertBefore(bar, ta);
+    const out = document.createElement("div");
+    out.className = "out"; out.setAttribute("aria-live", "polite");
+    el.appendChild(out);
+    ta.id = `cell-${i + 1}`;
+    const fit = () => { ta.style.height = "auto"; ta.style.height = (ta.scrollHeight + 4) + "px"; };
+    ta.addEventListener("input", fit);
+    requestAnimationFrame(fit);
+    ta.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && ev.shiftKey) { ev.preventDefault(); runUpTo(i); }
+      else if (ev.key === "Tab" && !ev.shiftKey) {
+        ev.preventDefault();
+        const s = ta.selectionStart, e = ta.selectionEnd;
+        ta.setRangeText("    ", s, e, "end");
+      }
+    });
+    const cell = { el, ta, out, original, fit, ran: false, n: bar.querySelector(".cell-n"),
+                   runBtn: bar.querySelector(".run") };
+    cell.runBtn.addEventListener("click", () => runUpTo(i));
+    bar.querySelector(".reset").addEventListener("click", () => { ta.value = original; fit(); });
+    return cell;
+  });
+
+  // Pyodide boot (once)
+  let pyPromise = null;
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src; s.onload = resolve;
+      s.onerror = () => reject(new Error("Could not download " + src));
+      document.head.appendChild(s);
+    });
+  }
+  function getPython() {
+    if (!pyPromise) {
+      pyPromise = (async () => {
+        setStatus("loading", "Downloading Python…");
+        await loadScript(PYODIDE_BASE + "pyodide.js");
+        const py = await loadPyodide({ indexURL: PYODIDE_BASE });
+        setStatus("loading", "Loading pandas, statsmodels…");
+        await py.loadPackage(PACKAGES);
+        py.runPython(KERNEL);
+        setStatus("ready", "Python ready");
+        return py;
+      })().catch((err) => {
+        pyPromise = null;
+        setStatus("error", "Python failed to load");
+        throw err;
+      });
+    }
+    return pyPromise;
+  }
+
+  // Cells run one at a time, in order
+  let queue = Promise.resolve();
+  let counter = 0;
+  function runUpTo(i) {
+    queue = queue.then(async () => {
+      let py;
+      try { py = await getPython(); }
+      catch (err) {
+        cells[i].out.innerHTML = "";
+        const pre = document.createElement("pre");
+        pre.className = "err";
+        pre.textContent = `${err.message}\nPython needs an internet connection to load the first time. The solution key below each question shows the expected output.`;
+        cells[i].out.appendChild(pre);
+        return;
+      }
+      for (let j = 0; j <= i; j++) {
+        if (j < i && cells[j].ran) continue;
+        const ok = await execCell(py, j);
+        if (!ok && j < i) {
+          const note = document.createElement("p");
+          note.className = "note";
+          note.textContent = `Stopped: cell [${j + 1}] above raised an error.`;
+          cells[i].out.innerHTML = ""; cells[i].out.appendChild(note);
+          return;
+        }
+      }
+    });
+    return queue;
+  }
+
+  async function execCell(py, j) {
+    const c = cells[j];
+    c.el.dataset.state = "running"; c.n.textContent = "[*]"; c.runBtn.disabled = true;
+    c.out.innerHTML = "";
+    await new Promise(requestAnimationFrame);
+    const res = JSON.parse(py.globals.get("_run_cell")(c.ta.value));
+    if (res.stdout) {
+      const pre = document.createElement("pre"); pre.textContent = res.stdout.replace(/\n$/, ""); c.out.appendChild(pre);
+    }
+    if (res.html) {
+      const div = document.createElement("div"); div.innerHTML = res.html; c.out.appendChild(div);
+    }
+    for (const b64 of res.figs) {
+      const img = document.createElement("img"); img.alt = "Figure produced by this cell"; img.src = "data:image/png;base64," + b64; c.out.appendChild(img);
+    }
+    if (res.error) {
+      const pre = document.createElement("pre"); pre.className = "err"; pre.textContent = res.error; c.out.appendChild(pre);
+    }
+    c.ran = !res.error;
+    c.el.dataset.state = res.error ? "error" : "done";
+    c.n.textContent = `[${++counter}]`;
+    c.runBtn.disabled = false;
+    return !res.error;
+  }
+
+  document.getElementById("run-all").addEventListener("click", () => {
+    cells.forEach((c) => { c.ran = false; });
+    runUpTo(cells.length - 1);
+  });
+
+  // Optional: load the real course CSV into Python's file system
+  const upload = document.getElementById("csv-upload");
+  const csvMsg = document.getElementById("csv-msg");
+  upload.addEventListener("change", async () => {
+    const files = [...upload.files];
+    if (!files.length) return;
+    const expected = (upload.dataset.files || "").split(",").filter(Boolean);
+    const unknown = files.filter((f) => !expected.includes(f.name)).map((f) => f.name);
+    if (unknown.length) {
+      csvMsg.textContent = `Rename ${unknown.join(", ")} to ${expected.join(" or ")} so the setup cell can find it.`;
+      return;
+    }
+    csvMsg.textContent = "Loading Python to receive the files…";
+    try {
+      const py = await getPython();
+      for (const file of files) {
+        py.FS.writeFile(file.name, new Uint8Array(await file.arrayBuffer()));
+      }
+      const names = files.map((f) => f.name).join(", ");
+      cells.forEach((c) => { c.ran = false; });
+      csvMsg.textContent = `Loaded ${names}. Re-running all cells with the course data…`;
+      await runUpTo(cells.length - 1);
+      csvMsg.textContent = `Using ${names}. Results should now match the solution keys.`;
+    } catch (err) {
+      csvMsg.textContent = "Could not load the files: " + err.message;
+    }
+  });
+
+  // Math
+  window.addEventListener("load", () => {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [{ left: "\\[", right: "\\]", display: true }, { left: "\\(", right: "\\)", display: false }],
+        ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+        throwOnError: false
+      });
+    }
+    // Start Python in the background so it is ready when class begins
+    getPython().catch(() => {});
+  });
+})();
+</script>
+</body>
+</html>

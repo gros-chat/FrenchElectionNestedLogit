@@ -15,6 +15,7 @@
   --paper:#F3F6F7; --surface:#FFFFFF; --muted:#E9EEF1; --ink:#17212A; --ink-2:#47545F; --ink-3:#77838E; --line:#D5DDE2;
   --accent:#2B4E80; --accent-soft:#E2EAF5;
   --car:#B4432F; --car-soft:#F6E3DE; --bus:#1F6F8B; --bus-soft:#DDEEF3;
+  --bike:#4F7A28; --walk:#7B4F9E; --mtn:#3E6B3A; --mtn-soft:#E1ECDD; --beach:#B4741A; --beach-soft:#F7EBD6;
   --key:#FBF5E6; --key-line:#E7D9B2; --ok:#2E7D4F; --err:#B3261E; --err-soft:#FBE5E3;
   --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
   --body:"Source Serif 4",Georgia,"Times New Roman",serif;
@@ -26,12 +27,14 @@
   --paper:#0F151A; --surface:#161E25; --muted:#1D2730; --ink:#E3E9ED; --ink-2:#A8B3BD; --ink-3:#7C8893; --line:#2A353F;
   --accent:#8FB2E6; --accent-soft:#1D2A3D;
   --car:#E57C64; --car-soft:#3A2420; --bus:#5DB4D0; --bus-soft:#16303A;
+  --bike:#93C76C; --walk:#BB97DA; --mtn:#8DC085; --mtn-soft:#1C2E1C; --beach:#E5B160; --beach-soft:#33291A;
   --key:#221F17; --key-line:#4A4128; --ok:#6CC495; --err:#F07B72; --err-soft:#3A1E1C;
   color-scheme:dark; } }
 :root[data-theme="dark"]{
   --paper:#0F151A; --surface:#161E25; --muted:#1D2730; --ink:#E3E9ED; --ink-2:#A8B3BD; --ink-3:#7C8893; --line:#2A353F;
   --accent:#8FB2E6; --accent-soft:#1D2A3D;
   --car:#E57C64; --car-soft:#3A2420; --bus:#5DB4D0; --bus-soft:#16303A;
+  --bike:#93C76C; --walk:#BB97DA; --mtn:#8DC085; --mtn-soft:#1C2E1C; --beach:#E5B160; --beach-soft:#33291A;
   --key:#221F17; --key-line:#4A4128; --ok:#6CC495; --err:#F07B72; --err-soft:#3A1E1C;
   color-scheme:dark; }
 
@@ -65,7 +68,7 @@ main{min-width:0;padding-block:40px 120px}
 .hero{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:8px}
 .hero .eyebrow{font-family:var(--display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0}
 .hero h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,5vw,54px);line-height:1.02;letter-spacing:-.02em;margin:10px 0 14px;text-wrap:balance}
-.hero h1 .car{color:var(--car)} .hero h1 .bus{color:var(--bus)}
+.hero h1 .car{color:var(--car)} .hero h1 .bus{color:var(--bus)} .hero h1 .mtn{color:var(--mtn)} .hero h1 .beach{color:var(--beach)}
 .hero p{max-width:66ch;margin:0 0 12px;color:var(--ink-2)}
 .how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px;font-family:var(--display);font-size:14px;line-height:1.4}
 .how div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;color:var(--ink-2)}
@@ -82,7 +85,7 @@ section.q:first-of-type{border-top:0;margin-top:0}
 .prompt{margin:18px 0 0;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);font-size:16px;color:var(--ink-2);max-width:72ch}
 .prompt b{color:var(--ink)}
 code{font-family:var(--mono);font-size:.84em;background:var(--muted);padding:1px 5px;border-radius:3px}
-.car-t{color:var(--car);font-weight:600} .bus-t{color:var(--bus);font-weight:600}
+.car-t{color:var(--car);font-weight:600} .bus-t{color:var(--bus);font-weight:600} .bike-t{color:var(--bike);font-weight:600} .walk-t{color:var(--walk);font-weight:600} .mtn-t{color:var(--mtn);font-weight:600} .beach-t{color:var(--beach);font-weight:600}
 .callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 var(--r) var(--r) 0;max-width:68ch;margin:16px 0}
 .callout p{margin:6px 0}
 .katex-display{overflow-x:auto;overflow-y:hidden;padding:4px 0}
@@ -103,6 +106,15 @@ svg .area{fill:var(--muted);stroke:none}
 svg .l-car{stroke:var(--car);stroke-width:2.5;fill:none}
 svg .l-bus{stroke:var(--bus);stroke-width:2.5;fill:none}
 svg .l-acc{stroke:var(--accent);stroke-width:2.5;fill:none}
+svg .l-bike{stroke:var(--bike);stroke-width:2.5;fill:none} svg .l-walk{stroke:var(--walk);stroke-width:2.5;fill:none}
+svg .l-mtn{stroke:var(--mtn);stroke-width:2.5;fill:none} svg .l-beach{stroke:var(--beach);stroke-width:2.5;fill:none}
+svg .l-ink{stroke:var(--ink);stroke-width:2;fill:none} svg .l-dash{stroke-dasharray:6 4}
+svg .f-car{fill:var(--car)} svg .f-bus{fill:var(--bus)} svg .f-bike{fill:var(--bike)} svg .f-walk{fill:var(--walk)}
+svg .f-mtn{fill:var(--mtn)} svg .f-beach{fill:var(--beach)} svg .f-muted{fill:var(--muted)} svg .f-acc{fill:var(--accent)}
+svg .f-mtn-soft{fill:var(--mtn-soft)} svg .f-beach-soft{fill:var(--beach-soft)} svg .f-acc-soft{fill:var(--accent-soft)}
+svg .t-mtn{fill:var(--mtn);font-weight:700} svg .t-beach{fill:var(--beach);font-weight:700} svg .t-acc{fill:var(--accent);font-weight:700}
+svg .t-bike{fill:var(--bike);font-weight:700} svg .t-on{fill:var(--surface);font-weight:700} svg .t-walk{fill:var(--walk);font-weight:700} svg .t-small{font-size:11px}
+.cell .slow{font-family:var(--display);font-size:12px;color:var(--ink-3);font-weight:400}
 svg .band{fill:var(--err-soft);stroke:none}
 svg .rej{fill:var(--car-soft);stroke:none}
 svg .node{fill:var(--surface);stroke:var(--ink-3);stroke-width:1.2}
@@ -215,11 +227,11 @@ footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-fa
 <section class="q" id="setup">
   <div class="q-head"><span class="q-tag">0</span><h2>Data and setup</h2></div>
   <p>The course file <code>commute_binary.csv</code> holds one row per student: the chosen <code>mode</code> (<span class="car-t">car</span> or <span class="bus-t">bus</span>), the time of each alternative in minutes (<code>time.car</code>, <code>time.bus</code>), and the cost of each in dollars (<code>cost.car</code>; <code>cost.bus</code> is zero because the bus is free).</p>
-  <p>If you have the course file, load it below and every result will match the solution key. Without it, the setup cell builds a <b>simulated stand-in</b> with the same columns and similar summary statistics. The simulated choices come from a binary logit with known coefficients, which we will exploit in later problem sets to check whether our estimators recover the truth.</p>
+  <p>If you have the course file, load it below and every result will match the solution key. Without it, the setup cell builds a <b>simulated stand-in</b> with the same columns and similar summary statistics. The simulated choices come from a binary logit with known coefficients, plus an unobserved taste for driving that later problem sets deal with. The same simulation is used on the Problem Set 2 and 3 pages, so results connect across the course.</p>
 
   <div class="upload">
     <label for="csv-upload">Use the real data</label>
-    <input type="file" id="csv-upload" accept=".csv,text/csv">
+    <input type="file" id="csv-upload" accept=".csv,text/csv" data-files="commute_binary.csv">
     <output id="csv-msg">No file loaded: cells use the simulated stand-in.</output>
   </div>
 
@@ -235,22 +247,31 @@ from pathlib import Path
 CAR, BUS, GREY = "#B4432F", "#1F6F8B", "#9AA5B1"   # same colors as the page
 
 def simulate_commute_binary(n=1000, seed=703):
-    """Stand-in for commute_binary.csv. Choices come from a binary logit
-    with known coefficients, so we know the 'truth' behind the data."""
+    """Stand-in for commute_binary.csv (winter: car or bus).
+    Choices come from a binary logit with known coefficients. An unobserved
+    taste for driving also nudges car lovers to live farther out, which makes
+    cost and time mildly endogenous (Problem Set 3 deals with that)."""
     rng = np.random.default_rng(seed)
-    miles = 1 + rng.lognormal(np.log(3.2), 0.55, n)              # everyone lives > 1 mile away
-    time_car = np.maximum(3, np.round(2.5 + 1.75 * miles + rng.normal(0, 1.5, n)))
-    time_bus = np.maximum(4, np.round(5 + 1.85 * miles + rng.normal(0, 3, n)))
-    price_gas = np.round(rng.normal(3.2, 0.25, n), 2)             # $ per gallon
-    mpg = rng.uniform(25, 45, n)
-    cost_car = np.round(miles * price_gas / mpg, 2)               # $ per trip
-    v = 1.9 - 2.0 * cost_car - 0.30 * time_car + 0.13 * time_bus  # utility(car) - utility(bus)
-    drives = v + rng.logistic(size=n) > 0
-    return pd.DataFrame({"id": np.arange(1, n + 1),
-                         "mode": np.where(drives, "car", "bus"),
+    taste = rng.normal(0, 1, n)                                     # unobserved liking for driving
+    miles = 1 + rng.lognormal(np.log(3.2) + 0.08 * taste, 0.5, n)  # everyone lives &gt; 1 mile away
+    price_gas = np.round(rng.normal(3.2, 0.3, n), 2)               # $ per gallon
+    snowfall = np.round(rng.exponential(3, n), 1)                  # inches on the travel day
+    construction = rng.binomial(1, 0.25, n)                        # road works on the driving route
+    bus_detour = rng.binomial(1, 0.2, n)                           # detour on the bus route
+    time_car = np.maximum(3, np.round(2 + 1.7 * miles + 0.3 * snowfall + 3 * construction + rng.normal(0, 1.5, n)))
+    time_bus = np.maximum(4, np.round(4 + 1.8 * miles + 0.4 * snowfall + 4 * bus_detour + rng.normal(0, 3, n)))
+    mpg = rng.uniform(18, 50, n)
+    cost_car = np.round(miles * price_gas / mpg, 2)                # $ per trip
+    income = np.round(rng.uniform(15, 40, n), 1)                   # $ thousands per year
+    married = rng.random(n) &lt; 0.3
+    v = 2.4 - (55 / income) * cost_car - 0.33 * time_car + 0.13 * time_bus + 0.5 * taste
+    drives = v + rng.logistic(size=n) &gt; 0
+    return pd.DataFrame({"id": np.arange(1, n + 1), "mode": np.where(drives, "car", "bus"),
                          "time.car": time_car, "cost.car": cost_car,
                          "time.bus": time_bus, "cost.bus": 0.0,
-                         "price_gas": price_gas})
+                         "price_gas": price_gas, "snowfall": snowfall,
+                         "construction": construction, "bus_detour": bus_detour,
+                         "income": income, "marital_status": np.where(married, "married", "single")})
 
 if Path("commute_binary.csv").exists():
     data_binary = pd.read_csv("commute_binary.csv")
@@ -569,7 +590,8 @@ print(f"+1 minute on the bus       -> {100 * b['time_bus']:+.1f} percentage poin
 vot = b["time_car"] / b["cost_car"]
 print(f"\nImplied value of driving time: ${vot:.3f} per minute = ${60 * vot:.2f} per hour")
 if source == "simulated stand-in":
-    print("Truth in the simulation: 0.30 / 2.0 = $0.150 per minute = $9.00 per hour")</textarea>
+    print("Truth in the simulation: 0.33 / (55 / income) x 60 = $0.36 per hour per $1,000 of income,")
+    print(f"about ${0.36 * data_binary['income'].mean():.2f} per hour at the average income")</textarea>
   </div>
   <p class="try"><b>Try:</b> refit with <code>cov_type="nonrobust"</code> and with <code>"HC0"</code>. Which standard errors move most, and why the cost coefficient?</p>
 
@@ -778,6 +800,7 @@ print(f"Share driving: {df['car'].mean():.1%} now, {(df['prob_car_2a'] + effect)
 </section>
 
 <footer>
+  <p><b>Problem Set 1</b> · <a href="problem_set_2.html">Problem Set 2</a> · <a href="problem_set_3.html">Problem Set 3</a> · <a href="problem_set_4.html">Problem Set 4</a> · <a href="problem_set_5.html">Problem Set 5</a></p>
   Source: ResEcon 703 Problem Set 1 solutions (UMass Amherst). R code and output in the solution keys are reproduced from that document; Python translations, theory notes, figures and the simulated stand-in data were written for this class page. Python runs in the browser with <a href="https://pyodide.org/" target="_blank" rel="noopener">Pyodide</a>; the first load downloads about 30&nbsp;MB.
 </footer>
 </main>
@@ -847,6 +870,11 @@ def _run_cell(src):
     bar.innerHTML = `<span class="cell-n">[ ]</span><span class="cell-title"></span>
       <button type="button" class="reset">Reset</button><button type="button" class="run">Run ▸</button>`;
     bar.querySelector(".cell-title").textContent = el.dataset.title || `Cell ${i + 1}`;
+    if (el.dataset.slow) {
+      const slow = document.createElement("span");
+      slow.className = "slow"; slow.textContent = " · " + el.dataset.slow;
+      bar.querySelector(".cell-title").appendChild(slow);
+    }
     el.insertBefore(bar, ta);
     const out = document.createElement("div");
     out.className = "out"; out.setAttribute("aria-live", "polite");
@@ -964,19 +992,27 @@ def _run_cell(src):
   const upload = document.getElementById("csv-upload");
   const csvMsg = document.getElementById("csv-msg");
   upload.addEventListener("change", async () => {
-    const file = upload.files[0];
-    if (!file) return;
-    csvMsg.textContent = "Loading Python to receive the file…";
+    const files = [...upload.files];
+    if (!files.length) return;
+    const expected = (upload.dataset.files || "").split(",").filter(Boolean);
+    const unknown = files.filter((f) => !expected.includes(f.name)).map((f) => f.name);
+    if (unknown.length) {
+      csvMsg.textContent = `Rename ${unknown.join(", ")} to ${expected.join(" or ")} so the setup cell can find it.`;
+      return;
+    }
+    csvMsg.textContent = "Loading Python to receive the files…";
     try {
       const py = await getPython();
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      py.FS.writeFile("commute_binary.csv", bytes);
+      for (const file of files) {
+        py.FS.writeFile(file.name, new Uint8Array(await file.arrayBuffer()));
+      }
+      const names = files.map((f) => f.name).join(", ");
       cells.forEach((c) => { c.ran = false; });
-      csvMsg.textContent = `Loaded ${file.name}. Re-running all cells with the course data…`;
+      csvMsg.textContent = `Loaded ${names}. Re-running all cells with the course data…`;
       await runUpTo(cells.length - 1);
-      csvMsg.textContent = `Using ${file.name}. Results should now match the solution keys.`;
+      csvMsg.textContent = `Using ${names}. Results should now match the solution keys.`;
     } catch (err) {
-      csvMsg.textContent = "Could not load the file: " + err.message;
+      csvMsg.textContent = "Could not load the files: " + err.message;
     }
   });
 

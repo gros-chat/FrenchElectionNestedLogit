@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PS4 Camping Choices</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+/* Layout: sticky question rail on the left, one reading column per question (prompt → theory → figure → code → key). */
+:root{
+  --paper:#F3F6F7; --surface:#FFFFFF; --muted:#E9EEF1; --ink:#17212A; --ink-2:#47545F; --ink-3:#77838E; --line:#D5DDE2;
+  --accent:#2B4E80; --accent-soft:#E2EAF5;
+  --car:#B4432F; --car-soft:#F6E3DE; --bus:#1F6F8B; --bus-soft:#DDEEF3;
+  --bike:#4F7A28; --walk:#7B4F9E; --mtn:#3E6B3A; --mtn-soft:#E1ECDD; --beach:#B4741A; --beach-soft:#F7EBD6;
+  --key:#FBF5E6; --key-line:#E7D9B2; --ok:#2E7D4F; --err:#B3261E; --err-soft:#FBE5E3;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:6px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0F151A; --surface:#161E25; --muted:#1D2730; --ink:#E3E9ED; --ink-2:#A8B3BD; --ink-3:#7C8893; --line:#2A353F;
+  --accent:#8FB2E6; --accent-soft:#1D2A3D;
+  --car:#E57C64; --car-soft:#3A2420; --bus:#5DB4D0; --bus-soft:#16303A;
+  --bike:#93C76C; --walk:#BB97DA; --mtn:#8DC085; --mtn-soft:#1C2E1C; --beach:#E5B160; --beach-soft:#33291A;
+  --key:#221F17; --key-line:#4A4128; --ok:#6CC495; --err:#F07B72; --err-soft:#3A1E1C;
+  color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --paper:#0F151A; --surface:#161E25; --muted:#1D2730; --ink:#E3E9ED; --ink-2:#A8B3BD; --ink-3:#7C8893; --line:#2A353F;
+  --accent:#8FB2E6; --accent-soft:#1D2A3D;
+  --car:#E57C64; --car-soft:#3A2420; --bus:#5DB4D0; --bus-soft:#16303A;
+  --bike:#93C76C; --walk:#BB97DA; --mtn:#8DC085; --mtn-soft:#1C2E1C; --beach:#E5B160; --beach-soft:#33291A;
+  --key:#221F17; --key-line:#4A4128; --ok:#6CC495; --err:#F07B72; --err-soft:#3A1E1C;
+  color-scheme:dark; }
+
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:20px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6}
+a{color:var(--accent);text-underline-offset:2px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.shell{display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;max-width:1180px;margin:0 auto;padding-inline:24px}
+
+/* Rail */
+.rail{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;max-height:100vh;overflow-y:auto;padding-block:32px;font-family:var(--display)}
+.rail .course{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px}
+.rail .ps{font-size:22px;font-weight:750;line-height:1.1;margin:0 0 22px}
+.rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.rail a{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:baseline;padding:6px 8px;border-radius:var(--r);text-decoration:none;color:var(--ink-2);font-size:14px;line-height:1.3}
+.rail a:hover{background:var(--muted);color:var(--ink)}
+.rail a b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.rail .group{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:14px 8px 4px}
+.py-status{margin-top:24px;display:flex;flex-direction:column;gap:10px;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:var(--muted);color:var(--ink-2);width:max-content;max-width:100%}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex:none}
+.pill[data-state="loading"] i{background:var(--accent);animation:pulse 1s ease-in-out infinite}
+.pill[data-state="ready"] i{background:var(--ok)}
+.pill[data-state="error"] i{background:var(--err)}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion: reduce){.pill i{animation:none!important}}
+
+/* Main */
+main{min-width:0;padding-block:40px 120px}
+.hero{border-bottom:1px solid var(--line);padding-bottom:28px;margin-bottom:8px}
+.hero .eyebrow{font-family:var(--display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0}
+.hero h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,5vw,54px);line-height:1.02;letter-spacing:-.02em;margin:10px 0 14px;text-wrap:balance}
+.hero h1 .car{color:var(--car)} .hero h1 .bus{color:var(--bus)} .hero h1 .mtn{color:var(--mtn)} .hero h1 .beach{color:var(--beach)}
+.hero p{max-width:66ch;margin:0 0 12px;color:var(--ink-2)}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px;font-family:var(--display);font-size:14px;line-height:1.4}
+.how div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;color:var(--ink-2)}
+.how b{display:block;color:var(--ink);margin-bottom:2px}
+
+section.q{overflow-wrap:break-word;padding-top:44px;border-top:1px solid var(--line);margin-top:44px}
+section.q:first-of-type{border-top:0;margin-top:0}
+.q-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.q-tag{font-family:var(--display);font-weight:800;font-size:15px;color:var(--surface);background:var(--ink);border-radius:4px;padding:2px 9px;font-variant-numeric:tabular-nums}
+.q h2{font-family:var(--display);font-weight:750;font-size:30px;line-height:1.15;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.q h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin:30px 0 8px}
+.q p,.q li{max-width:68ch}
+.q ul,.q ol{padding-left:22px}
+.prompt{margin:18px 0 0;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);font-size:16px;color:var(--ink-2);max-width:72ch}
+.prompt b{color:var(--ink)}
+code{font-family:var(--mono);font-size:.84em;background:var(--muted);padding:1px 5px;border-radius:3px}
+.car-t{color:var(--car);font-weight:600} .bus-t{color:var(--bus);font-weight:600} .bike-t{color:var(--bike);font-weight:600} .walk-t{color:var(--walk);font-weight:600} .mtn-t{color:var(--mtn);font-weight:600} .beach-t{color:var(--beach);font-weight:600}
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 16px;border-radius:0 var(--r) var(--r) 0;max-width:68ch;margin:16px 0}
+.callout p{margin:6px 0}
+.katex-display{overflow-x:auto;overflow-y:hidden;padding:4px 0}
+
+/* Figures */
+figure.fig{margin:20px 0;padding:14px 14px 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);max-width:720px}
+figure.fig svg{display:block;width:100%;height:auto}
+figure.fig figcaption{font-family:var(--display);font-size:13.5px;line-height:1.45;color:var(--ink-2);margin-top:8px}
+.fig-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;max-width:720px}
+.fig-row figure.fig{margin:0}
+svg text{font-family:var(--display);fill:var(--ink-2);font-size:12px}
+svg .t-strong{fill:var(--ink);font-weight:700}
+svg .t-car{fill:var(--car);font-weight:700} svg .t-bus{fill:var(--bus);font-weight:700} svg .t-err{fill:var(--err);font-weight:600}
+svg .axis{stroke:var(--ink-3);stroke-width:1;fill:none}
+svg .grid{stroke:var(--line);stroke-width:1;fill:none}
+svg .curve{stroke:var(--ink);stroke-width:2;fill:none}
+svg .area{fill:var(--muted);stroke:none}
+svg .l-car{stroke:var(--car);stroke-width:2.5;fill:none}
+svg .l-bus{stroke:var(--bus);stroke-width:2.5;fill:none}
+svg .l-acc{stroke:var(--accent);stroke-width:2.5;fill:none}
+svg .l-bike{stroke:var(--bike);stroke-width:2.5;fill:none} svg .l-walk{stroke:var(--walk);stroke-width:2.5;fill:none}
+svg .l-mtn{stroke:var(--mtn);stroke-width:2.5;fill:none} svg .l-beach{stroke:var(--beach);stroke-width:2.5;fill:none}
+svg .l-ink{stroke:var(--ink);stroke-width:2;fill:none} svg .l-dash{stroke-dasharray:6 4}
+svg .f-car{fill:var(--car)} svg .f-bus{fill:var(--bus)} svg .f-bike{fill:var(--bike)} svg .f-walk{fill:var(--walk)}
+svg .f-mtn{fill:var(--mtn)} svg .f-beach{fill:var(--beach)} svg .f-muted{fill:var(--muted)} svg .f-acc{fill:var(--accent)}
+svg .f-mtn-soft{fill:var(--mtn-soft)} svg .f-beach-soft{fill:var(--beach-soft)} svg .f-acc-soft{fill:var(--accent-soft)}
+svg .t-mtn{fill:var(--mtn);font-weight:700} svg .t-beach{fill:var(--beach);font-weight:700} svg .t-acc{fill:var(--accent);font-weight:700}
+svg .t-bike{fill:var(--bike);font-weight:700} svg .t-on{fill:var(--surface);font-weight:700} svg .t-walk{fill:var(--walk);font-weight:700} svg .t-small{font-size:11px}
+.cell .slow{font-family:var(--display);font-size:12px;color:var(--ink-3);font-weight:400}
+svg .band{fill:var(--err-soft);stroke:none}
+svg .rej{fill:var(--car-soft);stroke:none}
+svg .node{fill:var(--surface);stroke:var(--ink-3);stroke-width:1.2}
+svg .node-key{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+svg .edge{stroke:var(--ink-3);stroke-width:1.4;fill:none}
+svg .arrowhead{fill:var(--ink-3)}
+.key-swatch{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+
+.see{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 4px;font-family:var(--display);font-size:13.5px}
+.see span{color:var(--ink-3);font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+.see a{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);text-decoration:none;color:var(--ink)}
+.see a:hover{border-color:var(--accent);color:var(--accent)}
+.see a::after{content:"↗";color:var(--ink-3);font-size:11px}
+
+/* Code cells */
+.cell{margin:16px 0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden;max-width:860px}
+.cell-bar{display:flex;align-items:center;gap:10px;padding:7px 8px 7px 12px;border-bottom:1px solid var(--line);background:var(--muted);font-family:var(--display);font-size:13.5px;flex-wrap:wrap}
+.cell-n{font-family:var(--mono);font-size:12px;color:var(--ink-3);min-width:34px}
+.cell-title{flex:1;min-width:0;color:var(--ink);font-weight:600}
+.cell-bar button{font-family:var(--display);font-size:13px;font-weight:650;border-radius:5px;padding:5px 12px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)}
+.cell-bar button.run{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.cell-bar button:hover{filter:brightness(1.08)}
+.cell-bar button:disabled{opacity:.55;cursor:progress}
+.cell textarea{display:block;width:100%;border:0;resize:vertical;padding:12px 14px;margin:0;background:var(--surface);color:var(--ink);font-family:var(--mono);font-size:13.5px;line-height:1.55;tab-size:4;white-space:pre;overflow-x:auto;min-height:60px}
+.cell textarea:focus{outline:none;background:var(--paper)}
+.cell[data-state="running"] .cell-n{color:var(--accent)}
+.cell[data-state="done"] .cell-n{color:var(--ok)}
+.cell[data-state="error"] .cell-n{color:var(--err)}
+.out{border-top:1px dashed var(--line);padding:10px 14px;font-size:13.5px;overflow-x:auto}
+.out:empty{display:none}
+.out pre{margin:0;font-family:var(--mono);font-size:12.8px;line-height:1.5;white-space:pre;color:var(--ink)}
+.out pre.err{color:var(--err);background:var(--err-soft);padding:8px 10px;border-radius:4px;white-space:pre-wrap}
+.out .note{font-family:var(--display);color:var(--ink-3);font-size:13px}
+.out img{display:block;max-width:100%;height:auto;background:#FFFFFF;border-radius:4px;padding:6px;margin:8px 0}
+.out table{border-collapse:collapse;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;margin:4px 0}
+.out table{border:0}
+.out th,.out td{padding:4px 10px;border:0;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.out thead th{color:var(--ink-2);font-weight:600}
+.out tbody th{text-align:left;color:var(--ink)}
+.try{font-family:var(--display);font-size:13.5px;color:var(--ink-2);margin:-6px 0 16px;max-width:860px}
+.try b{color:var(--ink)}
+
+/* Solution key */
+details.key{margin:20px 0;border:1px solid var(--key-line);background:var(--key);border-radius:var(--r);max-width:860px}
+details.key summary{cursor:pointer;padding:10px 14px;font-family:var(--display);font-weight:650;font-size:14px;color:var(--ink)}
+details.key summary span{font-weight:400;color:var(--ink-3)}
+details.key .body{padding:0 16px 14px}
+details.key pre{font-family:var(--mono);font-size:12.5px;line-height:1.5;background:var(--surface);border:1px solid var(--key-line);border-radius:4px;padding:10px 12px;overflow-x:auto;margin:8px 0}
+.discuss{max-width:68ch;margin-top:18px;font-size:16px}
+.discuss h3{margin-top:22px}
+.discuss ol{margin:0}
+
+.upload{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-family:var(--display);font-size:14px;margin:12px 0;padding:12px 14px;border:1px dashed var(--line);border-radius:var(--r);max-width:860px;background:var(--surface)}
+.upload label{font-weight:650}
+.upload input{font-family:var(--display);font-size:13px;max-width:100%}
+.upload output{color:var(--ink-3)}
+.btn-all{font-family:var(--display);font-size:13px;font-weight:650;border-radius:5px;padding:7px 12px;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:var(--surface);width:max-content}
+footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--display);font-size:13px;color:var(--ink-3);max-width:72ch}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:0;padding-inline:16px}
+  .rail{position:static;max-height:none;padding-block:20px 0;border-bottom:1px solid var(--line)}
+  .rail ol{flex-direction:row;flex-wrap:wrap}
+  .rail a{grid-template-columns:auto;padding:4px 8px;border:1px solid var(--line)}
+  .rail a span{display:none}
+  .rail .group{display:none}
+  .py-status{flex-direction:row;flex-wrap:wrap;align-items:center;margin:14px 0 16px}
+  .how{grid-template-columns:minmax(0,1fr)}
+  .fig-row{grid-template-columns:minmax(0,1fr)}
+  .q h2{font-size:25px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav class="rail" aria-label="Questions">
+  <p class="course">ResEcon 703 · UMass Amherst</p>
+  <p class="ps">Problem Set 4</p>
+  <ol>
+    <li><a href="#setup"><b>0</b><span>Data &amp; setup</span></a></li>
+    <li class="group">Logit and nested logit</li>
+    <li><a href="#p1a1"><b>1a.i</b><span>Multinomial logit</span></a></li>
+    <li><a href="#p1a2"><b>1a.ii</b><span>Value of time and mountains</span></a></li>
+    <li><a href="#p1a3"><b>1a.iii</b><span>Greylock fee elasticities</span></a></li>
+    <li><a href="#p1b1"><b>1b.i</b><span>Nested logit</span></a></li>
+    <li><a href="#p1b2"><b>1b.ii</b><span>LR test: are nests needed?</span></a></li>
+    <li><a href="#p1b3"><b>1b.iii</b><span>Values, nested logit</span></a></li>
+    <li><a href="#p1b4"><b>1b.iv</b><span>Elasticities, nested logit</span></a></li>
+    <li class="group">Mixed logit</li>
+    <li><a href="#p2a"><b>2a.i</b><span>All coefficients random</span></a></li>
+    <li><a href="#p2b1"><b>2b.i</b><span>Fixed cost coefficient</span></a></li>
+    <li><a href="#p2b2"><b>2b.ii</b><span>LR test: random cost?</span></a></li>
+    <li><a href="#p2b3"><b>2b.iii</b><span>Distribution of values</span></a></li>
+    <li><a href="#p2b4"><b>2b.iv</b><span>Who prefers mountains?</span></a></li>
+    <li><a href="#p2c1"><b>2c.i</b><span>A $20 Greylock fee</span></a></li>
+    <li><a href="#p2c2"><b>2c.ii</b><span>Who pays for it?</span></a></li>
+  </ol>
+  <div class="py-status">
+    <span class="pill" id="py-pill" data-state="idle"><i></i><span id="py-msg">Python not started</span></span>
+    <button class="btn-all" id="run-all" type="button">Run all cells</button>
+  </div>
+</nav>
+
+<main>
+<header class="hero">
+  <p class="eyebrow">Topics in Advanced Econometrics · Class notebook</p>
+  <h1><span class="mtn">Mountains</span> or <span class="beach">beach</span>?</h1>
+  <p>1,000 campers each chose one of five Massachusetts state parks: two in the Berkshire mountains, three on the coast. The Department of Conservation and Recreation (DCR) wants to know how campers value travel time and setting, and what a $20 fee increase at Mount Greylock would do. The multinomial logit gives one answer; nested and mixed logits show why it is the wrong one.</p>
+  <p>The original problem set used <code>mlogit()</code> with nests and random parameters. Python has no such package, so the cells below write each likelihood in a few lines of numpy.</p>
+  <div class="how">
+    <div><b>Run a cell</b>Press <em>Run</em> or Shift + Enter inside the code. Earlier cells run first if they haven't yet.</div>
+    <div><b>Edit freely</b>Change the code and re-run. <em>Reset</em> restores the original version.</div>
+    <div><b>Check the key</b>Each question ends with the official R output and answer, collapsed.</div>
+  </div>
+</header>
+
+<section class="q" id="setup">
+  <div class="q-head"><span class="q-tag">0</span><h2>Data and setup</h2></div>
+  <p><code>camping.csv</code> is in <b>long format</b>: five rows per camper, one per park, with <code>visit = 1</code> on the park chosen. Each row has the trip's <code>cost</code> (travel plus fees, in $), the travel <code>time</code> (minutes), and whether the park is in the <span class="mtn-t">mountains</span> or at the <span class="beach-t">beach</span>. Parks 1–2 are mountain parks, 3–5 beach parks.</p>
+  <p>Without the course file, the setup cell simulates a stand-in from a mixed logit with known parameters, close to the estimates in the key.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 258" role="img" aria-label="Schematic map: Mount Greylock and October Mountain in the far west, Horseneck, Salisbury and Scusset beaches in the east near most campers">
+      <rect class="f-acc-soft" x="276.5" y="24.5" width="283.5" height="157.9" opacity=".55"/>
+      <text class="t-acc t-small" x="285.9" y="176.4" text-anchor="start">most campers live in this area</text>
+      <circle class="f-mtn" cx="52.4" cy="56.1" r="7"/>
+      <text class="t-mtn" x="64.4" y="60.1" text-anchor="start">Mount Greylock</text>
+      <circle class="f-mtn" cx="68.6" cy="119.3" r="7"/>
+      <text class="t-mtn" x="80.6" y="123.3" text-anchor="start">October Mountain</text>
+      <circle class="f-beach" cx="425.0" cy="203.5" r="7"/>
+      <text class="t-beach" x="413.0" y="207.5" text-anchor="end">Horseneck Beach</text>
+      <circle class="f-beach" cx="465.5" cy="35.1" r="7"/>
+      <text class="t-beach" x="453.5" y="39.1" text-anchor="end">Salisbury Beach</text>
+      <circle class="f-beach" cx="506.0" cy="161.4" r="7"/>
+      <text class="t-beach" x="494.0" y="165.4" text-anchor="end">Scusset Beach</text>
+      <circle class="f-acc" cx="430.4" cy="87.7" r="4"/>
+      <text class="t-acc" x="421.4" y="91.7" text-anchor="end">Boston</text>
+      <line class="axis" x1="20" y1="214" x2="560" y2="214"/>
+      <line class="axis" x1="20.0" y1="214" x2="20.0" y2="219"/><text x="20.0" y="232" text-anchor="middle">0</text>
+      <line class="axis" x1="155.0" y1="214" x2="155.0" y2="219"/><text x="155.0" y="232" text-anchor="middle">50</text>
+      <line class="axis" x1="290.0" y1="214" x2="290.0" y2="219"/><text x="290.0" y="232" text-anchor="middle">100</text>
+      <line class="axis" x1="425.0" y1="214" x2="425.0" y2="219"/><text x="425.0" y="232" text-anchor="middle">150</text>
+      <line class="axis" x1="560.0" y1="214" x2="560.0" y2="219"/><text x="560.0" y="232" text-anchor="middle">200</text>
+      <text x="290.0" y="252" text-anchor="middle">miles east</text>
+    </svg>
+    <figcaption>A schematic of the setting used by the simulated stand-in: the two mountain parks are far from where most campers live, the three beaches are close. Positions are stylised.</figcaption>
+  </figure>
+
+  <div class="upload">
+    <label for="csv-upload">Use the real data</label>
+    <input type="file" id="csv-upload" accept=".csv,text/csv" data-files="camping.csv">
+    <output id="csv-msg">No file loaded: cells use the simulated stand-in.</output>
+  </div>
+  <p class="try">Accepted file names: <code>camping.csv</code>.</p>
+
+  <div class="cell" data-title="Load libraries and the camping data">
+<textarea spellcheck="false" aria-label="Python code: Load libraries and the camping data">import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+from scipy.optimize import minimize
+from scipy.special import logsumexp
+from pathlib import Path
+
+MTN, BEACH, GREY = "#3E6B3A", "#B4741A", "#9AA5B1"   # page colours
+
+PARKS = ["Mount Greylock", "October Mountain", "Horseneck Beach", "Salisbury Beach", "Scusset Beach"]
+
+def simulate_camping(n=1000, seed=703):
+    """Stand-in for camping.csv: 1000 campers x 5 parks, long format.
+    Choices come from a mixed logit: a fixed cost coefficient and normal
+    random coefficients on travel time and on the mountain setting."""
+    rng = np.random.default_rng(seed)
+    px = np.array([12, 18, 150, 165, 180])        # park positions, miles east
+    py = np.array([75, 45, 5, 85, 25])            # and miles north
+    fee = np.array([15, 25, 65, 78, 74])          # $ per night
+    mountain = np.array([1, 1, 0, 0, 0])
+    home_x = np.clip(rng.normal(135, 45, n), 0, 200)
+    home_y = np.clip(rng.normal(55, 25, n), 0, 95)
+    miles = 1.25 * np.hypot(home_x[:, None] - px, home_y[:, None] - py) + 5
+    time = np.round(miles / 50 * 60 + rng.normal(0, 8, (n, 5)))      # minutes
+    nights = rng.integers(1, 4, n)[:, None]
+    cost = np.round(fee * nights + 0.30 * 2 * miles, 2)               # $ per trip
+    b_time = rng.normal(-0.006, 0.0037, n)[:, None]                   # random coefficients
+    b_mtn = rng.normal(-0.85, 5.6, n)[:, None]
+    V = -0.02 * cost + b_time * time + b_mtn * mountain
+    choice = np.argmax(V + rng.gumbel(size=V.shape), axis=1)
+    return pd.DataFrame({"camper_id": np.repeat(np.arange(1, n + 1), 5),
+                         "park_id": np.tile(np.arange(1, 6), n),
+                         "park": np.tile(PARKS, n),
+                         "visit": (np.arange(5) == choice[:, None]).astype(int).ravel(),
+                         "mountain": np.tile(mountain, n), "beach": np.tile(1 - mountain, n),
+                         "cost": cost.ravel(), "time": time.ravel()})
+
+if Path("camping.csv").exists():
+    data_camping = pd.read_csv("camping.csv"); source = "course file"
+else:
+    data_camping = simulate_camping(); source = "simulated stand-in"
+data_camping = data_camping.sort_values(["camper_id", "park_id"]).reset_index(drop=True)
+
+# Long data -&gt; arrays: X is campers x parks x variables, y is the index of the chosen park
+VARS = ["cost", "time", "mountain"]
+N, J = data_camping["camper_id"].nunique(), data_camping["park_id"].nunique()
+X = data_camping[VARS].to_numpy().reshape(N, J, len(VARS))
+y = data_camping["visit"].to_numpy().reshape(N, J).argmax(axis=1)
+park_names = data_camping["park"].iloc[:J].tolist()
+rows = np.arange(N)
+
+print(f"{len(data_camping)} rows = {N} campers x {J} parks  ({source})")
+print("Share of campers at each park:", {p: round(float(s), 3) for p, s in zip(park_names, np.bincount(y) / N)})
+data_camping.head(10)</textarea>
+  </div>
+
+</section>
+
+<section class="q" id="p1a1">
+  <div class="q-head"><span class="q-tag">1a.i</span><h2>Multinomial logit of park choice</h2></div>
+  <div class="prompt">Model the park choice as a multinomial logit with common parameters on cost, time and setting, \(V_{nj}=\beta_1C_{nj}+\beta_2T_{nj}+\beta_3M_j\), without alternative-specific intercepts. Report and interpret the estimates.</div>
+
+  <h3>Theory</h3>
+  <p>The setting enters through a park attribute \(M_j\), not an alternative-specific constant. That is the reason for the warning in the prompt: with constants for every park, \(\beta_3M_j\) would be a linear combination of the mountain parks' constants and could not be identified. Without constants, the model says that two parks with the same cost, time and setting are equally attractive on average.</p>
+  \[P_{nj}=\frac{\exp(\beta_1C_{nj}+\beta_2T_{nj}+\beta_3M_j)}{\sum_{k=1}^{5}\exp(\beta_1C_{nk}+\beta_2T_{nk}+\beta_3M_k)} .\]
+  <p>The estimation is the conditional logit of Problem Sets 2 and 3, now on data that arrive already in long form. <code>mlogit</code>'s formula <code>visit ~ cost + time + mountain | 0</code> means three generic variables and no intercepts.</p>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Conditional_logistic_regression" target="_blank" rel="noopener">Conditional logit</a>
+    <a href="https://en.wikipedia.org/wiki/Travel_cost_analysis" target="_blank" rel="noopener">Recreation demand: random utility models</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 3</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p>The first cell defines the tools used on this page (an optimiser wrapper, the numerical Hessian, an LR test) and fits the multinomial logit.</p>
+  <div class="cell" data-title="Tools, and 1a.i the multinomial logit">
+<textarea spellcheck="false" aria-label="Python code: Tools, and 1a.i the multinomial logit">def numerical_hessian(f, x, rel_step=1e-4):
+    x = np.asarray(x, float); k = len(x); H = np.zeros((k, k))
+    h = rel_step * np.maximum(1.0, np.abs(x))
+    for i in range(k):
+        for j in range(i, k):
+            ei = np.zeros(k); ei[i] = h[i]; ej = np.zeros(k); ej[j] = h[j]
+            H[i, j] = H[j, i] = (f(x + ei + ej) - f(x + ei - ej) - f(x - ei + ej) + f(x - ei - ej)) / (4 * h[i] * h[j])
+    return H
+
+def fit(neg_ll, start, names, jac=False):
+    """Minimise a negative log-likelihood; return estimates, SEs from the Hessian, and ln L."""
+    res = minimize(neg_ll, np.asarray(start, float), jac=jac, method="BFGS")
+    if jac:                                            # Hessian from differences of the exact gradient
+        k = len(res.x); H = np.zeros((k, k))
+        for i in range(k):
+            h = 1e-5 * max(1.0, abs(res.x[i])); e = np.zeros(k); e[i] = h
+            H[:, i] = (neg_ll(res.x + e)[1] - neg_ll(res.x - e)[1]) / (2 * h)
+        H = (H + H.T) / 2
+    else:
+        H = numerical_hessian(neg_ll, res.x)
+    se = np.sqrt(np.diag(np.linalg.inv(H)))
+    table = pd.DataFrame({"Estimate": res.x, "Std. Error": se, "z-value": res.x / se,
+                          "Pr(&gt;|z|)": 2 * stats.norm.sf(np.abs(res.x / se))}, index=names)
+    return {"par": pd.Series(res.x, index=names), "table": table, "loglik": -res.fun, "cov": np.linalg.inv(H)}
+
+def lrtest(restricted, unrestricted):
+    stat = 2 * (unrestricted["loglik"] - restricted["loglik"])
+    df = len(unrestricted["par"]) - len(restricted["par"])
+    print(f"LogLik restricted {restricted['loglik']:.1f}, unrestricted {unrestricted['loglik']:.1f}")
+    print(f"Chisq = {stat:.3f}, Df = {df}, Pr(&gt;Chisq) = {stats.chi2.sf(stat, df):.4g}")
+
+def logit_probs(beta):
+    V = X @ beta
+    return np.exp(V - logsumexp(V, axis=1, keepdims=True))
+
+def neg_ll_mnl(beta):
+    V = X @ beta                                   # N x J
+    return -(V[rows, y] - logsumexp(V, axis=1)).sum()
+
+model_1a = fit(neg_ll_mnl, np.zeros(3), VARS)
+print(model_1a["table"].round(6))
+print(f"\nLog-Likelihood: {model_1a['loglik']:.1f}")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## Frequencies of alternatives:choice
+##     1     2     3     4     5
+## 0.274 0.202 0.209 0.167 0.148
+##
+## Coefficients :
+##             Estimate  Std. Error z-value  Pr(&gt;|z|)
+## cost     -0.01478389  0.00368970 -4.0068 6.155e-05 ***
+## time     -0.00163201  0.00040778 -4.0022 6.275e-05 ***
+## mountain -0.33105186  0.17595101 -1.8815    0.0599 .
+##
+## Log-Likelihood: -1524.2</pre>
+      <p>The cost and time parameters (β₁ and β₂) are statistically significant and can be interpreted as marginal utilities. The cost of camping at a park reduces the utility of camping there, and the time spent traveling to the park reduces the utility of camping there. The mountain parameter, β₃, is statistically significant at the 10% level and is interpreted as the relative utility of camping in the mountains. The campers in our dataset obtain less utility, <em>ceteris paribus</em>, from camping in the mountains than from camping at the beach.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p1a2">
+  <div class="q-head"><span class="q-tag">1a.ii</span><h2>What do campers pay for time and setting?</h2></div>
+  <div class="prompt">Calculate the dollar value that a camper places on each hour spent traveling and on camping in the mountains (relative to the beach).</div>
+
+  <h3>Theory</h3>
+  <p>As in Problem Set 2, ratios of coefficients convert utility into dollars. The value of an hour of travel is \(60\,\beta_2/\beta_1\) (both negative, so the ratio is positive). The value of the mountain setting relative to the beach is the cost change that offsets it:</p>
+  \[\beta_1\,\Delta C+\beta_3=0\ \Longrightarrow\ \Delta C=-\beta_3/\beta_1=\beta_3/(-\beta_1).\]
+  <p>A negative value means the average camper would need to be paid to switch from an otherwise identical beach park to a mountain park.</p>
+  <div class="cell" data-title="1a.ii Value of travel time and of the mountains">
+<textarea spellcheck="false" aria-label="Python code: 1a.ii Value of travel time and of the mountains">b = model_1a["par"]
+print(f"Value of travel time:  ${b['time'] / b['cost'] * 60:.2f} per hour")
+print(f"Value of mountains:    ${b['mountain'] / -b['cost']:.2f} relative to the beach")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>coef(model_1a)[2:3] / coef(model_1a)[1] * c(60, -1)
+##      time   mountain
+##  6.623449 -22.392742</pre>
+      <p>These campers value their time spent traveling to the park at $6.62 per hour, and they value camping in the mountains at $22.39 less than camping at the beach.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p1a3">
+  <div class="q-head"><span class="q-tag">1a.iii</span><h2>Elasticities with respect to the Greylock fee</h2></div>
+  <div class="prompt">For each camper, calculate the elasticity of choosing each park with respect to the cost of camping at Mount Greylock (park 1). Report the mean elasticity for each park and relate the pattern to an important property of the logit.</div>
+
+  <h3>Theory</h3>
+  <p>For the logit, the elasticities with respect to the cost of park 1 are</p>
+  \[E_{P_{n1},C_{n1}}=\beta_1C_{n1}(1-P_{n1}),\qquad E_{P_{nj},C_{n1}}=-\beta_1C_{n1}P_{n1}\quad(j\neq1).\]
+  <p>The cross-elasticity is identical for all four other parks. A camper priced out of Greylock is no more likely, proportionally, to go to October Mountain than to the beach. That is IIA again, and here it is clearly implausible: someone who chose a mountain park probably likes mountains.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 210" role="img" aria-label="Multinomial logit elasticities with respect to Greylock's cost: own minus 0.676, all four others plus 0.223">
+      <text x="160" y="33.0" text-anchor="end">Mount Greylock (own)</text>
+      <rect class="f-mtn" x="236.9" y="21" width="121.0" height="18" rx="2"/>
+      <text class="t-strong" x="230.9" y="33.0" text-anchor="end">-0.676</text>
+      <text x="160" y="63.0" text-anchor="end">October Mountain</text>
+      <rect class="f-mtn" x="357.9" y="51" width="39.9" height="18" rx="2"/>
+      <text class="t-strong" x="403.8" y="63.0" text-anchor="start">+0.223</text>
+      <text x="160" y="93.0" text-anchor="end">Horseneck Beach</text>
+      <rect class="f-beach" x="357.9" y="81" width="39.9" height="18" rx="2"/>
+      <text class="t-strong" x="403.8" y="93.0" text-anchor="start">+0.223</text>
+      <text x="160" y="123.0" text-anchor="end">Salisbury Beach</text>
+      <rect class="f-beach" x="357.9" y="111" width="39.9" height="18" rx="2"/>
+      <text class="t-strong" x="403.8" y="123.0" text-anchor="start">+0.223</text>
+      <text x="160" y="153.0" text-anchor="end">Scusset Beach</text>
+      <rect class="f-beach" x="357.9" y="141" width="39.9" height="18" rx="2"/>
+      <text class="t-strong" x="403.8" y="153.0" text-anchor="start">+0.223</text>
+      <line class="axis" x1="357.9" y1="12" x2="357.9" y2="170"/>
+      <text x="214.7" y="186" text-anchor="middle">-0.8</text>
+      <text x="286.3" y="186" text-anchor="middle">-0.4</text>
+      <text x="357.9" y="186" text-anchor="middle">0</text>
+      <text x="429.5" y="186" text-anchor="middle">0.4</text>
+      <text x="501.1" y="186" text-anchor="middle">0.8</text>
+      <text x="340.0" y="206" text-anchor="middle">mean elasticity w.r.t. Greylock's cost (solution key)</text>
+    </svg>
+    <figcaption>Under IIA, October Mountain (the other mountain park) gains no more from a Greylock price rise than a beach does, in percentage terms.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Independence_of_irrelevant_alternatives" target="_blank" rel="noopener">Independence of irrelevant alternatives</a>
+    <a href="https://en.wikipedia.org/wiki/Price_elasticity_of_demand" target="_blank" rel="noopener">Price elasticity of demand</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="1a.iii Elasticities with respect to Greylock's cost">
+<textarea spellcheck="false" aria-label="Python code: 1a.iii Elasticities with respect to Greylock's cost">P_1a = logit_probs(model_1a["par"].to_numpy())
+cost_1 = X[:, 0, 0]                                    # each camper's cost of Mount Greylock
+b_cost = model_1a["par"]["cost"]
+elas = -b_cost * cost_1[:, None] * P_1a[:, [0]] * np.ones((1, J))   # cross-elasticities
+elas[:, 0] = b_cost * cost_1 * (1 - P_1a[:, 0])                      # own elasticity
+pd.Series(elas.mean(axis=0), index=park_names, name="mean elasticity").round(4)</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## # A tibble: 1 x 2
+##   own_elas cross_elas
+## 1   -0.676      0.223</pre>
+      <p>The mean elasticity of camping at Mount Greylock with respect to its cost is −0.676, and the mean elasticity of camping at any of the other four parks with respect to the cost of camping at Mount Greylock is 0.223. This model implies that campers will substitute to the other park in proportion to their observed visits. In other words, campers will substitute to other parks with no consideration for whether those parks share attributes with Mount Greylock. This proportional substitution is an example of the rigid substitution patterns imposed by the logit model.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p1b1">
+  <div class="q-head"><span class="q-tag">1b.i</span><h2>The nested logit</h2></div>
+  <div class="prompt">If campers have individual preferences for mountains or beach, utilities are correlated among parks with the same setting. Model the choice as a nested logit with two nests (mountain: parks 1–2; beach: parks 3–5) and the same representative utility as in part (a). Report and interpret the estimates.</div>
+
+  <h3>Theory</h3>
+  <p>Suppose each camper has an unobserved taste for mountains or for the beach. Then the errors of the two mountain parks move together, and so do those of the three beaches. The <b>nested logit</b> allows exactly this. It belongs to the generalised extreme value (GEV) family: errors are still extreme value, but correlated within nests \(B_k\).</p>
+  \[P_{ni}=\underbrace{\frac{e^{V_{ni}/\lambda_k}}{\sum_{j\in B_k}e^{V_{nj}/\lambda_k}}}_{P_{ni\mid B_k}}\ \times\ \underbrace{\frac{\big(\sum_{j\in B_k}e^{V_{nj}/\lambda_k}\big)^{\lambda_k}}{\sum_{l}\big(\sum_{j\in B_l}e^{V_{nj}/\lambda_l}\big)^{\lambda_l}}}_{P_{nB_k}} .\]
+  <p>The term \(I_{nk}=\ln\sum_{j\in B_k}e^{V_{nj}/\lambda_k}\) is the <b>inclusive value</b> of nest \(k\), and \(\lambda_k\) is its coefficient (<code>iv</code> in <code>mlogit</code>). Interpretation:</p>
+  <ul>
+    <li>\(\lambda_k=1\): no correlation within the nest; if all \(\lambda\)'s are 1, the model collapses to the multinomial logit.</li>
+    <li>\(0&lt;\lambda_k&lt;1\): positive correlation; \(1-\lambda_k\) is a rough index of it. Smaller \(\lambda\) means alternatives in the nest are closer substitutes.</li>
+    <li>\(\lambda_k&gt;1\): inconsistent with utility maximisation for some data.</li>
+  </ul>
+  <p>IIA now holds <em>within</em> a nest but not across nests.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 210" role="img" aria-label="Nest tree: a root splits into a mountain nest with Mount Greylock and October Mountain, and a beach nest with Horseneck, Salisbury and Scusset beaches">
+      <rect class="node" x="240" y="10" width="100" height="32" rx="5"/><text class="t-strong" x="290" y="31" text-anchor="middle">choose a park</text>
+      <rect class="node-key" x="70" y="80" width="180" height="34" rx="5"/><text class="t-mtn" x="160" y="102" text-anchor="middle">mountain nest (iv:mountain)</text>
+      <rect class="node-key" x="335" y="80" width="170" height="34" rx="5"/><text class="t-beach" x="420" y="102" text-anchor="middle">beach nest (iv:beach)</text>
+      <line class="edge" x1="290" y1="42" x2="160" y2="80"/><line class="edge" x1="290" y1="42" x2="420" y2="80"/>
+      <line class="edge" x1="160" y1="114" x2="85" y2="158"/><line class="edge" x1="160" y1="114" x2="230" y2="158"/>
+      <line class="edge" x1="420" y1="114" x2="335" y2="158"/><line class="edge" x1="420" y1="114" x2="425" y2="158"/><line class="edge" x1="420" y1="114" x2="515" y2="158"/>
+      <rect class="node" x="25" y="158" width="120" height="30" rx="5"/><text x="85" y="178" text-anchor="middle">Mount Greylock</text>
+      <rect class="node" x="160" y="158" width="140" height="30" rx="5"/><text x="230" y="178" text-anchor="middle">October Mountain</text>
+      <rect class="node" x="310" y="158" width="74" height="30" rx="5"/><text x="347" y="178" text-anchor="middle">Horseneck</text>
+      <rect class="node" x="390" y="158" width="74" height="30" rx="5"/><text x="427" y="178" text-anchor="middle">Salisbury</text>
+      <rect class="node" x="470" y="158" width="90" height="30" rx="5"/><text x="515" y="178" text-anchor="middle">Scusset</text>
+      <text class="t-small" x="290" y="206" text-anchor="middle">errors are correlated within a nest (1 − λ measures how much), independent across nests</text>
+    </svg>
+    <figcaption>The nest structure. The tree is a way to describe the error correlation, not a claim that campers decide in two steps.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Generalized_extreme_value_distribution" target="_blank" rel="noopener">Nested logit (GEV family)</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 4: GEV models</a>
+    <a href="https://cran.r-project.org/web/packages/mlogit/index.html" target="_blank" rel="noopener">mlogit vignettes: nested logit</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p>The nested logit log-likelihood, written from the formula above with the two inclusive values computed by <code>logsumexp</code>:</p>
+  <div class="cell" data-title="1b.i Estimate the nested logit">
+<textarea spellcheck="false" aria-label="Python code: 1b.i Estimate the nested logit">nest = np.array([0, 0, 1, 1, 1])                       # 0 = mountain (parks 1-2), 1 = beach (parks 3-5)
+
+def nl_log_probs(params):
+    beta, lam = params[:3], params[3:]
+    V = X @ beta                                       # N x J
+    lam_j = lam[nest]                                  # each park's nest parameter
+    Vs = V / lam_j
+    IV = np.column_stack([logsumexp(Vs[:, nest == k], axis=1) for k in range(2)])   # inclusive values
+    log_denom = logsumexp(lam * IV, axis=1)
+    return Vs + (lam_j - 1) * IV[:, nest] - log_denom[:, None]       # ln P_nj
+
+def neg_ll_nl(params):
+    return -nl_log_probs(params)[rows, y].sum()
+
+start = np.r_[model_1a["par"].to_numpy(), 1.0, 1.0]   # start at the MNL, where lambda = 1
+model_1b = fit(neg_ll_nl, start, VARS + ["iv:mountain", "iv:beach"])
+print(model_1b["table"].round(6))
+print(f"\nLog-Likelihood: {model_1b['loglik']:.1f}")</textarea>
+  </div>
+  <div class="cell" data-title="Check: probabilities sum to one, and λ = 1 gives the logit">
+<textarea spellcheck="false" aria-label="Python code: Check: probabilities sum to one, and λ = 1 gives the logit">P_nl = np.exp(nl_log_probs(model_1b["par"].to_numpy()))
+print("Rows of P sum to 1:", np.allclose(P_nl.sum(axis=1), 1))
+print("Nested logit at lambda = (1, 1) equals the MNL:",
+      np.isclose(neg_ll_nl(np.r_[model_1a["par"].to_numpy(), 1, 1]), neg_ll_mnl(model_1a["par"].to_numpy())))</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## Coefficients :
+##                 Estimate  Std. Error z-value  Pr(&gt;|z|)
+## cost        -0.00607442  0.00151849 -4.0003 6.326e-05 ***
+## time        -0.00146685  0.00024578 -5.9681 2.400e-09 ***
+## mountain    -0.19944206  0.09847759 -2.0253   0.04284 *
+## iv:mountain  0.27206879  0.05790001  4.6989 2.615e-06 ***
+## iv:beach     0.31647461  0.06018706  5.2582 1.455e-07 ***
+##
+## Log-Likelihood: -1500.9</pre>
+      <p>The cost, time, and mountain parameters are interpreted as they were in part (a), although the mountain parameter is now statistically significant at the 5% level. This model contains two additional parameters, the coefficients on the inclusive value for each nest, which are statistically significant. These parameters represent the independence of random utility within each nest, with a value of 1 indicating full independence and a value close to 0 indicating high dependence. Thus, we conclude there is some dependence within each of the nests. That is, the random utility that a camper obtains from camping at each of the parks in the mountains is correlated, as is the random utility from camping at each of the parks at the beach. This result is consistent with each camper having an individual preference for the mountains or the beach beyond the average preference represented by β₃, the common mountain parameter.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>The z-values test \(\lambda=0\). Which null hypothesis about \(\lambda\) is more interesting, and how would you test it?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p1b2">
+  <div class="q-head"><span class="q-tag">1b.ii</span><h2>Is the nesting needed?</h2></div>
+  <div class="prompt">The model in part (a) imposes a restriction on the model in part (b). Write the null hypothesis, describe it in words, and test it with a likelihood ratio test.</div>
+
+  <h3>Theory</h3>
+  <p>The MNL is the nested logit with \(\lambda_{mountain}=\lambda_{beach}=1\): two restrictions, so \(LR\sim\chi^2_2\) under \(H_0\). In words, the null is that the unobserved utility of each park is independent of every other park's, i.e. that campers have no individual preference for a setting beyond the average \(\beta_3\).</p>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Likelihood-ratio_test" target="_blank" rel="noopener">Likelihood-ratio test</a>
+  </div>
+  <div class="cell" data-title="1b.ii LR test: nested logit vs. multinomial logit">
+<textarea spellcheck="false" aria-label="Python code: 1b.ii LR test: nested logit vs. multinomial logit">lrtest(model_1a, model_1b)</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>lrtest(model_1a, model_1b)
+##   #Df  LogLik Df  Chisq Pr(&gt;Chisq)
+## 1   3 -1524.2
+## 2   5 -1500.9  2 46.564  7.739e-11 ***</pre>
+      <p>The null hypothesis is that the inclusive value coefficients equal 1 for both nests: \(H_0:\lambda_{mountain}=\lambda_{beach}=1\). In words, there is no correlation among the random utility terms, i.e. the random utility of every alternative is i.i.d. If a camper has an individual preference for camping in the mountains or at the beach beyond the average preference represented by β₃, this hypothesis would not hold. We reject it with a p-value of approximately 0: there is strong evidence of correlation among the random utility terms within each nest.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p1b3">
+  <div class="q-head"><span class="q-tag">1b.iii</span><h2>Values from the nested logit</h2></div>
+  <div class="prompt">Calculate the dollar value of an hour of travel and of camping in the mountains using the nested logit estimates.</div>
+
+  <h3>Theory</h3>
+  <p>The formulas are the same as in 1a.ii. The numbers change because the MNL misattributes the correlated tastes: it has to explain why mountain parks are visited by a fixed group of people with only cost, time and an average mountain effect.</p>
+  <div class="cell" data-title="1b.iii Values from the nested logit">
+<textarea spellcheck="false" aria-label="Python code: 1b.iii Values from the nested logit">b = model_1b["par"]
+print(f"Value of travel time:  ${b['time'] / b['cost'] * 60:.2f} per hour   (MNL: ${model_1a['par']['time'] / model_1a['par']['cost'] * 60:.2f})")
+print(f"Value of mountains:    ${b['mountain'] / -b['cost']:.2f}            (MNL: ${model_1a['par']['mountain'] / -model_1a['par']['cost']:.2f})")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>coef(model_1b)[2:3] / coef(model_1b)[1] * c(60, -1)
+##     time mountain
+##  14.4888 -32.8331</pre>
+      <p>These campers value their time spent traveling to the park at $14.49 per hour, and they value camping in the mountains at $32.83 less than camping at the beach.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p1b4">
+  <div class="q-head"><span class="q-tag">1b.iv</span><h2>Elasticities from the nested logit</h2></div>
+  <div class="prompt">Calculate each park's elasticity with respect to the cost of camping at Mount Greylock for each camper, and report the mean for each park. Compare with part (a).</div>
+
+  <h3>Theory</h3>
+  <p>For park 1 in nest \(k\) (the mountains), differentiating the nested logit probability gives</p>
+  \[E_{1,C_1}=\beta_1C_{1}\Big[\tfrac{1}{\lambda_k}-\tfrac{1-\lambda_k}{\lambda_k}P_{1\mid B_k}-P_{1}\Big],\]
+  \[E_{j,C_1}=-\beta_1C_{1}P_{1}\Big[1+\tfrac{1-\lambda_k}{\lambda_k}\tfrac{1}{P_{B_k}}\Big]\ \ (j\in B_k,\ j\neq1),\qquad E_{j,C_1}=-\beta_1C_1P_1\ \ (j\notin B_k).\]
+  <p>The extra term for parks in the same nest grows as \(\lambda_k\) falls: strong within-nest correlation means close substitutes. Across nests, the logit formula still applies.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 150" role="img" aria-label="Nested logit elasticities: own minus 0.709, October Mountain plus 0.649, beaches plus 0.095">
+      <text x="160" y="33.0" text-anchor="end">Mount Greylock (own)</text>
+      <rect class="f-mtn" x="231.0" y="21" width="126.9" height="18" rx="2"/>
+      <text class="t-strong" x="225.0" y="33.0" text-anchor="end">-0.709</text>
+      <text x="160" y="63.0" text-anchor="end">October Mountain</text>
+      <rect class="f-mtn" x="357.9" y="51" width="116.1" height="18" rx="2"/>
+      <text class="t-strong" x="480.0" y="63.0" text-anchor="start">+0.649</text>
+      <text x="160" y="93.0" text-anchor="end">each beach park</text>
+      <rect class="f-beach" x="357.9" y="81" width="17.0" height="18" rx="2"/>
+      <text class="t-strong" x="380.9" y="93.0" text-anchor="start">+0.095</text>
+      <line class="axis" x1="357.9" y1="12" x2="357.9" y2="110"/>
+      <text x="214.7" y="126" text-anchor="middle">-0.8</text>
+      <text x="286.3" y="126" text-anchor="middle">-0.4</text>
+      <text x="357.9" y="126" text-anchor="middle">0</text>
+      <text x="429.5" y="126" text-anchor="middle">0.4</text>
+      <text x="501.1" y="126" text-anchor="middle">0.8</text>
+      <text x="340.0" y="146" text-anchor="middle">mean elasticity w.r.t. Greylock's cost (solution key)</text>
+    </svg>
+    <figcaption>With nests, campers leaving Greylock mostly go to the other mountain park.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 4.2: nested logit elasticities</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="1b.iv Elasticities from the nested logit">
+<textarea spellcheck="false" aria-label="Python code: 1b.iv Elasticities from the nested logit">b = model_1b["par"]
+lam_m = b["iv:mountain"]
+P = np.exp(nl_log_probs(b.to_numpy()))
+prob = P[:, 0]                                   # P(Greylock)
+prob_nest = P[:, :2].sum(axis=1)                 # P(mountain nest)
+prob_cond = prob / prob_nest                     # P(Greylock | mountain)
+cost_1 = X[:, 0, 0]
+own = b["cost"] * cost_1 * (1 / lam_m - (1 - lam_m) / lam_m * prob_cond - prob)
+cross_mtn = -b["cost"] * cost_1 * prob * (1 + (1 - lam_m) / (lam_m * prob_nest))
+cross_beach = -b["cost"] * cost_1 * prob
+pd.Series({"own (Greylock)": own.mean(), "October Mountain": cross_mtn.mean(), "each beach park": cross_beach.mean()}).round(4)</textarea>
+  </div>
+  <div class="cell" data-title="Check the formulas numerically">
+<textarea spellcheck="false" aria-label="Python code: Check the formulas numerically"># Raise Greylock's cost by 0.1% and compare the arc elasticities with the formulas
+eps = 1e-3
+X_up = X.copy(); X_up[:, 0, 0] *= 1 + eps
+X_saved = X; X = X_up
+P_up = np.exp(nl_log_probs(b.to_numpy()))
+X = X_saved
+numeric = ((P_up - P) / P / eps).mean(axis=0)
+pd.Series(numeric, index=park_names, name="numerical elasticity").round(4)</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## # A tibble: 1 x 3
+##   own_elas cross_elas_mountain cross_elas_beach
+## 1   -0.709               0.649           0.0952</pre>
+      <p>The mean elasticity of camping at Mount Greylock with respect to its cost is −0.709; the mean elasticity of camping at October Mountain with respect to the cost of camping at Mount Greylock is 0.649; and the mean elasticity of camping at any of the beach parks with respect to the cost of camping at Mount Greylock is 0.095. This model implies that campers will substitute to October Mountain in much greater proportion than to the beach parks. These elasticities are more intuitive than the elasticities in part (a), which imposed proportional substitution, if campers have individual preferences for camping in the mountains.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p2a">
+  <div class="q-head"><span class="q-tag">2a.i</span><h2>Mixed logit with random coefficients</h2></div>
+  <div class="prompt">Model the park choice as a mixed logit with \(V_{nj}=\beta_{1n}C_{nj}+\beta_{2n}T_{nj}+\beta_{3n}M_j\) and all three coefficients normal, \(\beta_k\sim\mathcal N(\mu_k,\sigma_k^2)\). Use 100 draws and seed 703. Report and interpret the estimates.</div>
+
+  <h3>Theory</h3>
+  <p>The nested logit gave each <em>nest</em> correlated errors. The <b>mixed logit</b> goes further: each camper has their own coefficients,</p>
+  \[U_{nj}=\beta_n'x_{nj}+\varepsilon_{nj},\qquad \beta_{n}\sim\mathcal N(\mu,\ \operatorname{diag}(\sigma^2)),\qquad \varepsilon\ \text{i.i.d. Gumbel}.\]
+  <p>A camper with a large \(\beta_{3n}\) likes every mountain park. That taste creates correlation between the mountain parks' utilities, without our having to specify nests. Given \(\beta_n\) the choice is a logit, so the choice probability is an average of logits over the taste distribution:</p>
+  \[P_{ni}=\int\frac{e^{\beta'x_{ni}}}{\sum_je^{\beta'x_{nj}}}\,\phi(\beta\mid\mu,\sigma)\,d\beta\ \approx\ \frac1R\sum_{r=1}^{R}\frac{e^{\beta_r'x_{ni}}}{\sum_je^{\beta_r'x_{nj}}},\quad \beta_r=\mu+\sigma\eta_r .\]
+  <p>There is no closed form, so we <b>simulate</b> it with \(R=100\) standard normal draws \(\eta_r\) per camper (held fixed while the optimiser searches) and maximise the simulated log-likelihood. Problem Set 5 builds this estimator step by step. The sign of \(\sigma\) is not identified, since \(\sigma\eta\) and \(-\sigma\eta\) have the same distribution; only \(|\sigma|\) matters, which is why the key can report \(-5.6\).</p>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Mixed_logit" target="_blank" rel="noopener">Mixed logit</a>
+    <a href="https://en.wikipedia.org/wiki/Monte_Carlo_integration" target="_blank" rel="noopener">Monte Carlo integration</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 6: mixed logit</a>
+    <a href="https://doi.org/10.1002/1099-1255(200009/10)15:5%3C447::AID-JAE570%3E3.0.CO;2-1" target="_blank" rel="noopener">McFadden and Train (2000), any RUM is a mixed logit</a>
+  </div>
+
+  <h3>In Python</h3>
+  <p>The next cell builds the simulated log-likelihood for any set of random coefficients. It also returns the exact gradient, which makes BFGS fast enough for the browser.</p>
+  <div class="cell" data-title="Simulated log-likelihood for the mixed logit">
+<textarea spellcheck="false" aria-label="Python code: Simulated log-likelihood for the mixed logit">R = 100
+rng = np.random.default_rng(703)                       # seed 703, as in the key
+draws_all = rng.standard_normal((N, R, 3))             # one draw per camper, simulation draw, coefficient
+
+def make_mixed_logit(random, draws):
+    """Simulated negative log-likelihood (and its gradient) for a mixed logit with normal coefficients.
+    random: which of VARS have random coefficients. Parameters: means of all VARS, then sds of the random ones."""
+    K = len(VARS); idx = np.flatnonzero(random); R = draws.shape[1]
+    Xc = X[rows, y]                                    # attributes of each camper's chosen park
+    def coefficients(theta):
+        Bc = np.broadcast_to(theta[:K], (N, R, K)).copy()
+        Bc[:, :, idx] += theta[K:] * draws             # beta_nr = mu + sigma * draw
+        return Bc
+    def neg_ll(theta):
+        Bc = coefficients(theta)
+        V = np.einsum("nrk,njk-&gt;nrj", Bc, X)           # utility of each park in each draw
+        lse = logsumexp(V, axis=2)
+        logL = V[rows, :, y] - lse                     # log logit prob of the chosen park, per draw
+        logP = logsumexp(logL, axis=1) - np.log(R)     # log of the average over draws
+        Pj = np.exp(V - lse[:, :, None])
+        dev = Xc[:, None, :] - np.einsum("nrj,njk-&gt;nrk", Pj, X)
+        w = np.exp(logL - logP[:, None]) / R
+        grad = np.r_[np.einsum("nr,nrk-&gt;k", w, dev), np.einsum("nr,nrk,nrk-&gt;k", w, dev[:, :, idx], draws)]
+        return -logP.sum(), -grad
+    neg_ll.coefficients = coefficients
+    return neg_ll
+
+print("make_mixed_logit() ready; draws:", draws_all.shape)</textarea>
+  </div>
+  <div class="cell" data-title="2a.i Mixed logit with all three coefficients random" data-slow="about 10–20 s in the browser">
+<textarea spellcheck="false" aria-label="Python code: 2a.i Mixed logit with all three coefficients random">nll_2a = make_mixed_logit([True, True, True], draws_all)
+model_2a = fit(nll_2a, [-0.02, -0.005, -0.8, 0.01, 0.002, 5], VARS + ["sd.cost", "sd.time", "sd.mountain"], jac=True)
+print(model_2a["table"].round(6))
+print(f"\nLog-Likelihood: {model_2a['loglik']:.1f}")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## Coefficients :
+##               Estimate  Std. Error z-value  Pr(&gt;|z|)
+## cost        -0.0214846  0.0042303 -5.0788 3.799e-07 ***
+## time        -0.0061720  0.0010827 -5.7007 1.193e-08 ***
+## mountain    -0.8444033  0.3083382 -2.7386  0.006171 **
+## sd.cost      0.0126612  0.0166059  0.7624  0.445791
+## sd.time      0.0036772  0.0015353  2.3951  0.016616 *
+## sd.mountain -5.6000997  1.1536954 -4.8541 1.210e-06 ***
+##
+## Log-Likelihood: -1504.5</pre>
+      <p>The cost coefficient, β₁, is the marginal utility of the cost of the camping trip, or the negative of the marginal utility of money. Modelled as random and normal, different campers can have a different marginal utility of money. We estimate that this coefficient has a mean of −0.021 and a standard deviation of 0.013. The standard deviation parameter is not statistically significant, so we cannot conclude that this coefficient has any variance, suggesting it may be better to model it as fixed. The other parameters are all statistically significant. The marginal utility of travel time is normally distributed with mean −0.0062 and standard deviation 0.0037. The utility of camping in the mountains, relative to the beach and <em>ceteris paribus</em>, is normally distributed with mean −0.84 and standard deviation 5.6.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>A standard deviation of 5.6 on a mean of −0.84: what share of campers prefer the mountains? (Hint: \(\Phi(-0.84/5.6)\).)</li>
+      <li>Why is a normal distribution an awkward choice for a cost coefficient?</li>
+    </ol>
+  </div>
+</section>
+
+<section class="q" id="p2b1">
+  <div class="q-head"><span class="q-tag">2b.i</span><h2>Mixed logit with a fixed cost coefficient</h2></div>
+  <div class="prompt">Model \(\beta_1\) as fixed and \(\beta_2,\beta_3\) as normal. Use 100 draws and seed 703. Report and interpret the estimates.</div>
+
+  <h3>Theory</h3>
+  <p>With a fixed cost coefficient, every dollar value is a random coefficient divided by a constant, so it keeps the coefficient's normal distribution. With a random cost coefficient, the value of time would be a ratio of two normals, which has no mean (the denominator can be arbitrarily close to zero). Fixing cost is the standard way to get well-behaved willingness-to-pay distributions.</p>
+  <div class="cell" data-title="2b.i Mixed logit with a fixed cost coefficient" data-slow="about 10 s in the browser">
+<textarea spellcheck="false" aria-label="Python code: 2b.i Mixed logit with a fixed cost coefficient">draws_2b = draws_all[:, :, 1:]                         # draws for time and mountain only
+nll_2b = make_mixed_logit([False, True, True], draws_2b)
+model_2b = fit(nll_2b, [-0.02, -0.005, -0.8, 0.002, 5], VARS + ["sd.time", "sd.mountain"], jac=True)
+print(model_2b["table"].round(6))
+print(f"\nLog-Likelihood: {model_2b['loglik']:.1f}")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>## Coefficients :
+##                Estimate  Std. Error z-value  Pr(&gt;|z|)
+## cost        -0.01872287  0.00410751 -4.5582 5.159e-06 ***
+## time        -0.00487803  0.00089451 -5.4533 4.945e-08 ***
+## mountain    -0.82439901  0.28712024 -2.8713  0.004088 **
+## sd.time      0.00194078  0.00100759  1.9262  0.054084 .
+## sd.mountain  4.67359368  1.00229284  4.6629 3.118e-06 ***
+##
+## Log-Likelihood: -1503.2</pre>
+      <p>The cost coefficient, β₁, is now fixed at −0.019 for all campers. The time coefficient is normally distributed with mean −0.0049 and standard deviation 0.0019. The utility of camping in the mountains, relative to the beach and <em>ceteris paribus</em>, is normally distributed with mean −0.82 and standard deviation 4.7.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p2b2">
+  <div class="q-head"><span class="q-tag">2b.ii</span><h2>Is the cost coefficient random?</h2></div>
+  <div class="prompt">Test whether β₁ is fixed or random. Write the null hypothesis, describe it in words, and conduct a likelihood ratio test.</div>
+
+  <h3>Theory</h3>
+  <p>\(H_0:\sigma_1^2=0\): every camper has the same marginal utility of money. One restriction, so compare \(LR\) with \(\chi^2_1\). Two caveats worth raising in class:</p>
+  <ul>
+    <li><b>Boundary.</b> A variance cannot be negative, so \(H_0\) sits on the edge of the parameter space. The correct null distribution is a 50:50 mixture of \(\chi^2_0\) and \(\chi^2_1\), so the usual p-value is too large by a factor of two (conservative).</li>
+    <li><b>Simulation.</b> Both likelihoods are simulated. With the same draws in both models, simulation noise partly cancels, but the restricted model can even reach a higher simulated likelihood, as in the key (−1503.2 vs −1504.5). That is why the key prints a negative degrees-of-freedom difference.</li>
+  </ul>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Likelihood-ratio_test#Asymptotic_distribution:_Wilks%E2%80%99_theorem" target="_blank" rel="noopener">Tests on the boundary of the parameter space</a>
+  </div>
+  <div class="cell" data-title="2b.ii Is the cost coefficient random?">
+<textarea spellcheck="false" aria-label="Python code: 2b.ii Is the cost coefficient random?">lrtest(model_2b, model_2a)
+stat = max(0.0, 2 * (model_2a["loglik"] - model_2b["loglik"]))
+print(f"Boundary-corrected p-value (half the chi2(1) tail): {0.5 * stats.chi2.sf(stat, 1):.4f}")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>lrtest(model_2a, model_2b)
+##   #Df  LogLik Df  Chisq Pr(&gt;Chisq)
+## 1   6 -1504.5
+## 2   5 -1503.2 -1 2.5395      0.111</pre>
+      <p>The null hypothesis is that the variance of the random β₁ coefficient equals 0, \(H_0:\sigma_1^2=0\). In words, there is no heterogeneity in this cost coefficient, so all campers have the same marginal utility of cost or income. We fail to reject this hypothesis with a p-value of 0.11, so we conclude that the cost coefficient, β₁, is fixed for all campers.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p2b3">
+  <div class="q-head"><span class="q-tag">2b.iii</span><h2>Distributions of dollar values</h2></div>
+  <div class="prompt">Calculate the dollar value of an hour of travel and of camping in the mountains. Because β₂ and β₃ are random, these values are distributions: report the mean and standard deviation of each.</div>
+
+  <h3>Theory</h3>
+  <p>With a fixed cost coefficient, a random coefficient divided by \(-\beta_1\) is still normal:</p>
+  \[\text{WTP}_{time,n}=60\,\frac{\beta_{2n}}{\beta_1}\sim\mathcal N\Big(60\frac{\mu_2}{\beta_1},\ \Big(60\frac{\sigma_2}{\beta_1}\Big)^2\Big),\qquad \text{WTP}_{mtn,n}=\frac{\beta_{3n}}{-\beta_1}\sim\mathcal N\Big(\frac{\mu_3}{-\beta_1},\ \Big(\frac{\sigma_3}{\beta_1}\Big)^2\Big).\]
+  <p>A normal distribution of time values puts some mass on negative values, meaning campers who enjoy driving to the park. Whether that is plausible is a modelling choice; a log-normal coefficient would rule it out.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 230" role="img" aria-label="Normal distribution of the mountain coefficient with mean minus 0.82 and standard deviation 4.67; the 43 percent of campers with positive values are shaded">
+      <path class="f-mtn-soft" d="M304.0,42.7 L306.1,43.4 L308.2,44.2 L310.3,45.2 L312.4,46.2 L314.5,47.3 L316.6,48.5 L318.7,49.7 L320.8,51.1 L322.9,52.6 L325.0,54.1 L327.1,55.7 L329.2,57.4 L331.3,59.1 L333.4,60.9 L335.5,62.8 L337.6,64.7 L339.7,66.7 L341.8,68.8 L343.9,70.8 L346.0,73.0 L348.1,75.1 L350.2,77.3 L352.3,79.6 L354.4,81.9 L356.5,84.1 L358.6,86.5 L360.7,88.8 L362.8,91.1 L364.9,93.5 L367.0,95.8 L369.1,98.2 L371.2,100.6 L373.3,102.9 L375.4,105.3 L377.5,107.6 L379.6,109.9 L381.7,112.2 L383.8,114.5 L385.9,116.8 L388.0,119.0 L390.1,121.3 L392.2,123.5 L394.3,125.6 L396.4,127.7 L398.5,129.8 L400.6,131.9 L402.7,133.9 L404.8,135.9 L406.9,137.8 L409.0,139.7 L411.1,141.6 L413.2,143.4 L415.3,145.1 L417.4,146.9 L419.5,148.5 L421.6,150.2 L423.7,151.7 L425.8,153.3 L427.9,154.8 L430.0,156.2 L432.1,157.6 L434.2,159.0 L436.3,160.3 L438.4,161.5 L440.5,162.7 L442.6,163.9 L444.7,165.0 L446.8,166.1 L448.9,167.1 L451.0,168.1 L453.1,169.1 L455.2,170.0 L457.3,170.9 L459.4,171.7 L461.5,172.5 L463.6,173.3 L465.7,174.0 L467.8,174.7 L469.9,175.4 L472.0,176.0 L474.1,176.6 L476.2,177.2 L478.3,177.8 L480.4,178.3 L482.5,178.8 L484.6,179.2 L486.7,179.7 L488.8,180.1 L490.9,180.5 L493.0,180.8 L495.1,181.2 L497.2,181.5 L499.3,181.8 L501.4,182.1 L503.5,182.4 L505.6,182.6 L507.7,182.9 L509.8,183.1 L511.9,183.3 L514.0,183.5 L516.1,183.7 L518.2,183.9 L520.3,184.0 L522.4,184.2 L524.5,184.3 L526.6,184.4 L528.7,184.6 L530.8,184.7 L532.9,184.8 L535.0,184.9 L537.1,185.0 L539.2,185.0 L541.3,185.1 L543.4,185.2 L545.5,185.3 L547.6,185.3 L549.7,185.4 L551.8,185.4 L553.9,185.5 L556.0,185.5 L556.0,186.0 L553.9,186.0 L551.8,186.0 L549.7,186.0 L547.6,186.0 L545.5,186.0 L543.4,186.0 L541.3,186.0 L539.2,186.0 L537.1,186.0 L535.0,186.0 L532.9,186.0 L530.8,186.0 L528.7,186.0 L526.6,186.0 L524.5,186.0 L522.4,186.0 L520.3,186.0 L518.2,186.0 L516.1,186.0 L514.0,186.0 L511.9,186.0 L509.8,186.0 L507.7,186.0 L505.6,186.0 L503.5,186.0 L501.4,186.0 L499.3,186.0 L497.2,186.0 L495.1,186.0 L493.0,186.0 L490.9,186.0 L488.8,186.0 L486.7,186.0 L484.6,186.0 L482.5,186.0 L480.4,186.0 L478.3,186.0 L476.2,186.0 L474.1,186.0 L472.0,186.0 L469.9,186.0 L467.8,186.0 L465.7,186.0 L463.6,186.0 L461.5,186.0 L459.4,186.0 L457.3,186.0 L455.2,186.0 L453.1,186.0 L451.0,186.0 L448.9,186.0 L446.8,186.0 L444.7,186.0 L442.6,186.0 L440.5,186.0 L438.4,186.0 L436.3,186.0 L434.2,186.0 L432.1,186.0 L430.0,186.0 L427.9,186.0 L425.8,186.0 L423.7,186.0 L421.6,186.0 L419.5,186.0 L417.4,186.0 L415.3,186.0 L413.2,186.0 L411.1,186.0 L409.0,186.0 L406.9,186.0 L404.8,186.0 L402.7,186.0 L400.6,186.0 L398.5,186.0 L396.4,186.0 L394.3,186.0 L392.2,186.0 L390.1,186.0 L388.0,186.0 L385.9,186.0 L383.8,186.0 L381.7,186.0 L379.6,186.0 L377.5,186.0 L375.4,186.0 L373.3,186.0 L371.2,186.0 L369.1,186.0 L367.0,186.0 L364.9,186.0 L362.8,186.0 L360.7,186.0 L358.6,186.0 L356.5,186.0 L354.4,186.0 L352.3,186.0 L350.2,186.0 L348.1,186.0 L346.0,186.0 L343.9,186.0 L341.8,186.0 L339.7,186.0 L337.6,186.0 L335.5,186.0 L333.4,186.0 L331.3,186.0 L329.2,186.0 L327.1,186.0 L325.0,186.0 L322.9,186.0 L320.8,186.0 L318.7,186.0 L316.6,186.0 L314.5,186.0 L312.4,186.0 L310.3,186.0 L308.2,186.0 L306.1,186.0 L304.0,186.0 Z"/>
+      <path class="curve" d="M52.0,184.5 L54.1,184.4 L56.2,184.3 L58.3,184.1 L60.4,184.0 L62.5,183.8 L64.6,183.6 L66.7,183.5 L68.8,183.3 L70.9,183.0 L73.0,182.8 L75.1,182.6 L77.2,182.3 L79.3,182.0 L81.4,181.8 L83.5,181.4 L85.6,181.1 L87.7,180.8 L89.8,180.4 L91.9,180.0 L94.0,179.6 L96.1,179.1 L98.2,178.7 L100.3,178.2 L102.4,177.7 L104.5,177.1 L106.6,176.5 L108.7,175.9 L110.8,175.3 L112.9,174.6 L115.0,173.9 L117.1,173.2 L119.2,172.4 L121.3,171.6 L123.4,170.7 L125.5,169.9 L127.6,168.9 L129.7,168.0 L131.8,167.0 L133.9,165.9 L136.0,164.8 L138.1,163.7 L140.2,162.5 L142.3,161.3 L144.4,160.0 L146.5,158.7 L148.6,157.3 L150.7,155.9 L152.8,154.5 L154.9,153.0 L157.0,151.4 L159.1,149.8 L161.2,148.2 L163.3,146.5 L165.4,144.8 L167.5,143.0 L169.6,141.2 L171.7,139.4 L173.8,137.4 L175.9,135.5 L178.0,133.5 L180.1,131.5 L182.2,129.4 L184.3,127.3 L186.4,125.2 L188.5,123.0 L190.6,120.8 L192.7,118.6 L194.8,116.4 L196.9,114.1 L199.0,111.8 L201.1,109.5 L203.2,107.2 L205.3,104.8 L207.4,102.5 L209.5,100.1 L211.6,97.7 L213.7,95.4 L215.8,93.0 L217.9,90.7 L220.0,88.3 L222.1,86.0 L224.2,83.7 L226.3,81.4 L228.4,79.2 L230.5,76.9 L232.6,74.7 L234.7,72.6 L236.8,70.4 L238.9,68.4 L241.0,66.3 L243.1,64.4 L245.2,62.4 L247.3,60.6 L249.4,58.8 L251.5,57.0 L253.6,55.4 L255.7,53.8 L257.8,52.3 L259.9,50.8 L262.0,49.5 L264.1,48.2 L266.2,47.1 L268.3,46.0 L270.4,45.0 L272.5,44.1 L274.6,43.3 L276.7,42.6 L278.8,42.0 L280.9,41.4 L283.0,41.0 L285.1,40.7 L287.2,40.5 L289.3,40.4 L291.4,40.5 L293.5,40.6 L295.6,40.8 L297.7,41.1 L299.8,41.5 L301.9,42.1 L304.0,42.7 L306.1,43.4 L308.2,44.2 L310.3,45.2 L312.4,46.2 L314.5,47.3 L316.6,48.5 L318.7,49.7 L320.8,51.1 L322.9,52.6 L325.0,54.1 L327.1,55.7 L329.2,57.4 L331.3,59.1 L333.4,60.9 L335.5,62.8 L337.6,64.7 L339.7,66.7 L341.8,68.8 L343.9,70.8 L346.0,73.0 L348.1,75.1 L350.2,77.3 L352.3,79.6 L354.4,81.9 L356.5,84.1 L358.6,86.5 L360.7,88.8 L362.8,91.1 L364.9,93.5 L367.0,95.8 L369.1,98.2 L371.2,100.6 L373.3,102.9 L375.4,105.3 L377.5,107.6 L379.6,109.9 L381.7,112.2 L383.8,114.5 L385.9,116.8 L388.0,119.0 L390.1,121.3 L392.2,123.5 L394.3,125.6 L396.4,127.7 L398.5,129.8 L400.6,131.9 L402.7,133.9 L404.8,135.9 L406.9,137.8 L409.0,139.7 L411.1,141.6 L413.2,143.4 L415.3,145.1 L417.4,146.9 L419.5,148.5 L421.6,150.2 L423.7,151.7 L425.8,153.3 L427.9,154.8 L430.0,156.2 L432.1,157.6 L434.2,159.0 L436.3,160.3 L438.4,161.5 L440.5,162.7 L442.6,163.9 L444.7,165.0 L446.8,166.1 L448.9,167.1 L451.0,168.1 L453.1,169.1 L455.2,170.0 L457.3,170.9 L459.4,171.7 L461.5,172.5 L463.6,173.3 L465.7,174.0 L467.8,174.7 L469.9,175.4 L472.0,176.0 L474.1,176.6 L476.2,177.2 L478.3,177.8 L480.4,178.3 L482.5,178.8 L484.6,179.2 L486.7,179.7 L488.8,180.1 L490.9,180.5 L493.0,180.8 L495.1,181.2 L497.2,181.5 L499.3,181.8 L501.4,182.1 L503.5,182.4 L505.6,182.6 L507.7,182.9 L509.8,183.1 L511.9,183.3 L514.0,183.5 L516.1,183.7 L518.2,183.9 L520.3,184.0 L522.4,184.2 L524.5,184.3 L526.6,184.4 L528.7,184.6 L530.8,184.7 L532.9,184.8 L535.0,184.9 L537.1,185.0 L539.2,185.0 L541.3,185.1 L543.4,185.2 L545.5,185.3 L547.6,185.3 L549.7,185.4 L551.8,185.4 L553.9,185.5 L556.0,185.5"/>
+      <line class="axis" x1="304.0" y1="186.0" x2="304.0" y2="24.0"/>
+      <line class="l-beach l-dash" x1="290.2" y1="186.0" x2="290.2" y2="40.4"/>
+      <text class="t-mtn" x="388.0" y="109.3" text-anchor="start">prefer mountains: 43%</text>
+      <text class="t-beach" x="60.4" y="109.3" text-anchor="start">prefer beach: 57%</text>
+      <text class="t-beach" x="284.2" y="36.4" text-anchor="end">mean −0.82</text>
+      <line class="axis" x1="52" y1="186" x2="556" y2="186"/>
+      <line class="axis" x1="52" y1="24" x2="52" y2="186"/>
+      <line class="axis" x1="52.0" y1="186" x2="52.0" y2="191"/><text x="52.0" y="204" text-anchor="middle">-15</text>
+      <line class="axis" x1="136.0" y1="186" x2="136.0" y2="191"/><text x="136.0" y="204" text-anchor="middle">-10</text>
+      <line class="axis" x1="220.0" y1="186" x2="220.0" y2="191"/><text x="220.0" y="204" text-anchor="middle">-5</text>
+      <line class="axis" x1="304.0" y1="186" x2="304.0" y2="191"/><text x="304.0" y="204" text-anchor="middle">0</text>
+      <line class="axis" x1="388.0" y1="186" x2="388.0" y2="191"/><text x="388.0" y="204" text-anchor="middle">5</text>
+      <line class="axis" x1="472.0" y1="186" x2="472.0" y2="191"/><text x="472.0" y="204" text-anchor="middle">10</text>
+      <line class="axis" x1="556.0" y1="186" x2="556.0" y2="191"/><text x="556.0" y="204" text-anchor="middle">15</text>
+      <text x="304.0" y="224" text-anchor="middle">mountain coefficient β₃ₙ (utils), key estimates</text>
+      <text x="14" y="105.0" text-anchor="middle" transform="rotate(-90 14 105.0)">density</text>
+    </svg>
+    <figcaption>The estimated distribution of taste for the mountains. The average camper slightly prefers the beach, but tastes are so spread out that 43% prefer the mountains.</figcaption>
+  </figure>
+  <div class="see"><span>Illustrations</span>
+    <a href="https://en.wikipedia.org/wiki/Normal_distribution" target="_blank" rel="noopener">Normal distribution</a>
+    <a href="https://eml.berkeley.edu/books/choice2.html" target="_blank" rel="noopener">Train ch. 6.2: distributions of coefficients</a>
+  </div>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="2b.iii Distribution of the dollar values">
+<textarea spellcheck="false" aria-label="Python code: 2b.iii Distribution of the dollar values">b = model_2b["par"]
+wtp = pd.DataFrame({"mean": [b["time"] / b["cost"] * 60, b["mountain"] / -b["cost"]],
+                    "sd": [abs(b["sd.time"]) / -b["cost"] * 60, abs(b["sd.mountain"]) / -b["cost"]]},
+                   index=["time ($/hour)", "mountain ($)"])
+wtp.round(2)</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>##      time   sd.time
+## 15.632328  6.219499
+##    mountain sd.mountain
+##   -44.03166   249.61950</pre>
+      <p>These campers have a heterogeneous valuation of their time spent traveling to the park. These time values are normally distributed with a mean of $15.63 and a standard deviation of $6.22. Similarly, the dollar value of camping in the mountains, relative to camping at the beach and <em>ceteris paribus</em>, is normally distributed with a mean of −$44.03 and a standard deviation of $249.62.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p2b4">
+  <div class="q-head"><span class="q-tag">2b.iv</span><h2>How many campers prefer the mountains?</h2></div>
+  <div class="prompt">Calculate the proportion of campers who have a positive value of camping in the mountains (relative to the beach).</div>
+
+  <h3>Theory</h3>
+  <p>The share of campers with a positive value of the mountains is \(\Pr(\text{WTP}_{mtn}&gt;0)=1-\Phi\big(0;\,\text{mean},\,\text{sd}\big)=\Phi(\mu_3/|\sigma_3|)\).</p>
+  <div class="cell" data-title="2b.iv Share of campers who prefer the mountains">
+<textarea spellcheck="false" aria-label="Python code: 2b.iv Share of campers who prefer the mountains">share_mtn = 1 - stats.norm.cdf(0, loc=wtp.loc["mountain ($)", "mean"], scale=wtp.loc["mountain ($)", "sd"])
+print(f"Share with a positive value of the mountains: {share_mtn:.3f}")
+print(f"Share of campers who actually chose a mountain park: {(y &lt; 2).mean():.3f}")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>1 - pnorm(q = 0, mean = coef(model_2b)[3] / -coef(model_2b)[1],
+          sd = abs(coef(model_2b)[5]) / -coef(model_2b)[1])
+## [1] 0.4299918</pre>
+      <p>Of the 1000 campers in this dataset, 43% have a positive valuation of camping in the mountains relative to camping at the beach. That is, <em>ceteris paribus</em>, 43% of these campers would prefer to camp in the mountains than at the beach.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p2c1">
+  <div class="q-head"><span class="q-tag">2c.i</span><h2>Counterfactual: a $20 fee at Mount Greylock</h2></div>
+  <div class="prompt">DCR is considering a fee increase at Mount Greylock that would raise each camper's cost by $20. Using the model from part (b), how many fewer campers do you expect at Greylock, and how many more at each of the other four parks?</div>
+
+  <h3>Theory</h3>
+  <p>Predicted visits to park \(j\) are \(\sum_nP_{nj}\), where each \(P_{nj}\) is now the simulated mixed logit probability, the average over draws. Each camper's own draws make the substitution pattern realistic: draws with a high mountain taste put most weight on October Mountain when Greylock's price rises.</p>
+  <figure class="fig">
+    <svg viewBox="0 0 580 210" role="img" aria-label="Change in campers per park from a 20 dollar Greylock fee: Greylock minus 47, October Mountain plus 32, each beach about plus 5">
+      <text x="160" y="33.0" text-anchor="end">Mount Greylock</text>
+      <rect class="f-mtn" x="211.7" y="21" width="152.5" height="18" rx="2"/>
+      <text class="t-strong" x="205.7" y="33.0" text-anchor="end">-47.1</text>
+      <text x="160" y="63.0" text-anchor="end">October Mountain</text>
+      <rect class="f-mtn" x="364.3" y="51" width="103.7" height="18" rx="2"/>
+      <text class="t-strong" x="474.0" y="63.0" text-anchor="start">+32.0</text>
+      <text x="160" y="93.0" text-anchor="end">Horseneck Beach</text>
+      <rect class="f-beach" x="364.3" y="81" width="19.1" height="18" rx="2"/>
+      <text class="t-strong" x="389.4" y="93.0" text-anchor="start">+5.9</text>
+      <text x="160" y="123.0" text-anchor="end">Salisbury Beach</text>
+      <rect class="f-beach" x="364.3" y="111" width="14.7" height="18" rx="2"/>
+      <text class="t-strong" x="385.0" y="123.0" text-anchor="start">+4.5</text>
+      <text x="160" y="153.0" text-anchor="end">Scusset Beach</text>
+      <rect class="f-beach" x="364.3" y="141" width="15.0" height="18" rx="2"/>
+      <text class="t-strong" x="385.3" y="153.0" text-anchor="start">+4.6</text>
+      <line class="axis" x1="364.3" y1="12" x2="364.3" y2="170"/>
+      <text x="170.0" y="186" text-anchor="middle">-60</text>
+      <text x="234.8" y="186" text-anchor="middle">-40</text>
+      <text x="299.5" y="186" text-anchor="middle">-20</text>
+      <text x="364.3" y="186" text-anchor="middle">0</text>
+      <text x="429.0" y="186" text-anchor="middle">20</text>
+      <text x="493.8" y="186" text-anchor="middle">40</text>
+      <text x="340.0" y="206" text-anchor="middle">change in expected campers (solution key)</text>
+    </svg>
+    <figcaption>Most campers priced out of Greylock move to the other mountain park, because the people at Greylock are mostly people who like mountains.</figcaption>
+  </figure>
+
+  <h3>In Python</h3>
+  <div class="cell" data-title="2c.i A $20 fee increase at Mount Greylock">
+<textarea spellcheck="false" aria-label="Python code: 2c.i A $20 fee increase at Mount Greylock">def mixed_probs(theta, nll, Xmat):
+    """Simulated choice probabilities, campers x parks, averaged over draws."""
+    Bc = nll.coefficients(np.asarray(theta))
+    V = np.einsum("nrk,njk-&gt;nrj", Bc, Xmat)
+    return np.exp(V - logsumexp(V, axis=2, keepdims=True)).mean(axis=1)
+
+X_counter = X.copy()
+X_counter[:, 0, 0] += 20                                # Greylock costs $20 more for everyone
+theta_2b = model_2b["par"].to_numpy()
+agg_obs = mixed_probs(theta_2b, nll_2b, X).sum(axis=0)
+agg_counter = mixed_probs(theta_2b, nll_2b, X_counter).sum(axis=0)
+pd.DataFrame({"observed": agg_obs, "with fee": agg_counter, "change": agg_counter - agg_obs}, index=park_names).round(2)</textarea>
+  </div>
+  <div class="cell" data-title="Compare: what would the plain logit predict?">
+<textarea spellcheck="false" aria-label="Python code: Compare: what would the plain logit predict?">b1a = model_1a["par"].to_numpy()
+X_saved = X
+mnl_obs = logit_probs(b1a).sum(axis=0)
+X = X_counter; mnl_counter = logit_probs(b1a).sum(axis=0); X = X_saved
+pd.DataFrame({"mixed logit": agg_counter - agg_obs, "multinomial logit": mnl_counter - mnl_obs}, index=park_names).round(2)</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>colSums(agg_choices_counter_2b - agg_choices_obs_2b)
+##          1          2          3          4          5
+## -47.108365  32.020511   5.906957   4.544644   4.636252</pre>
+      <p>Due to this camping fee increase at Mount Greylock, we would expect 47.1 fewer campers at that park. We would also expect an additional 32.0 campers at the other mountain park, October Mountain, and approximately only 5 or 6 additional campers at each of the beach parks.</p>
+    </div>
+  </details>
+</section>
+
+<section class="q" id="p2c2">
+  <div class="q-head"><span class="q-tag">2c.ii</span><h2>Who pays for the fee?</h2></div>
+  <div class="prompt">How do you expect the increased camping fee at Mount Greylock to affect the economic surplus of the 1000 campers?</div>
+
+  <h3>Theory</h3>
+  <p>With a fixed cost coefficient, the log-sum formula of Problem Set 2 applies draw by draw. For camper \(n\),</p>
+  \[\Delta CS_n=\frac{1}{-\beta_1}\cdot\frac1R\sum_r\Big[\ln\sum_je^{V^{1}_{nrj}}-\ln\sum_je^{V^{0}_{nrj}}\Big].\]
+  <p>The loss is close to $20 for a camper who would certainly have gone to Greylock and is near zero for one who would never go. Summed over campers, it is a little less than $20 times Greylock's visitors, because some of them switch parks.</p>
+  <div class="cell" data-title="2c.ii Change in consumer surplus">
+<textarea spellcheck="false" aria-label="Python code: 2c.ii Change in consumer surplus">def mixed_logsum(theta, nll, Xmat):
+    Bc = nll.coefficients(np.asarray(theta))
+    return logsumexp(np.einsum("nrk,njk-&gt;nrj", Bc, Xmat), axis=2).mean(axis=1)   # one value per camper
+
+delta_cs = (mixed_logsum(theta_2b, nll_2b, X_counter) - mixed_logsum(theta_2b, nll_2b, X)) / -model_2b["par"]["cost"]
+print(f"Total change in consumer surplus: -${-delta_cs.sum():,.0f}")
+print(f"For comparison, $20 x predicted Greylock visitors: -${20 * agg_obs[0]:,.0f}")</textarea>
+  </div>
+  <details class="key">
+    <summary>Solution key <span>· course data, R output</span></summary>
+    <div class="body">
+<pre>sum((logsum_counter_2b - logsum_obs_2b)) / -coef(model_2b)[1]
+##      cost
+## -4302.969</pre>
+      <p>This increased camping fee is expected to reduce the economic surplus of these 1000 campers by a total of roughly $4303.</p>
+    </div>
+  </details>
+  <div class="discuss">
+    <h3>Discuss</h3>
+    <ol>
+      <li>DCR collects the fee from campers who still go to Greylock. Compare that revenue with the loss in consumer surplus. Who bears the difference?</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <p><a href="problem_set_1.html">Problem Set 1</a> · <a href="problem_set_2.html">Problem Set 2</a> · <a href="problem_set_3.html">Problem Set 3</a> · <b>Problem Set 4</b> · <a href="problem_set_5.html">Problem Set 5</a></p>
+  Source: ResEcon 703 Problem Set 4 solutions (UMass Amherst). R code and output in the solution keys are reproduced from that document; Python translations, theory notes, figures and the simulated stand-in data were written for this class page. Python runs in the browser with <a href="https://pyodide.org/" target="_blank" rel="noopener">Pyodide</a>; the first load downloads about 30&nbsp;MB.
+</footer>
+</main>
+</div>
+
+<script>
+(() => {
+  const PYODIDE_BASE = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/";
+  const PACKAGES = ["numpy", "pandas", "matplotlib", "scipy", "statsmodels"];
+
+  // Python side: run a cell in a shared namespace, capture prints, tables and figures
+  const KERNEL = `
+import sys, io, ast, json, base64, traceback
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+plt.rcParams.update({"figure.dpi": 100, "axes.spines.top": False, "axes.spines.right": False,
+                     "font.size": 10, "axes.titleweight": "bold"})
+_NS = {"__name__": "__main__"}
+
+def _run_cell(src):
+    buf = io.StringIO()
+    old = sys.stdout, sys.stderr
+    sys.stdout = sys.stderr = buf
+    html, err = None, None
+    try:
+        tree = ast.parse(src, "<cell>", "exec")
+        last = None
+        if tree.body and isinstance(tree.body[-1], ast.Expr):
+            last = ast.Expression(tree.body.pop().value)
+        exec(compile(tree, "<cell>", "exec"), _NS)
+        if last is not None:
+            val = eval(compile(last, "<cell>", "eval"), _NS)
+            if val is not None:
+                rh = getattr(val, "_repr_html_", None)
+                h = rh() if callable(rh) else None
+                if h:
+                    html = h
+                else:
+                    print(repr(val))
+    except Exception:
+        etype, evalue, tb = sys.exc_info()
+        lines = [f for f in traceback.extract_tb(tb) if f.filename == "<cell>"]
+        where = f"Line {lines[-1].lineno}: " if lines else ""
+        err = where + "".join(traceback.format_exception_only(etype, evalue)).strip()
+    finally:
+        sys.stdout, sys.stderr = old
+    figs = []
+    for num in plt.get_fignums():
+        b = io.BytesIO()
+        plt.figure(num).savefig(b, format="png", dpi=110, bbox_inches="tight", facecolor="white")
+        figs.append(base64.b64encode(b.getvalue()).decode("ascii"))
+    plt.close("all")
+    return json.dumps({"stdout": buf.getvalue(), "html": html, "figs": figs, "error": err})
+`;
+
+  const pill = document.getElementById("py-pill");
+  const pillMsg = document.getElementById("py-msg");
+  const setStatus = (state, msg) => { pill.dataset.state = state; pillMsg.textContent = msg; };
+
+  // Build the cells
+  const cells = [...document.querySelectorAll(".cell")].map((el, i) => {
+    const ta = el.querySelector("textarea");
+    const original = ta.value;
+    const bar = document.createElement("div");
+    bar.className = "cell-bar";
+    bar.innerHTML = `<span class="cell-n">[ ]</span><span class="cell-title"></span>
+      <button type="button" class="reset">Reset</button><button type="button" class="run">Run ▸</button>`;
+    bar.querySelector(".cell-title").textContent = el.dataset.title || `Cell ${i + 1}`;
+    if (el.dataset.slow) {
+      const slow = document.createElement("span");
+      slow.className = "slow"; slow.textContent = " · " + el.dataset.slow;
+      bar.querySelector(".cell-title").appendChild(slow);
+    }
+    el.insertBefore(bar, ta);
+    const out = document.createElement("div");
+    out.className = "out"; out.setAttribute("aria-live", "polite");
+    el.appendChild(out);
+    ta.id = `cell-${i + 1}`;
+    const fit = () => { ta.style.height = "auto"; ta.style.height = (ta.scrollHeight + 4) + "px"; };
+    ta.addEventListener("input", fit);
+    requestAnimationFrame(fit);
+    ta.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && ev.shiftKey) { ev.preventDefault(); runUpTo(i); }
+      else if (ev.key === "Tab" && !ev.shiftKey) {
+        ev.preventDefault();
+        const s = ta.selectionStart, e = ta.selectionEnd;
+        ta.setRangeText("    ", s, e, "end");
+      }
+    });
+    const cell = { el, ta, out, original, fit, ran: false, n: bar.querySelector(".cell-n"),
+                   runBtn: bar.querySelector(".run") };
+    cell.runBtn.addEventListener("click", () => runUpTo(i));
+    bar.querySelector(".reset").addEventListener("click", () => { ta.value = original; fit(); });
+    return cell;
+  });
+
+  // Pyodide boot (once)
+  let pyPromise = null;
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src; s.onload = resolve;
+      s.onerror = () => reject(new Error("Could not download " + src));
+      document.head.appendChild(s);
+    });
+  }
+  function getPython() {
+    if (!pyPromise) {
+      pyPromise = (async () => {
+        setStatus("loading", "Downloading Python…");
+        await loadScript(PYODIDE_BASE + "pyodide.js");
+        const py = await loadPyodide({ indexURL: PYODIDE_BASE });
+        setStatus("loading", "Loading pandas, statsmodels…");
+        await py.loadPackage(PACKAGES);
+        py.runPython(KERNEL);
+        setStatus("ready", "Python ready");
+        return py;
+      })().catch((err) => {
+        pyPromise = null;
+        setStatus("error", "Python failed to load");
+        throw err;
+      });
+    }
+    return pyPromise;
+  }
+
+  // Cells run one at a time, in order
+  let queue = Promise.resolve();
+  let counter = 0;
+  function runUpTo(i) {
+    queue = queue.then(async () => {
+      let py;
+      try { py = await getPython(); }
+      catch (err) {
+        cells[i].out.innerHTML = "";
+        const pre = document.createElement("pre");
+        pre.className = "err";
+        pre.textContent = `${err.message}\nPython needs an internet connection to load the first time. The solution key below each question shows the expected output.`;
+        cells[i].out.appendChild(pre);
+        return;
+      }
+      for (let j = 0; j <= i; j++) {
+        if (j < i && cells[j].ran) continue;
+        const ok = await execCell(py, j);
+        if (!ok && j < i) {
+          const note = document.createElement("p");
+          note.className = "note";
+          note.textContent = `Stopped: cell [${j + 1}] above raised an error.`;
+          cells[i].out.innerHTML = ""; cells[i].out.appendChild(note);
+          return;
+        }
+      }
+    });
+    return queue;
+  }
+
+  async function execCell(py, j) {
+    const c = cells[j];
+    c.el.dataset.state = "running"; c.n.textContent = "[*]"; c.runBtn.disabled = true;
+    c.out.innerHTML = "";
+    await new Promise(requestAnimationFrame);
+    const res = JSON.parse(py.globals.get("_run_cell")(c.ta.value));
+    if (res.stdout) {
+      const pre = document.createElement("pre"); pre.textContent = res.stdout.replace(/\n$/, ""); c.out.appendChild(pre);
+    }
+    if (res.html) {
+      const div = document.createElement("div"); div.innerHTML = res.html; c.out.appendChild(div);
+    }
+    for (const b64 of res.figs) {
+      const img = document.createElement("img"); img.alt = "Figure produced by this cell"; img.src = "data:image/png;base64," + b64; c.out.appendChild(img);
+    }
+    if (res.error) {
+      const pre = document.createElement("pre"); pre.className = "err"; pre.textContent = res.error; c.out.appendChild(pre);
+    }
+    c.ran = !res.error;
+    c.el.dataset.state = res.error ? "error" : "done";
+    c.n.textContent = `[${++counter}]`;
+    c.runBtn.disabled = false;
+    return !res.error;
+  }
+
+  document.getElementById("run-all").addEventListener("click", () => {
+    cells.forEach((c) => { c.ran = false; });
+    runUpTo(cells.length - 1);
+  });
+
+  // Optional: load the real course CSV into Python's file system
+  const upload = document.getElementById("csv-upload");
+  const csvMsg = document.getElementById("csv-msg");
+  upload.addEventListener("change", async () => {
+    const files = [...upload.files];
+    if (!files.length) return;
+    const expected = (upload.dataset.files || "").split(",").filter(Boolean);
+    const unknown = files.filter((f) => !expected.includes(f.name)).map((f) => f.name);
+    if (unknown.length) {
+      csvMsg.textContent = `Rename ${unknown.join(", ")} to ${expected.join(" or ")} so the setup cell can find it.`;
+      return;
+    }
+    csvMsg.textContent = "Loading Python to receive the files…";
+    try {
+      const py = await getPython();
+      for (const file of files) {
+        py.FS.writeFile(file.name, new Uint8Array(await file.arrayBuffer()));
+      }
+      const names = files.map((f) => f.name).join(", ");
+      cells.forEach((c) => { c.ran = false; });
+      csvMsg.textContent = `Loaded ${names}. Re-running all cells with the course data…`;
+      await runUpTo(cells.length - 1);
+      csvMsg.textContent = `Using ${names}. Results should now match the solution keys.`;
+    } catch (err) {
+      csvMsg.textContent = "Could not load the files: " + err.message;
+    }
+  });
+
+  // Math
+  window.addEventListener("load", () => {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [{ left: "\\[", right: "\\]", display: true }, { left: "\\(", right: "\\)", display: false }],
+        ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+        throwOnError: false
+      });
+    }
+    // Start Python in the background so it is ready when class begins
+    getPython().catch(() => {});
+  });
+})();
+</script>
+</body>
+</html>
