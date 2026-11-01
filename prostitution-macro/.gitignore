@@ -1,0 +1,3 @@
+# Cached World Bank extracts (16 MB); src/01_build_panel.py re-downloads them
+.cache/
+out/estimate.log

@@ -1,0 +1,23 @@
+jurisdiction,iso3,year,measure,value,unit,pct_gdp,in_official_gdp,source_org,source
+United Kingdom,GBR,2009,prostitution_value_added,5.3,bn GBP,,yes,ONS,https://unsiap.or.jp/sites/default/files/pdf/e-learning_el_material_4_eco_4_1_eco_stat_1508_gdp_kor_reference_materialillegal_activities_in_the_uk_national_accounts.pdf
+United Kingdom,GBR,2009,illegal_activities_total,9.7,bn GBP,0.70,yes,ONS,https://quarterly.blog.gov.uk/2014/10/15/sex-drugs-and-gdp/
+United Kingdom,GBR,2010,prostitution_value_added,5.6,bn GBP,0.35,yes,ONS,https://cy.ons.gov.uk/aboutus/transparencyandgovernance/freedomofinformationfoi/illegalproductionn2
+Netherlands,NLD,2008,prostitution_value_added,,share,0.10,yes,ECB/IMF,https://www.imf.org/en/data/statistics/informal-economy-data/reports/ecb-estimation-of-prostitution-services-in-europe-in-the-context-of-the-external-accounts
+Netherlands,NLD,2021,prostitution_value_added,0.7,bn EUR,0.08,yes,CBS,https://www.cbs.nl/en-gb/longread/de-nederlandse-economie/2024/estimating-illegal-activities-in-the-national-accounts?onepage=true
+Netherlands,NLD,2021,illegal_activities_total,4.5,bn EUR,0.50,yes,CBS,https://www.dutchnews.nl/2024/05/illegal-drugs-prostitution-generate-e4-5-billion-for-nl-economy/
+Italy,ITA,2011,prostitution_value_added,,share,0.20,yes,ECB/IMF,https://www.imf.org/en/data/statistics/informal-economy-data/reports/ecb-estimation-of-prostitution-services-in-europe-in-the-context-of-the-external-accounts
+Sweden,SWE,2006,prostitution_value_added,,share,0.10,yes,ECB/IMF,https://www.imf.org/en/data/statistics/informal-economy-data/reports/ecb-estimation-of-prostitution-services-in-europe-in-the-context-of-the-external-accounts
+United States,USA,2017,prostitution_consumer_spending,4.0,bn USD,0.02,no,BEA (satellite),https://apps.bea.gov/scb/issues/2021/02-february/pdf/0221-illegal-activity.pdf
+South Korea,KOR,2002,sex_trade_turnover,24000,bn KRW,4.10,no,Korean Institute of Criminology,https://macleans.ca/news/world/south-korea-takes-on-prostitution/
+South Korea,KOR,2007,sex_trade_turnover,14000,bn KRW,1.60,no,Korea Women's Development Institute,https://thediplomat.com/2015/04/ambassadors-and-prostitutes-south-koreas-sex-workers/
+South Korea,KOR,2002,transactions,170,millions,,no,Korea Women's Development Institute,https://thediplomat.com/2015/04/ambassadors-and-prostitutes-south-koreas-sex-workers/
+South Korea,KOR,2007,transactions,94,millions,,no,Korea Women's Development Institute,https://thediplomat.com/2015/04/ambassadors-and-prostitutes-south-koreas-sex-workers/
+Germany,DEU,2019,registered_sex_workers,40400,persons,,n/a,Destatis,https://destatis.de/EN/Press/2020/07/PE20_286_228.html
+Germany,DEU,2020,registered_sex_workers,24900,persons,,n/a,Destatis,https://www.destatis.de/EN/Press/2021/07/PE21_314_228.html
+Germany,DEU,2021,registered_sex_workers,23700,persons,,n/a,Destatis,https://www.destatis.de/EN/Press/2021/07/PE21_314_228.html
+Germany,DEU,2023,registered_sex_workers,30600,persons,,n/a,Destatis,https://www.destatis.de/DE/Presse/Pressemitteilungen/2025/07/PD25_240_228.html
+Germany,DEU,2024,registered_sex_workers,32300,persons,,n/a,Destatis,https://www.destatis.de/DE/Presse/Pressemitteilungen/2025/07/PD25_240_228.html
+Northern Ireland,GBR-NIR,2015,online_sex_work_adverts,3351,adverts,,n/a,DoJ NI / QUB review,https://www.justice-ni.gov.uk/news/report-published-impact-sex-purchase-offence
+Northern Ireland,GBR-NIR,2018,online_sex_work_adverts,3973,adverts,,n/a,DoJ NI / QUB review,https://www.justice-ni.gov.uk/news/report-published-impact-sex-purchase-offence
+Northern Ireland,GBR-NIR,2014,street_sex_workers,20,persons,,n/a,DoJ NI / QUB review,https://www.justice-ni.gov.uk/news/report-published-impact-sex-purchase-offence
+Northern Ireland,GBR-NIR,2019,street_sex_workers,10,persons,,n/a,DoJ NI / QUB review,https://www.justice-ni.gov.uk/news/report-published-impact-sex-purchase-offence
