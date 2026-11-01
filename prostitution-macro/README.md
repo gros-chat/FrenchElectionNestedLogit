@@ -36,11 +36,24 @@ src/
                            inference, synthetic control
   04_arithmetic.py         mechanical effect sizes and the noise floor
   05_report.py             render the HTML report
+  06_figures.py            article figures (300 dpi PNG)
+  07_article.js            render the academic article (.docx)
 out/
   abundance.json  arithmetic.json  results.json
+  fig/                     figures used by the article
 ```
 
-Run in order: `01` → `02` → `03` → `04` → `05`.
+Run in order: `01` → `02` → `03` → `04` → `05` → `06` → `07`.
+
+## Outputs
+
+| File | What it is |
+|---|---|
+| `../prostitution_macro_v1.html` | self-contained interactive report |
+| `../prostitution_macro_article.docx` | academic article, 16 pp., 5 tables, 3 figures |
+
+Both are generated from `out/*.json`, so no figure in either is transcribed by
+hand; re-running `03` and then `05`/`06`/`07` regenerates them in step.
 
 ## Data sources
 
